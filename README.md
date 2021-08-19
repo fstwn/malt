@@ -4,7 +4,7 @@
 
 There are two ways to install:
 
-### Set up Environment manually using Conda
+### 1. Set up Environment manually using Conda
 
 First add conda-forge and open3d-admin to channels
 ```
