@@ -5,13 +5,17 @@
 This requires you to have the following:
 - Windows (unfortunately Hops and rhino.inside won't work on OSX for now)
 - Anaconda / Miniconda
-- Rhino 7
+- Rhino 7.4 or newer
+- [Hops](https://developer.rhino3d.com/guides/grasshopper/hops-component/) ([Install using Rhino package manager](rhino://package/search?name=hops))
 
 ## Installation
 
-There are two ways to install:
+There are three steps for getting the provided Hops components up an running:
+1. Setting up the `ddu_ias_research` virtual environment using `conda` (either manually or automatically)
+2. Running `hops_app.py` in the `ddu_research` environment to start the Hops Server
+3. Using a Hops Component in Grasshopper to query one of the provided Hops Routes
 
-### 1. Set up Environment manually using Conda
+### 1.a Set up Environment *manually* using Conda
 
 First add conda-forge and open3d-admin to channels
 ```
@@ -41,7 +45,7 @@ Finally, we install `compas_rhino` and the other compas extensions by running:
 python -m compas_rhino.install -v 7.0 -p compas compas_rhino compas_ghpython compas_fab compas_cgal
 ```
 
-### 2. Set up Environment automatically using conda environment file
+### 1.b Set up Environment *automatically* using conda environment file
 
 Set up the environment `ddu_ias_research` by running:
 ```
@@ -57,3 +61,5 @@ Finally, we install `compas_rhino` and the other compas extensions by running:
 ```
 python -m compas_rhino.install -v 7.0 -p compas compas_rhino compas_ghpython compas_fab compas_cgal
 ```
+
+### 2.
