@@ -245,7 +245,7 @@ def build_gluing_map(F):
     face-side it is glued to.  In particular, G[f,s] is a pair (f',s') such
     that (f,s) and (f',s') are glued together.
     """
-    
+
     # In order to construct this array, for each side of a triangle, we need to
     # find the neighboring side in some other triangle. There are many ways that
     # this lookup could be accomplished. Here, we use an array-based strategy
@@ -277,8 +277,7 @@ def build_gluing_map(F):
     # Build the |F|x3 gluing map G, by linking together pairs of sides with the same vertex indices.
     G = np.empty([n_faces(F),3,2], dtype=np.int64);
     for p in range(0,n_sides,2):
-        
-        # extra sanity check to fail nicely if a mesh with boundary 
+        # extra sanity check to fail nicely if a mesh with boundary
         # or nonmanifold mesh is given as input
         if S[p+0,0] != S[p+1,0] or S[p+0,1] != S[p+1,1]:
             raise ValueError("Problem building glue map. Is input closed & manifold?")
@@ -288,12 +287,12 @@ def build_gluing_map(F):
         glue_together(G, fs0, fs1)
 
     # A sanity-check test
-    validate_gluing_map(G)
+    validate_gluing_map(G, F)
 
     return G
 
 
-def validate_gluing_map(G):
+def validate_gluing_map(G, F):
     """
     Performs sanity checks on the connectivity of the gluing map. Throws an
     exception if anything is wrong.
@@ -340,7 +339,7 @@ def flip_edge(F, G, l, s0):
     s1 = other(G, s0)
 
     # Get the 3 sides of each face
-    s2, s3 = next_side(s0), next_side(next_side(s0)) 
+    s2, s3 = next_side(s0), next_side(next_side(s0))
     s4, s5 = next_side(s1), next_side(next_side(s1))
 
     # Get the sides glued to each edge of the diamond
@@ -354,10 +353,10 @@ def flip_edge(F, G, l, s0):
 
     # Get the original lengths of the outside edges of the diamond
     l2, l3, l4, l5 = l[s2], l[s3], l[s4], l[s5]
-    
+
     # Compute the length of the new edge
     new_length = diagonal_length(G, l, s0)
-    
+
     # Update the adjacency list F
     F[f0] = (v3, v2, v0)
     F[f1] = (v2, v3, v1)
@@ -444,7 +443,7 @@ def flip_to_delaunay(F, G, l):
         if not is_delaunay(G, l, fs):
 
             # Flip the edge
-            # Note that we need to update the current face-side fs, 
+            # Note that we need to update the current face-side fs,
             # because it is re-labelled during the flip.
             fs = flip_edge(F, G, l, fs)
             n_flips += 1
@@ -515,7 +514,7 @@ def build_cotan_laplacian(F, l):
 
     :param F: |F|x3 vertex-face adjacency list F
     :param l: |F|x3 edge-lengths array, giving the length of each face-side
-    :returns: The Laplace matrix, as a sparse, |V|x|V| real scipy matrix 
+    :returns: The Laplace matrix, as a sparse, |V|x|V| real scipy matrix
     """
 
     # Initialize empty sparse matrix

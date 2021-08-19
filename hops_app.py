@@ -1,7 +1,9 @@
 # PYTHON STANDARD LIBRARY IMPORTS ---------------------------------------------
+
 from itertools import product
 
 # HOPS & RHINO IMPORTS --------------------------------------------------------
+
 import ghhops_server as hs
 
 import rhinoinside
@@ -20,14 +22,18 @@ import Rhino # NOQA402
 # import KangarooSolver as ks
 
 # MODULE IMPORTS --------------------------------------------------------------
+
 import numpy as np # NOQA402
 import open3d as o3d # NOQA402
 import igl # NOQA402
 
 
 # LOCAL MODULE IMPORTS --------------------------------------------------------
+
+import localmodules.hopsutilities as hsutil # NOQA402
+
 from localmodules import icp # NOQA402
-from localmodules import intri
+from localmodules import intri # NOQA402
 
 
 # REGSISTER FLASK OR RHINOINSIDE HOPS APP -------------------------------------
@@ -58,7 +64,7 @@ hops = hs.Hops(app=rhinoinside)
         hs.HopsNumber("Error", "E", "Mean Error of ICP operation", hs.HopsParamAccess.ITEM),
         hs.HopsInteger("Iterations", "I", "Iterations before termination.", hs.HopsParamAccess.ITEM)
     ])
-def icpRegsiterPointClouds(scene_pts,
+def icp_RegsiterPointClouds(scene_pts,
                            model_pts,
                            threshold=1e-3,
                            max_iters=20,
@@ -86,7 +92,7 @@ def icpRegsiterPointClouds(scene_pts,
                                         nn_alg=alg)
 
     # convert the transformation array to an actual rhino transform
-    xform = transform_from_list(res[0])
+    xform = hsutil.np_array_to_rhino_transform(res[0])
 
     # copy scene points and transform the copy using the xform
     transformed_pts = scene_pts[:]
@@ -103,9 +109,9 @@ def icpRegsiterPointClouds(scene_pts,
 
 @hops.component(
     "/open3d.PoissonMesh",
-    name="PoissonMeshO3D",
+    name="PoissonMesh",
     nickname="PoissonMesh",
-    description="Construct a Mesh from a PointCloud using Open3D",
+    description="Construct a Mesh from a PointCloud using Open3D poisson mesh reconstruction.",
     category=None,
     subcategory=None,
     icon=None,
@@ -116,7 +122,7 @@ def icpRegsiterPointClouds(scene_pts,
     outputs=[
         hs.HopsMesh("Mesh", "M", "The resulting Mesh.", hs.HopsParamAccess.ITEM),
     ])
-def open3dPoissonMeshComponent(points):
+def open3d_PoissonMeshComponent(points):
 
     # convert point list to np array
     np_points = np.array([[pt.X, pt.Y, pt.Z] for pt in points])
@@ -149,39 +155,102 @@ def open3dPoissonMeshComponent(points):
     [rhino_mesh.Faces.AddFace(f[0], f[1], f[2])
      for f in np.asarray(p_mesh_crop.triangles)]
 
+    rhino_mesh.Normals.ComputeNormals()
+    rhino_mesh.Compact()
+
     # return the rhino mesh
     return rhino_mesh
 
 
 @hops.component(
-    "/igl.GeodesicHeatDistances",
-    name="GeodesicHeatDistancesIGL",
-    nickname="GeoHeatDist",
-    description="Get fast approimate geodesic distances using the heat method",
+    "/open3d.PoissonMeshNormals",
+    name="PoissonMeshNormals",
+    nickname="PoissonMeshNormals",
+    description="Construct a Mesh from a PointCloud and corresponding normals using Open3D poisson mesh reconstruction.",
     category=None,
     subcategory=None,
     icon=None,
     inputs=[
-        hs.HopsMesh("Points", "P", "The PointClouds Points", hs.HopsParamAccess.LIST),
+        hs.HopsPoint("Points", "P", "The PointClouds Points", hs.HopsParamAccess.LIST),
+        hs.HopsVector("Normals", "N", "Optional Normals of the pointcloud to be used in reconstruction", hs.HopsParamAccess.LIST),
     ],
     outputs=[
         hs.HopsMesh("Mesh", "M", "The resulting Mesh.", hs.HopsParamAccess.ITEM),
     ])
+def open3d_PoissonMeshNormalsComponent(points, normals):
 
-def iglGeodesicHeatDistancesComponent(points, normals=None):
-    return
+    # convert point list to np array
+    np_points = np.array([[pt.X, pt.Y, pt.Z] for pt in points])
+
+    # create pointcloud
+    pointcloud = o3d.geometry.PointCloud()
+    pointcloud.points = o3d.utility.Vector3dVector(np_points)
+
+    if normals:
+        np_normals = np.array([[n.X, n.Y, n.Z] for n in normals])
+        pointcloud.normals = o3d.utility.Vector3dVector(np_normals)
+    else:
+        pointcloud.estimate_normals()
+
+    poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
+                        pointcloud,
+                        depth=8,
+                        width=0,
+                        scale=1.1,
+                        linear_fit=False)[0]
+    bbox = pointcloud.get_axis_aligned_bounding_box()
+    p_mesh_crop = poisson_mesh.crop(bbox)
+
+    # create rhino mesh from o3d output
+    rhino_mesh = Rhino.Geometry.Mesh()
+    [rhino_mesh.Vertices.Add(v[0], v[1], v[2])
+     for v in np.asarray(p_mesh_crop.vertices)]
+    [rhino_mesh.Faces.AddFace(f[0], f[1], f[2])
+     for f in np.asarray(p_mesh_crop.triangles)]
+
+    rhino_mesh.Normals.ComputeNormals()
+    rhino_mesh.Compact()
+
+    # return the rhino mesh
+    return rhino_mesh
 
 
-# ADDITIONAL FUNCTIONALITY ----------------------------------------------------
+@hops.component(
+    "/intri.IntrinsicTriangulation",
+    name="IntrinsicTriangulation",
+    nickname="InTri",
+    description="Compute intrinsic triangulation of a triangle mesh.",
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsMesh("Mesh", "M", "The triangle mesh to create intrinsic triangulation for.", hs.HopsParamAccess.ITEM),
+    ],
+    outputs=[
+        hs.HopsMesh("Mesh", "M", "The resulting Mesh with an intrinsic triangulation.", hs.HopsParamAccess.ITEM),
+    ])
+def intri_IntrinsicTriangulationComponent(mesh):
 
-def transform_from_list(data):
-    xform = Rhino.Geometry.Transform(1.0)
-    for i, j in product(range(4), range(4)):
-        xform[i, j] = data[i][j]
-    return xform
+    V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
+
+    # initialize the glue map and edge lengths arrays from the input data
+    G = intri.build_gluing_map(F)
+    eL = intri.build_edge_lengths(V, F)
+
+    # flip to delaunay
+    intri.flip_to_delaunay(F, G, eL)
+
+    intri_mesh = mesh.Duplicate()
+    intri_mesh.Faces.Clear()
+
+    [intri_mesh.Faces.AddFace(face[0], face[1], face[2]) for face in F]
+    intri_mesh.Normals.ComputeNormals()
+    intri_mesh.Compact()
+
+    return intri_mesh
 
 
-# RUN FLASK APP ---------------------------------------------------------------
+# RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------
 
 if __name__ == "__main__":
     if type(hops) == hs.HopsFlask:
