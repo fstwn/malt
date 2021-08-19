@@ -310,6 +310,7 @@ def intri_HeatMethodDistanceComponent(mesh,
 
     return out_mesh, geodists, values
 
+
 # RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------
 
 if __name__ == "__main__":
