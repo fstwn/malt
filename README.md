@@ -12,10 +12,10 @@ This requires you to have the following:
 
 There are three steps for getting the provided Hops components up an running:
 1. Setting up the `ddu_ias_research` virtual environment using `conda` (either manually or automatically)
-2. Running `hops_app.py` in the `ddu_research` environment to start the Hops Server
+2. Running `hops_app.py` in the `ddu_ias_research` environment to start the Hops Server
 3. Using a Hops Component in Grasshopper to query one of the provided Hops Routes
 
-### 1.a Set up Environment *manually* using Conda
+### 1.a Set up the Virtual Environment *manually* using Conda
 
 First add conda-forge and open3d-admin to channels
 ```
@@ -45,7 +45,7 @@ Finally, we install `compas_rhino` and the other compas extensions by running:
 python -m compas_rhino.install -v 7.0 -p compas compas_rhino compas_ghpython compas_fab compas_cgal
 ```
 
-### 1.b Set up Environment *automatically* using conda environment file
+### 1.b Set up the Virtual Environment *automatically* using conda environment file
 
 Set up the environment `ddu_ias_research` by running:
 ```
@@ -62,4 +62,17 @@ Finally, we install `compas_rhino` and the other compas extensions by running:
 python -m compas_rhino.install -v 7.0 -p compas compas_rhino compas_ghpython compas_fab compas_cgal
 ```
 
-### 2.
+### 2. Running `hops_app.py` in the Virtual Environment
+
+Make sure your current working directory is the directory where `hops_app.py` 
+is located. Otherwise browse to this directory using `cd`. Make sure the
+`ddu_ias_research` conda environment is active, otherwise run:
+```
+conda activate ddu_ias_research
+```
+
+Now you can start the Hops Server by running:
+```
+python hops_app.py
+```
+

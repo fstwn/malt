@@ -118,11 +118,15 @@ def icp_RegsiterPointClouds(scene_pts,
     inputs=[
         hs.HopsPoint("Points", "P", "The PointClouds Points", hs.HopsParamAccess.LIST),
         # hs.HopsVector("Normals", "N", "Optional Normals of the pointcloud to be used in reconstruction", hs.HopsParamAccess.LIST, optional=True, default=None),
+        hs.HopsInteger("Depth", "D", "Depth parameter for the poisson algorithm. Defaults to 8.", hs.HopsParamAccess.ITEM),
+        hs.HopsInteger("Width", "W", "Width parameter for the poisson algorithm. Ignored if depth is specified. Defaults to 0.", hs.HopsParamAccess.ITEM),
+        hs.HopsNumber("Scale", "S", "Scale parameter for the poisson algorithm.", hs.HopsParamAccess.ITEM),
+        hs.HopsBoolean("LinearFit", "L", "If true, the reconstructor will use linear interpolation to estimate the positions of iso-vertices.", hs.HopsParamAccess.ITEM)
     ],
     outputs=[
         hs.HopsMesh("Mesh", "M", "The resulting Mesh.", hs.HopsParamAccess.ITEM),
     ])
-def open3d_PoissonMeshComponent(points):
+def open3d_PoissonMeshComponent(points, depth=8, width=0, scale=1.1, linear_fit=False):
 
     # convert point list to np array
     np_points = np.array([[pt.X, pt.Y, pt.Z] for pt in points])
@@ -141,10 +145,10 @@ def open3d_PoissonMeshComponent(points):
 
     poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
                         pointcloud,
-                        depth=8,
-                        width=0,
-                        scale=1.1,
-                        linear_fit=False)[0]
+                        depth=depth,
+                        width=width,
+                        scale=scale,
+                        linear_fit=linear_fit)[0]
     bbox = pointcloud.get_axis_aligned_bounding_box()
     p_mesh_crop = poisson_mesh.crop(bbox)
 
@@ -172,12 +176,16 @@ def open3d_PoissonMeshComponent(points):
     icon=None,
     inputs=[
         hs.HopsPoint("Points", "P", "The PointClouds Points", hs.HopsParamAccess.LIST),
-        hs.HopsVector("Normals", "N", "Optional Normals of the pointcloud to be used in reconstruction", hs.HopsParamAccess.LIST),
+        hs.HopsVector("Normals", "N", "The Normals of the pointcloud to be used in reconstruction", hs.HopsParamAccess.LIST),
+        hs.HopsInteger("Depth", "D", "Depth parameter for the poisson algorithm. Defaults to 8.", hs.HopsParamAccess.ITEM),
+        hs.HopsInteger("Width", "W", "Width parameter for the poisson algorithm. Ignored if depth is specified. Defaults to 0.", hs.HopsParamAccess.ITEM),
+        hs.HopsNumber("Scale", "S", "Scale parameter for the poisson algorithm.", hs.HopsParamAccess.ITEM),
+        hs.HopsBoolean("LinearFit", "L", "If true, the reconstructor will use linear interpolation to estimate the positions of iso-vertices.", hs.HopsParamAccess.ITEM)
     ],
     outputs=[
         hs.HopsMesh("Mesh", "M", "The resulting Mesh.", hs.HopsParamAccess.ITEM),
     ])
-def open3d_PoissonMeshNormalsComponent(points, normals):
+def open3d_PoissonMeshNormalsComponent(points, normals, depth=8, width=0, scale=1.1, linear_fit=False):
 
     # convert point list to np array
     np_points = np.array([[pt.X, pt.Y, pt.Z] for pt in points])
@@ -194,10 +202,10 @@ def open3d_PoissonMeshNormalsComponent(points, normals):
 
     poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
                         pointcloud,
-                        depth=8,
-                        width=0,
-                        scale=1.1,
-                        linear_fit=False)[0]
+                        depth=depth,
+                        width=width,
+                        scale=scale,
+                        linear_fit=linear_fit)[0]
     bbox = pointcloud.get_axis_aligned_bounding_box()
     p_mesh_crop = poisson_mesh.crop(bbox)
 
@@ -249,6 +257,58 @@ def intri_IntrinsicTriangulationComponent(mesh):
 
     return intri_mesh
 
+
+@hops.component(
+    "/intri.HeatMethodDistance",
+    name="HeatMethodDistance",
+    nickname="HeatDist",
+    description="Compute geodesic distances using the heat method.",
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsMesh("Mesh", "M", "The triangle mesh to compute geodesic distances on.", hs.HopsParamAccess.ITEM),
+        hs.HopsInteger("SourceVertex", "S", "The index of the source vertex from which to compute geodesic distances using the heat method. Defaults to 0.", hs.HopsParamAccess.ITEM),
+        hs.HopsNumber("TextureScale", "T", "The texturescale used for setting the normalized values to the texture coordinates.", hs.HopsParamAccess.ITEM),
+    ],
+    outputs=[
+        hs.HopsMesh("Mesh", "M", "The mesh with texture coordinates set to the normalized values.", hs.HopsParamAccess.ITEM),
+        hs.HopsNumber("Distances", "D", "The geodesic distances to all mesh vertices.", hs.HopsParamAccess.LIST),
+        hs.HopsNumber("Values", "V", "The normalized values for every mesh vertex.", hs.HopsParamAccess.LIST),
+    ])
+def intri_HeatMethodDistanceComponent(mesh,
+                                      source_vertex=0,
+                                      texture_scale=1.0):
+
+    assert source_vertex <= mesh.Vertices.Count - 1, ("The index of the "
+                                                      "source vertex cannot "
+                                                      "exceed the vertex "
+                                                      "count!")
+
+    # get vertex and face array
+    V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
+
+    # initialize the edge lengths array from the input data
+    eL = intri.build_edge_lengths(V, F)
+
+    # compute geodesic heat distances
+    geodists = [float(d) for d in
+                intri.heat_method_distance_from_vertex(F, eL, source_vertex)]
+
+    # normalize all values for setting texture coordinates
+    vmin = min(geodists)
+    vmax = max(geodists)
+    mult = 1.0 / (vmax - vmin)
+    values = [mult * (v - vmin) for v in geodists]
+
+    # set texture coordinates of output mesh
+    out_mesh = mesh.Duplicate()
+    for i in range(out_mesh.Vertices.Count):
+        out_mesh.TextureCoordinates.SetTextureCoordinate(
+                    i,
+                    Rhino.Geometry.Point2f(0.0, values[i] * texture_scale))
+
+    return out_mesh, geodists, values
 
 # RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------
 

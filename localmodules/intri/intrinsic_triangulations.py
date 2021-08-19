@@ -17,14 +17,17 @@
 #
 # Authors: Nicholas Sharp, Mark Gillespie, Keenan Crane
 # https://github.com/nmwsharp/intrinsic-triangulations-tutorial
+#
+# Modified by Max Eschenbach, DDU, TU Darmstadt
 
 import numpy as np
 import scipy
 import scipy.sparse
 import scipy.sparse.linalg
 
+
 ##############################################################
-### Mesh management and traversal helpers
+# Mesh management and traversal helpers
 ##############################################################
 
 def next_side(fs):
@@ -49,6 +52,7 @@ def other(G, fs):
     """
     return tuple(G[fs])
 
+
 def n_faces(F):
     """
     Return the number of faces in the triangulation.
@@ -57,6 +61,7 @@ def n_faces(F):
     :returns: |F|
     """
     return F.shape[0]
+
 
 def n_verts(F):
     """
@@ -73,7 +78,7 @@ def n_verts(F):
 
 
 ##############################################################
-### Geometric subroutines
+# Geometric subroutines
 ##############################################################
 
 def face_area(l, f):
@@ -94,6 +99,7 @@ def face_area(l, f):
     d = s * (s - l_a) * (s - l_b) * (s - l_c)
     return np.sqrt(d)
 
+
 def surface_area(F,l):
     """
     Compute the surface area of a triangulation.
@@ -107,6 +113,7 @@ def surface_area(F,l):
         area_tot += face_area(l,f)
 
     return area_tot
+
 
 def opposite_corner_angle(l, fs):
     """
@@ -174,11 +181,11 @@ def is_delaunay(G, l, fs):
 
 
 ##############################################################
-### Construct initial data
+# Construct initial data
 ##############################################################
 
 
-def build_edge_lengths(V,F):
+def build_edge_lengths(V, F):
     """
     Compute edge lengths for the triangulation.
 
@@ -261,25 +268,25 @@ def build_gluing_map(F):
     # where (i,j) are the vertex indices of side s of face f in sorted order
     # (i<j).
     n_sides = 3*n_faces(F)
-    S = np.empty([n_sides,4], dtype=np.int64)
+    S = np.empty([n_sides, 4], dtype=np.int64)
 
     for f in range(n_faces(F)):    # iterate over triangles
         for s in range(3):         # iterate over the three sides
 
             # get the two endpoints (i,j) of this side, in sorted order
-            i = F[f,s]
-            j = F[next_side((f,s))]
-            S[f*3+s] = (min(i,j),max(i,j),f,s)
+            i = F[f, s]
+            j = F[next_side((f, s))]
+            S[f*3+s] = (min(i, j),max(i, j), f, s)
 
     # Sort the list row-wise (so i-j pairs are adjacent)
     S = sort_rows(S)
 
     # Build the |F|x3 gluing map G, by linking together pairs of sides with the same vertex indices.
-    G = np.empty([n_faces(F),3,2], dtype=np.int64);
-    for p in range(0,n_sides,2):
+    G = np.empty([n_faces(F), 3, 2], dtype=np.int64)
+    for p in range(0, n_sides, 2):
         # extra sanity check to fail nicely if a mesh with boundary
         # or nonmanifold mesh is given as input
-        if S[p+0,0] != S[p+1,0] or S[p+0,1] != S[p+1,1]:
+        if S[p + 0, 0] != S[p + 1, 0] or S[p + 0, 1] != S[p + 1, 1]:
             raise ValueError("Problem building glue map. Is input closed & manifold?")
 
         fs0 = tuple(S[p+0,2:4])
@@ -313,9 +320,8 @@ def validate_gluing_map(G, F):
                 raise ValueError("gluing map is not involution (applying it twice does not return the original face-side) {} -- {} -- {}".format(fs, fs_other, other(G, fs_other)))
 
 
-
 ##############################################################
-### Intrinsic Delaunay and edge flipping
+# Intrinsic Delaunay and edge flipping
 ##############################################################
 
 def flip_edge(F, G, l, s0):
@@ -391,7 +397,6 @@ def flip_edge(F, G, l, s0):
     return f0, 0
 
 
-
 def flip_to_delaunay(F, G, l):
     """
     Flip edges in the triangulation until it satisifes the intrinsic Delaunay criterion.
@@ -460,6 +465,7 @@ def flip_to_delaunay(F, G, l):
 
     print("performed {} edge flips to Delaunay".format(n_flips))
 
+
 def check_delaunay(F, G, l):
     """
     Check if a triangulation satisifies the intrinsic Delaunay property.
@@ -474,6 +480,7 @@ def check_delaunay(F, G, l):
             if not is_delaunay(G,l,(f,s)):
                 return False
     return True
+
 
 def print_info(F, G, l):
     """
@@ -491,7 +498,7 @@ def print_info(F, G, l):
 
 
 ##############################################################
-### Example application: Heat Method for Distance
+# Example application: Heat Method for Distance
 ##############################################################
 
 # This section contains a simple self-contained implementation of the Heat
@@ -679,8 +686,8 @@ def heat_method_distance_from_vertex(F, l, source_vert):
     """
 
     # Build matrices
-    L = build_cotan_laplacian(F,l)
-    M = build_lumped_mass(F,l)
+    L = build_cotan_laplacian(F, l)
+    M = build_lumped_mass(F, l)
 
     # Compute mean edge length h
     mean_edge_length = np.mean(l)
@@ -701,7 +708,7 @@ def heat_method_distance_from_vertex(F, l, source_vert):
     grads = grads / np.linalg.norm(grads, axis=1, keepdims=True) # normalize in each face
 
     # Solve for the function which has those gradients
-    div = evaluate_divergence_at_vertices(F,l,grads)
+    div = evaluate_divergence_at_vertices(F, l, grads)
     dist = scipy.sparse.linalg.spsolve(L + scipy.sparse.eye(L.shape[0]) * 1e-6, div)
 
     # Shift so the source has distance 0
