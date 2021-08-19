@@ -1,13 +1,14 @@
 # PYTHON STANDARD LIBRARY IMPORTS ---------------------------------------------
 
 from itertools import product
+from os.path import normpath
 
 # HOPS & RHINO IMPORTS --------------------------------------------------------
 
 import ghhops_server as hs
 
 import rhinoinside
-rhinoinside.load(rhino_dir=r"C:\Program Files\Rhino 7\System")
+rhinoinside.load(rhino_dir=normpath("C:\Program Files\Rhino 7\System"))
 import Rhino # NOQA402
 
 # SYSTEM IF NECESSARY
