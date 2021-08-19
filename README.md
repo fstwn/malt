@@ -1,4 +1,4 @@
-# HopsLauncher and Research Environment
+# Malt and DDU/IAS Research Virtual Environment
 
 ## Prerequisites
 
