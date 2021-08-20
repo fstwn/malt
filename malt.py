@@ -41,7 +41,6 @@ from localmodules import intri # NOQA402
 # flaskapp = Flask(__name__)
 hops = hs.Hops(app=rhinoinside)
 
-
 # HOPS COMPONENTS -------------------------------------------------------------
 
 @hops.component(
@@ -318,4 +317,6 @@ if __name__ == "__main__":
     if type(hops) == hs.HopsFlask:
         flaskapp.run()
     else:
+        print(hops._components)
         hops.start(debug=True)
+        
