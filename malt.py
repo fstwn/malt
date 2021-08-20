@@ -365,8 +365,9 @@ def intri_HeatMethodDistanceComponent(mesh,
 # RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------
 
 if __name__ == "__main__":
+    print("[INFO] Hops Server will start shortly...")
     print("-------------------------------------------------")
-    print("Available Hops Components on this Server:\n")
+    print("[INFO] Available Hops Components on this Server:\n")
     [print("{0} -> {1}".format(c, hops._components[c].description))
         for c in hops._components]
     print("-------------------------------------------------")
