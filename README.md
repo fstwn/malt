@@ -4,16 +4,17 @@
 
 This requires you to have the following:
 - Windows (unfortunately Hops and rhino.inside won't work on OSX for now)
-- Anaconda / Miniconda
+- [Anaconda / Miniconda](https://www.anaconda.com/products/individual)
 - Rhino 7.4 or newer
 - [Hops](https://developer.rhino3d.com/guides/grasshopper/hops-component/) ([Install using Rhino package manager](rhino://package/search?name=hops))
 
 ## Installation
 
-There are three steps for getting the provided Hops components up an running:
-1. Setting up the `ddu_ias_research` virtual environment using `conda` (either manually or automatically)
-2. Running `hops_app.py` in the `ddu_ias_research` environment to start the Hops Server
-3. Using a Hops Component in Grasshopper to query one of the provided Hops Routes
+There are four steps for getting the provided Hops components up an running:
+1. Cloning this repository into a working directory of your choice
+2. Setting up the `ddu_ias_research` virtual environment using `conda` (either manually or automatically)
+3. Running `malt.py` in the `ddu_ias_research` environment to start the Hops Server
+4. Using a Hops Component in Grasshopper to query one of the provided Hops Routes
 
 ### 1.a Set up the Virtual Environment *manually* using Conda
 
@@ -62,9 +63,9 @@ Finally, we install `compas_rhino` and the other compas extensions by running:
 python -m compas_rhino.install -v 7.0 -p compas compas_rhino compas_ghpython compas_fab compas_cgal
 ```
 
-### 2. Running `hops_app.py` in the Virtual Environment
+### 2. Running `malt.py` in the Virtual Environment
 
-Make sure your current working directory is the directory where `hops_app.py` 
+Make sure your current working directory is the directory where `malt.py` 
 is located. Otherwise browse to this directory using `cd`. Make sure the
 `ddu_ias_research` conda environment is active, otherwise run:
 ```
@@ -73,6 +74,6 @@ conda activate ddu_ias_research
 
 Now you can start the Hops Server by running:
 ```
-python hops_app.py
+python malt.py
 ```
 
