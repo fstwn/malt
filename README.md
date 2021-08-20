@@ -1,9 +1,20 @@
 # Malt and DDU/IAS Research Virtual Environment
 
+## About Malt
+
+Malt is a collection of Hops components for Rhino Grasshopper.
+
+- The Hops components run using a local [ghhops-server](https://github.com/mcneel/compute.rhino3d/tree/master/src/ghhops-server-py).
+- Rhino functionality is provided using [Rhino.Inside.Cpython](https://github.com/mcneel/rhino.inside-cpython).
+
+## About the DDU/IAS Research Virtual Environment
+
+....
+
 ## Prerequisites
 
 This requires you to have the following:
-- Windows (unfortunately Hops and rhino.inside won't work on OSX for now)
+- Windows (unfortunately Hops and Rhino.Inside.Cpython won't work under OSX for now)
 - [Anaconda / Miniconda](https://www.anaconda.com/products/individual)
 - Rhino 7.4 or newer
 - [Hops](https://developer.rhino3d.com/guides/grasshopper/hops-component/) ([Install using Rhino package manager](rhino://package/search?name=hops))
