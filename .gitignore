@@ -13,6 +13,7 @@ __pycache__/
 # MISC
 
 _archive
-hops_app_decentralized.py
+malt_decentralized.py
+urban_production_env.yml
 malt.code-workspace
 
