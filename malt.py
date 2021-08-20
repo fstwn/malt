@@ -1,26 +1,62 @@
 # PYTHON STANDARD LIBRARY IMPORTS ---------------------------------------------
 
+import clr
 from itertools import product
 from os.path import normpath
 
-# HOPS & RHINO IMPORTS --------------------------------------------------------
+# OPTIONS ---------------------------------------------------------------------
 
-import ghhops_server as hs
+# Set to True to run using Flask
+_FLASK = False
 
-import rhinoinside
-rhinoinside.load(rhino_dir=normpath("C:\Program Files\Rhino 7\System"))
-import Rhino # NOQA402
+# True if you want to run using Rhino.Inside.CPython
+_RHINOINSIDE = True
+
+# System directory of your Rhino installation (for Rhino.Inside.CPython)
+_RHINODIR = r"C:\Program Files\Rhino 7\System"
+
+# Set to True to enable System import
+_USING_SYSTEM = False
+
+# Set to True to enable Grasshopper import
+_USING_GH = False
+
+# Set to True to enable Kangaroo 2 import
+_USING_K2 = False
+
+
+# HOPS & RHINO SETUP ----------------------------------------------------------
+
+import ghhops_server as hs # NOQA402
+
+if _FLASK and _RHINOINSIDE:
+    raise ValueError("Server cannot run using Rhino.Inside *and* Flask. If "
+                     "you want to use Rhino.Inside, use a standard HTTP Hops "
+                     "Server. If you want to run the Server using Flaks, you "
+                     "have to use rhino3dm instead of Rhino.Inside "
+                     "(deactivate the _RHINOINSIDE option to do so)!")
+
+# RHINO.INSIDE OR RHINO3DM
+if _RHINOINSIDE:
+    import rhinoinside
+    rhinoinside.load(rhino_dir=normpath(_RHINODIR))
+    import Rhino # NOQA402
+else:
+    import rhino3dm # NOQA402
 
 # SYSTEM IF NECESSARY
-# import System
+if _USING_SYSTEM:
+    import System # NOQA402
 
 # GRASSHOPPER IF NECESSARY
-# clr.AddReference("Grasshopper.dll")
-# import Grasshopper
+if _USING_GH:
+    clr.AddReference("Grasshopper.dll")
+    import Grasshopper as gh # NOQA402
 
 # KANGAROO 2 IF NECESSARY
-# clr.AddReference("KangarooSolver.dll")
-# import KangarooSolver as ks
+if _USING_K2:
+    clr.AddReference("KangarooSolver.dll")
+    import KangarooSolver as ks # NOQA402
 
 # MODULE IMPORTS --------------------------------------------------------------
 
@@ -38,8 +74,14 @@ from localmodules import intri # NOQA402
 
 
 # REGSISTER FLASK OR RHINOINSIDE HOPS APP -------------------------------------
-# flaskapp = Flask(__name__)
-hops = hs.Hops(app=rhinoinside)
+if _FLASK:
+    from flask import Flask # NOQA402
+    flaskapp = Flask(__name__)
+    hops = hs.Hops(app=flaskapp)
+elif _RHINOINSIDE:
+    hops = hs.Hops(app=rhinoinside)
+else:
+    hops = hs.Hops()
 
 # HOPS COMPONENTS -------------------------------------------------------------
 
@@ -65,10 +107,10 @@ hops = hs.Hops(app=rhinoinside)
         hs.HopsInteger("Iterations", "I", "Iterations before termination.", hs.HopsParamAccess.ITEM)
     ])
 def icp_RegsiterPointClouds(scene_pts,
-                           model_pts,
-                           threshold=1e-3,
-                           max_iters=20,
-                           alg=0):
+                            model_pts,
+                            threshold=1e-3,
+                            max_iters=20,
+                            alg=0):
 
     # sanitize alg input
     if alg == 0:
@@ -126,7 +168,11 @@ def icp_RegsiterPointClouds(scene_pts,
     outputs=[
         hs.HopsMesh("Mesh", "M", "The resulting Mesh.", hs.HopsParamAccess.ITEM),
     ])
-def open3d_PoissonMeshComponent(points, depth=8, width=0, scale=1.1, linear_fit=False):
+def open3d_PoissonMeshComponent(points,
+                                depth=8,
+                                width=0,
+                                scale=1.1,
+                                linear_fit=False):
 
     # convert point list to np array
     np_points = np.array([[pt.X, pt.Y, pt.Z] for pt in points])
@@ -185,7 +231,12 @@ def open3d_PoissonMeshComponent(points, depth=8, width=0, scale=1.1, linear_fit=
     outputs=[
         hs.HopsMesh("Mesh", "M", "The resulting Mesh.", hs.HopsParamAccess.ITEM),
     ])
-def open3d_PoissonMeshNormalsComponent(points, normals, depth=8, width=0, scale=1.1, linear_fit=False):
+def open3d_PoissonMeshNormalsComponent(points,
+                                       normals,
+                                       depth=8,
+                                       width=0,
+                                       scale=1.1,
+                                       linear_fit=False):
 
     # convert point list to np array
     np_points = np.array([[pt.X, pt.Y, pt.Z] for pt in points])
@@ -314,9 +365,13 @@ def intri_HeatMethodDistanceComponent(mesh,
 # RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------
 
 if __name__ == "__main__":
+    print("-------------------------------------------------")
+    print("Available Hops Components on this Server:\n")
+    [print("{0} -> {1}".format(c, hops._components[c].description))
+        for c in hops._components]
+    print("-------------------------------------------------")
+
     if type(hops) == hs.HopsFlask:
         flaskapp.run()
     else:
-        print(hops._components)
         hops.start(debug=True)
-        
