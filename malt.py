@@ -140,12 +140,14 @@ def icp_RegsiterPointClouds(scene_pts,
     transformed_pts = scene_pts[:]
     [pt.Transform(xform) for pt in transformed_pts]
 
+    # convert rhino transformation to list of floats for output
     xformlist = []
     for i, j in product(range(4), range(4)):
         xformlist.append(float(res[0][i][j]))
     err = float(res[1])
     iters = res[2]
 
+    # return the results
     return transformed_pts, xformlist, err, iters
 
 
@@ -181,30 +183,29 @@ def open3d_PoissonMeshComponent(points,
     pointcloud = o3d.geometry.PointCloud()
     pointcloud.points = o3d.utility.Vector3dVector(np_points)
 
-    # if normals:
-    #     np_normals = np.array([[n.X, n.Y, n.Z] for n in normals])
-    #     pointcloud.normals = o3d.utility.Vector3dVector(np_normals)
-    # else:
-    #     pointcloud.estimate_normals()
-    # estimate normals of incoming points
+    # estimate the normals
     pointcloud.estimate_normals()
 
+    # create poisson mesh reconstruction
     poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
                         pointcloud,
                         depth=depth,
                         width=width,
                         scale=scale,
                         linear_fit=linear_fit)[0]
+
+    # get bbx and crop poisson mesh with bbx
     bbox = pointcloud.get_axis_aligned_bounding_box()
     p_mesh_crop = poisson_mesh.crop(bbox)
 
-    # create rhino mesh from o3d output
+    # create rhino mesh from o3d output and add vertices and faces
     rhino_mesh = Rhino.Geometry.Mesh()
     [rhino_mesh.Vertices.Add(v[0], v[1], v[2])
      for v in np.asarray(p_mesh_crop.vertices)]
     [rhino_mesh.Faces.AddFace(f[0], f[1], f[2])
      for f in np.asarray(p_mesh_crop.triangles)]
 
+    # compute normals and compact
     rhino_mesh.Normals.ComputeNormals()
     rhino_mesh.Compact()
 
@@ -239,34 +240,39 @@ def open3d_PoissonMeshNormalsComponent(points,
                                        linear_fit=False):
 
     # convert point list to np array
-    np_points = np.array([[pt.X, pt.Y, pt.Z] for pt in points])
+    np_points = hsutil.rhino_points_to_np_array(points)
 
     # create pointcloud
     pointcloud = o3d.geometry.PointCloud()
     pointcloud.points = o3d.utility.Vector3dVector(np_points)
 
+    # if normals are present, use them, otherwise estimate using subroutine
     if normals:
         np_normals = np.array([[n.X, n.Y, n.Z] for n in normals])
         pointcloud.normals = o3d.utility.Vector3dVector(np_normals)
     else:
         pointcloud.estimate_normals()
 
+    # create poisson mesh reconstruction
     poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
                         pointcloud,
                         depth=depth,
                         width=width,
                         scale=scale,
                         linear_fit=linear_fit)[0]
+
+    # get bbx and crop poisson mesh with bbx
     bbox = pointcloud.get_axis_aligned_bounding_box()
     p_mesh_crop = poisson_mesh.crop(bbox)
 
-    # create rhino mesh from o3d output
+    # create rhino mesh from o3d output and vertices and faces
     rhino_mesh = Rhino.Geometry.Mesh()
     [rhino_mesh.Vertices.Add(v[0], v[1], v[2])
      for v in np.asarray(p_mesh_crop.vertices)]
     [rhino_mesh.Faces.AddFace(f[0], f[1], f[2])
      for f in np.asarray(p_mesh_crop.triangles)]
 
+    # compute normals and compact
     rhino_mesh.Normals.ComputeNormals()
     rhino_mesh.Compact()
 
@@ -290,6 +296,7 @@ def open3d_PoissonMeshNormalsComponent(points,
     ])
 def intri_IntrinsicTriangulationComponent(mesh):
 
+    # get vertices and faces as numpy arrays
     V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
 
     # initialize the glue map and edge lengths arrays from the input data
@@ -299,13 +306,18 @@ def intri_IntrinsicTriangulationComponent(mesh):
     # flip to delaunay
     intri.flip_to_delaunay(F, G, eL)
 
+    # duplicate original mesh and clear the faces
     intri_mesh = mesh.Duplicate()
     intri_mesh.Faces.Clear()
 
+    # set the intrinsic traignulation as faces
     [intri_mesh.Faces.AddFace(face[0], face[1], face[2]) for face in F]
+
+    # compute normals and compact
     intri_mesh.Normals.ComputeNormals()
     intri_mesh.Compact()
 
+    # return results
     return intri_mesh
 
 
@@ -331,6 +343,7 @@ def intri_HeatMethodDistanceComponent(mesh,
                                       source_vertex=0,
                                       texture_scale=1.0):
 
+    # ensure that the user picked a feasible index
     assert source_vertex <= mesh.Vertices.Count - 1, ("The index of the "
                                                       "source vertex cannot "
                                                       "exceed the vertex "
@@ -359,7 +372,47 @@ def intri_HeatMethodDistanceComponent(mesh,
                     i,
                     Rhino.Geometry.Point2f(0.0, values[i] * texture_scale))
 
+    # return results
     return out_mesh, geodists, values
+
+
+@hops.component(
+    "/igl.MeshIsocurves",
+    name="MeshIsocurves",
+    nickname="MeshIsoC",
+    description="Compute isocurves based on a function using libigl",
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsMesh("Mesh", "M", "The triangle mesh to compute isocurves on.", hs.HopsParamAccess.ITEM),
+        hs.HopsNumber("Values", "V", "The function to compute as a list of values at each vertex position of the mesh.", hs.HopsParamAccess.LIST),
+        hs.HopsInteger("Count", "C", "Number of Isocurves", hs.HopsParamAccess.ITEM),
+    ],
+    outputs=[
+        hs.HopsPoint("VertexPositions", "V", "Vertex positions of the isocurves", hs.HopsParamAccess.LIST),
+        hs.HopsInteger("EdgePositions", "E", "Edge positions of the isocurves", hs.HopsParamAccess.LIST),
+    ])
+def igl_MeshIsocurves(mesh, values, count):
+    # check if mehs is all triangles
+    if mesh.Faces.QuadCount > 0:
+        raise ValueError("Mesh has to be triangular!")
+
+    if not len(values) == mesh.Vertices.Count:
+        raise ValueError("Function list does not correspond with mesh vertices!")
+
+    # get np arrays of vertices and faces
+    V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
+
+    values = np.array(values)
+
+    isoV, isoE = igl.isolines(V, F, values, count)
+
+    isoV = hsutil.np_array_to_rhino_points(isoV)
+    evalues = []
+    [evalues.extend([int(edge[0]), int(edge[1])]) for edge in isoE]
+
+    return isoV, evalues
 
 
 # RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------
