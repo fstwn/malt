@@ -19,7 +19,7 @@ import Rhino # NOQA402
 
 def rhino_points_to_np_array(points):
     """
-    Converts a list of Rhino.Geometry.Point3d to a #Nx3 numpy array
+    Converts a list of Rhino.Geometry.Point3d objects to a #Nx3 numpy array.
     """
     return np.array([[pt.X, pt.Y, pt.Z] for pt in points])
 
@@ -46,6 +46,7 @@ def np_array_to_rhino_transform(xform_np_array: np.array):
 
 def np_array_to_rhino_points(pt_np_array: np.array):
     """
-    Converts a Nx3 numpy array to Rhino.Geometry.Point3d objects
+    Converts a Nx3 numpy array to a list of Rhino.Geometry.Point3d objects.
     """
-    return [Rhino.Geometry.Point3d(float(v[0]), float(v[1]), float(v[2])) for v in pt_np_array]
+    return [Rhino.Geometry.Point3d(float(v[0]), float(v[1]), float(v[2]))
+            for v in pt_np_array]
