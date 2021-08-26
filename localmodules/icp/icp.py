@@ -13,6 +13,7 @@ from scipy.optimize import linear_sum_assignment
 
 NN_ALGS = ['knn', 'hungarian']
 
+
 def nearest_neighbors(point_cloud_A, point_cloud_B, alg='knn'):
     """Find the nearest (Euclidean) neighbor in point_cloud_B (model) for each
     point in point_cloud_A (data).
