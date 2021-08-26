@@ -68,9 +68,9 @@ import igl # NOQA402
 # LOCAL MODULE IMPORTS --------------------------------------------------------
 
 import localmodules.hopsutilities as hsutil # NOQA402
-
 from localmodules import icp # NOQA402
 from localmodules import intri # NOQA402
+from localmodules import imgcontours # NOQA402
 
 
 # REGSISTER FLASK OR RHINOINSIDE HOPS APP -------------------------------------
@@ -83,7 +83,10 @@ elif _RHINOINSIDE:
 else:
     hops = hs.Hops()
 
+
 # HOPS COMPONENTS -------------------------------------------------------------
+
+# ITERATIVE CLOSEST POINT /////////////////////////////////////////////////////
 
 @hops.component(
     "/icp.RegisterPointClouds",
@@ -150,6 +153,148 @@ def icp_RegsiterPointClouds(scene_pts,
     # return the results
     return transformed_pts, xformlist, err, iters
 
+
+# LIBIGL //////////////////////////////////////////////////////////////////////
+
+@hops.component(
+    "/igl.MeshIsocurves",
+    name="MeshIsocurves",
+    nickname="MeshIsoC",
+    description="Compute isocurves based on a function using libigl",
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsMesh("Mesh", "M", "The triangle mesh to compute isocurves on.", hs.HopsParamAccess.ITEM),
+        hs.HopsNumber("Values", "V", "The function to compute as a list of values at each vertex position of the mesh.", hs.HopsParamAccess.LIST),
+        hs.HopsInteger("Count", "C", "Number of Isocurves", hs.HopsParamAccess.ITEM),
+    ],
+    outputs=[
+        hs.HopsPoint("VertexPositions", "V", "Vertex positions of the isocurves", hs.HopsParamAccess.LIST),
+        hs.HopsInteger("EdgePositions", "E", "Edge positions of the isocurves", hs.HopsParamAccess.LIST),
+    ])
+def igl_MeshIsocurvesComponent(mesh, values, count):
+    # check if mesh is all triangles
+    if mesh.Faces.QuadCount > 0:
+        raise ValueError("Mesh has to be triangular!")
+
+    if not len(values) == mesh.Vertices.Count:
+        raise ValueError("List of function values does not correspond with "
+                         "mesh vertices!")
+
+    # get np arrays of vertices and faces
+    V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
+
+    values = np.array(values)
+
+    isoV, isoE = igl.isolines(V, F, values, count)
+
+    isoV = hsutil.np_array_to_rhino_points(isoV)
+    evalues = []
+    [evalues.extend([int(edge[0]), int(edge[1])]) for edge in isoE]
+
+    return isoV, evalues
+
+
+# INTRINSIC TRIANGULATIONS ////////////////////////////////////////////////////
+
+@hops.component(
+    "/intri.IntrinsicTriangulation",
+    name="IntrinsicTriangulation",
+    nickname="InTri",
+    description="Compute intrinsic triangulation of a triangle mesh.",
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsMesh("Mesh", "M", "The triangle mesh to create intrinsic triangulation for.", hs.HopsParamAccess.ITEM),
+    ],
+    outputs=[
+        hs.HopsMesh("Mesh", "M", "The resulting Mesh with an intrinsic triangulation.", hs.HopsParamAccess.ITEM),
+    ])
+def intri_IntrinsicTriangulationComponent(mesh):
+
+    # get vertices and faces as numpy arrays
+    V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
+
+    # initialize the glue map and edge lengths arrays from the input data
+    G = intri.build_gluing_map(F)
+    eL = intri.build_edge_lengths(V, F)
+
+    # flip to delaunay
+    intri.flip_to_delaunay(F, G, eL)
+
+    # duplicate original mesh and clear the faces
+    intri_mesh = mesh.Duplicate()
+    intri_mesh.Faces.Clear()
+
+    # set the intrinsic traignulation as faces
+    [intri_mesh.Faces.AddFace(face[0], face[1], face[2]) for face in F]
+
+    # compute normals and compact
+    intri_mesh.Normals.ComputeNormals()
+    intri_mesh.Compact()
+
+    # return results
+    return intri_mesh
+
+
+@hops.component(
+    "/intri.HeatMethodDistance",
+    name="HeatMethodDistance",
+    nickname="HeatDist",
+    description="Compute geodesic distances using the heat method.",
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsMesh("Mesh", "M", "The triangle mesh to compute geodesic distances on.", hs.HopsParamAccess.ITEM),
+        hs.HopsInteger("SourceVertex", "S", "The index of the source vertex from which to compute geodesic distances using the heat method. Defaults to 0.", hs.HopsParamAccess.ITEM),
+        hs.HopsNumber("TextureScale", "T", "The texturescale used for setting the normalized values to the texture coordinates.", hs.HopsParamAccess.ITEM),
+    ],
+    outputs=[
+        hs.HopsMesh("Mesh", "M", "The mesh with texture coordinates set to the normalized values.", hs.HopsParamAccess.ITEM),
+        hs.HopsNumber("Distances", "D", "The geodesic distances to all mesh vertices.", hs.HopsParamAccess.LIST),
+        hs.HopsNumber("Values", "V", "The normalized values for every mesh vertex.", hs.HopsParamAccess.LIST),
+    ])
+def intri_HeatMethodDistanceComponent(mesh,
+                                      source_vertex=0,
+                                      texture_scale=1.0):
+
+    # ensure that the user picked a feasible index
+    assert source_vertex <= mesh.Vertices.Count - 1, ("The index of the "
+                                                      "source vertex cannot "
+                                                      "exceed the vertex "
+                                                      "count!")
+
+    # get vertex and face array
+    V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
+
+    # initialize the edge lengths array from the input data
+    eL = intri.build_edge_lengths(V, F)
+
+    # compute geodesic heat distances
+    geodists = [float(d) for d in
+                intri.heat_method_distance_from_vertex(F, eL, source_vertex)]
+
+    # normalize all values for setting texture coordinates
+    vmin = min(geodists)
+    vmax = max(geodists)
+    mult = 1.0 / (vmax - vmin)
+    values = [mult * (v - vmin) for v in geodists]
+
+    # set texture coordinates of output mesh
+    out_mesh = mesh.Duplicate()
+    for i in range(out_mesh.Vertices.Count):
+        out_mesh.TextureCoordinates.SetTextureCoordinate(
+                    i,
+                    Rhino.Geometry.Point2f(0.0, values[i] * texture_scale))
+
+    # return results
+    return out_mesh, geodists, values
+
+
+# OPEN3D //////////////////////////////////////////////////////////////////////
 
 @hops.component(
     "/open3d.PoissonMesh",
@@ -280,144 +425,36 @@ def open3d_PoissonMeshNormalsComponent(points,
     return rhino_mesh
 
 
+# OPENCV //////////////////////////////////////////////////////////////////////
+
 @hops.component(
-    "/intri.IntrinsicTriangulation",
-    name="IntrinsicTriangulation",
-    nickname="InTri",
-    description="Compute intrinsic triangulation of a triangle mesh.",
+    "/opencv.DetectContours",
+    name="DetectContours",
+    nickname="DetCon",
+    description="Detect the largest contour in an image",
     category=None,
     subcategory=None,
     icon=None,
     inputs=[
-        hs.HopsMesh("Mesh", "M", "The triangle mesh to create intrinsic triangulation for.", hs.HopsParamAccess.ITEM),
+        hs.HopsString("FilePath", "F", "The filepath of the image.", hs.HopsParamAccess.ITEM),
+        hs.HopsInteger("Threshold", "T", "The threshold for the binary image", hs.HopsParamAccess.ITEM),
     ],
     outputs=[
-        hs.HopsMesh("Mesh", "M", "The resulting Mesh with an intrinsic triangulation.", hs.HopsParamAccess.ITEM),
+        hs.HopsPoint("VertexPositions", "V", "Vertex positions of the contours", hs.HopsParamAccess.LIST),
     ])
-def intri_IntrinsicTriangulationComponent(mesh):
+def opencv_DetectContoursComponent(filepath, threshold):
+    image, contour = imgcontours.detect_contours(filepath, threshold)
 
-    # get vertices and faces as numpy arrays
-    V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
+    points = [Rhino.Geometry.Point3d(float(pt[0][0]), float(pt[0][1]), 0.0)
+              for pt in contour]
 
-    # initialize the glue map and edge lengths arrays from the input data
-    G = intri.build_gluing_map(F)
-    eL = intri.build_edge_lengths(V, F)
-
-    # flip to delaunay
-    intri.flip_to_delaunay(F, G, eL)
-
-    # duplicate original mesh and clear the faces
-    intri_mesh = mesh.Duplicate()
-    intri_mesh.Faces.Clear()
-
-    # set the intrinsic traignulation as faces
-    [intri_mesh.Faces.AddFace(face[0], face[1], face[2]) for face in F]
-
-    # compute normals and compact
-    intri_mesh.Normals.ComputeNormals()
-    intri_mesh.Compact()
-
-    # return results
-    return intri_mesh
-
-
-@hops.component(
-    "/intri.HeatMethodDistance",
-    name="HeatMethodDistance",
-    nickname="HeatDist",
-    description="Compute geodesic distances using the heat method.",
-    category=None,
-    subcategory=None,
-    icon=None,
-    inputs=[
-        hs.HopsMesh("Mesh", "M", "The triangle mesh to compute geodesic distances on.", hs.HopsParamAccess.ITEM),
-        hs.HopsInteger("SourceVertex", "S", "The index of the source vertex from which to compute geodesic distances using the heat method. Defaults to 0.", hs.HopsParamAccess.ITEM),
-        hs.HopsNumber("TextureScale", "T", "The texturescale used for setting the normalized values to the texture coordinates.", hs.HopsParamAccess.ITEM),
-    ],
-    outputs=[
-        hs.HopsMesh("Mesh", "M", "The mesh with texture coordinates set to the normalized values.", hs.HopsParamAccess.ITEM),
-        hs.HopsNumber("Distances", "D", "The geodesic distances to all mesh vertices.", hs.HopsParamAccess.LIST),
-        hs.HopsNumber("Values", "V", "The normalized values for every mesh vertex.", hs.HopsParamAccess.LIST),
-    ])
-def intri_HeatMethodDistanceComponent(mesh,
-                                      source_vertex=0,
-                                      texture_scale=1.0):
-
-    # ensure that the user picked a feasible index
-    assert source_vertex <= mesh.Vertices.Count - 1, ("The index of the "
-                                                      "source vertex cannot "
-                                                      "exceed the vertex "
-                                                      "count!")
-
-    # get vertex and face array
-    V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
-
-    # initialize the edge lengths array from the input data
-    eL = intri.build_edge_lengths(V, F)
-
-    # compute geodesic heat distances
-    geodists = [float(d) for d in
-                intri.heat_method_distance_from_vertex(F, eL, source_vertex)]
-
-    # normalize all values for setting texture coordinates
-    vmin = min(geodists)
-    vmax = max(geodists)
-    mult = 1.0 / (vmax - vmin)
-    values = [mult * (v - vmin) for v in geodists]
-
-    # set texture coordinates of output mesh
-    out_mesh = mesh.Duplicate()
-    for i in range(out_mesh.Vertices.Count):
-        out_mesh.TextureCoordinates.SetTextureCoordinate(
-                    i,
-                    Rhino.Geometry.Point2f(0.0, values[i] * texture_scale))
-
-    # return results
-    return out_mesh, geodists, values
-
-
-@hops.component(
-    "/igl.MeshIsocurves",
-    name="MeshIsocurves",
-    nickname="MeshIsoC",
-    description="Compute isocurves based on a function using libigl",
-    category=None,
-    subcategory=None,
-    icon=None,
-    inputs=[
-        hs.HopsMesh("Mesh", "M", "The triangle mesh to compute isocurves on.", hs.HopsParamAccess.ITEM),
-        hs.HopsNumber("Values", "V", "The function to compute as a list of values at each vertex position of the mesh.", hs.HopsParamAccess.LIST),
-        hs.HopsInteger("Count", "C", "Number of Isocurves", hs.HopsParamAccess.ITEM),
-    ],
-    outputs=[
-        hs.HopsPoint("VertexPositions", "V", "Vertex positions of the isocurves", hs.HopsParamAccess.LIST),
-        hs.HopsInteger("EdgePositions", "E", "Edge positions of the isocurves", hs.HopsParamAccess.LIST),
-    ])
-def igl_MeshIsocurves(mesh, values, count):
-    # check if mehs is all triangles
-    if mesh.Faces.QuadCount > 0:
-        raise ValueError("Mesh has to be triangular!")
-
-    if not len(values) == mesh.Vertices.Count:
-        raise ValueError("Function list does not correspond with mesh vertices!")
-
-    # get np arrays of vertices and faces
-    V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
-
-    values = np.array(values)
-
-    isoV, isoE = igl.isolines(V, F, values, count)
-
-    isoV = hsutil.np_array_to_rhino_points(isoV)
-    evalues = []
-    [evalues.extend([int(edge[0]), int(edge[1])]) for edge in isoE]
-
-    return isoV, evalues
+    return points
 
 
 # RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------
 
 if __name__ == "__main__":
+    print("/////////////////////////////////////////////////")
     print("[INFO] Hops Server will start shortly...")
     print("-------------------------------------------------")
     print("[INFO] Available Hops Components on this Server:\n")
@@ -428,4 +465,4 @@ if __name__ == "__main__":
     if type(hops) == hs.HopsFlask:
         flaskapp.run()
     else:
-        hops.start(debug=True)
+        hops.start(debug=False)
