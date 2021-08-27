@@ -458,8 +458,8 @@ def opencv_DetectContoursComponent(filepath,
         if len(cnt) >= 2:
             ptlist = System.Collections.Generic.List[Rhino.Geometry.Point3d]()
             [ptlist.Add(Rhino.Geometry.Point3d(float(pt[0][0]),
-                                            float(pt[0][1]),
-                                            0.0)) for pt in cnt]
+                                              float(pt[0][1]),
+                                              0.0)) for pt in cnt]
             ptlist.Add(Rhino.Geometry.Point3d(float(cnt[0][0][0]),
                                               float(cnt[0][0][1]),
                                               0.0))
