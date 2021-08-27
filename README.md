@@ -9,7 +9,9 @@ Malt is a collection of Hops components for Rhino Grasshopper.
 
 ## About the DDU/IAS Research Virtual Environment
 
-....
+The provided environment file `ddu_ias_research_env.yml` tries to unify several
+tools used at DDU and IAS into a single conda virtual environment for better
+interaction and collaboration in research.
 
 ## Prerequisites
 
@@ -29,8 +31,9 @@ working directory of your choice. For the purpose of this guide, I will use
 
 ### 2. Set up the Virtual Environment using conda environment file
 
-**If you have not installed [Anaconda / Miniconda](https://www.anaconda.com/products/individual)
-yet, NOW is the time to do it.**
+***NOTE: If you have not installed 
+[Anaconda / Miniconda](https://www.anaconda.com/products/individual) yet, NOW
+is the time to do it.***
 
 Set up a new conda virtual environment with the name `ddu_ias_research` using
 the provided environment file by running:
