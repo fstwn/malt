@@ -21,15 +21,19 @@ This requires you to have the following:
 
 ## Installation
 
-There are four steps for getting the provided Hops components up an running:
-1. Cloning this repository into a working directory of your choice
-2. Setting up the `ddu_ias_research` virtual environment using `conda`
-3. Running `hops_server.py` in the `ddu_ias_research` environment to start the Hops Server
-4. Using a Hops Component in Grasshopper to query one of the provided Hops Routes
+### 1. Clone the repository into a directory of your choice
+
+First off, clone or download this repository and unzip it (if needed) into a
+working directory of your choice. For the purpose of this guide, I will use
+`C:\source\repos\malt`.
 
 ### 2. Set up the Virtual Environment using conda environment file
 
-Set up the environment `ddu_ias_research` by running:
+**If you have not installed [Anaconda / Miniconda](https://www.anaconda.com/products/individual)
+yet, NOW is the time to do it.**
+
+Set up a new conda virtual environment with the name `ddu_ias_research` using
+the provided environment file by running:
 ```
 conda env create -f "ddu_ias_research.yml"
 ```
