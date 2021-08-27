@@ -45,7 +45,7 @@ else:
 
 # RHINO.INSIDE OR RHINO3DM
 if _RHINOINSIDE:
-    print("[INFO] Loading Rhino.Inside.CPython...")
+    print("[INFO] Loading Rhino.Inside.CPython ...")
     import rhinoinside
     rhinoinside.load(rhino_dir=normpath(_RHINODIR))
     import Rhino # NOQA402
@@ -116,11 +116,11 @@ else:
         hs.HopsNumber("Error", "E", "Mean Error of ICP operation", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("Iterations", "I", "Iterations before termination.", hs.HopsParamAccess.ITEM), # NOQA501
     ])
-def icp_RegsiterPointCloudsComponent(scene_pts,
-                            model_pts,
-                            threshold=1e-3,
-                            max_iters=20,
-                            alg=0):
+def icp_RegisterPointCloudsComponent(scene_pts,
+                                     model_pts,
+                                     threshold=1e-3,
+                                     max_iters=20,
+                                     alg=0):
 
     # sanitize alg input
     if alg == 0:
@@ -487,4 +487,4 @@ if __name__ == "__main__":
     if type(hops) == hs.HopsFlask:
         flaskapp.run()
     else:
-        hops.start(debug=False)
+        hops.start(debug=True)
