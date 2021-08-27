@@ -16,7 +16,7 @@ _RHINOINSIDE = True
 _RHINODIR = r"C:\Program Files\Rhino 7\System"
 
 # Set to True to enable System import
-_USING_SYSTEM = False
+_USING_SYSTEM = True
 
 # Set to True to enable Grasshopper import
 _USING_GH = False
@@ -32,7 +32,7 @@ import ghhops_server as hs # NOQA402
 if _FLASK and _RHINOINSIDE:
     raise ValueError("Server cannot run using Rhino.Inside *and* Flask. If "
                      "you want to use Rhino.Inside, use a standard HTTP Hops "
-                     "Server. If you want to run the Server using Flaks, you "
+                     "Server. If you want to run the Server using Flask, you "
                      "have to use rhino3dm instead of Rhino.Inside "
                      "(deactivate the _RHINOINSIDE option to do so)!")
 
@@ -67,10 +67,10 @@ import igl # NOQA402
 
 # LOCAL MODULE IMPORTS --------------------------------------------------------
 
-import localmodules.hopsutilities as hsutil # NOQA402
-from localmodules import icp # NOQA402
-from localmodules import intri # NOQA402
-from localmodules import imgcontours # NOQA402
+import malt.hopsutilities as hsutil # NOQA402
+from malt import icp # NOQA402
+from malt import intri # NOQA402
+from malt import imgprocessing # NOQA402
 
 
 # REGSISTER FLASK OR RHINOINSIDE HOPS APP -------------------------------------
@@ -310,7 +310,7 @@ def intri_HeatMethodDistanceComponent(mesh,
         hs.HopsInteger("Depth", "D", "Depth parameter for the poisson algorithm. Defaults to 8.", hs.HopsParamAccess.ITEM),
         hs.HopsInteger("Width", "W", "Width parameter for the poisson algorithm. Ignored if depth is specified. Defaults to 0.", hs.HopsParamAccess.ITEM),
         hs.HopsNumber("Scale", "S", "Scale parameter for the poisson algorithm.", hs.HopsParamAccess.ITEM),
-        hs.HopsBoolean("LinearFit", "L", "If true, the reconstructor will use linear interpolation to estimate the positions of iso-vertices.", hs.HopsParamAccess.ITEM)
+        hs.HopsBoolean("LinearFit", "L", "If true, the reconstructor will use linear interpolation to estimate the positions of iso-vertices.", hs.HopsParamAccess.ITEM),
     ],
     outputs=[
         hs.HopsMesh("Mesh", "M", "The resulting Mesh.", hs.HopsParamAccess.ITEM),
@@ -372,7 +372,7 @@ def open3d_PoissonMeshComponent(points,
         hs.HopsInteger("Depth", "D", "Depth parameter for the poisson algorithm. Defaults to 8.", hs.HopsParamAccess.ITEM),
         hs.HopsInteger("Width", "W", "Width parameter for the poisson algorithm. Ignored if depth is specified. Defaults to 0.", hs.HopsParamAccess.ITEM),
         hs.HopsNumber("Scale", "S", "Scale parameter for the poisson algorithm.", hs.HopsParamAccess.ITEM),
-        hs.HopsBoolean("LinearFit", "L", "If true, the reconstructor will use linear interpolation to estimate the positions of iso-vertices.", hs.HopsParamAccess.ITEM)
+        hs.HopsBoolean("LinearFit", "L", "If true, the reconstructor will use linear interpolation to estimate the positions of iso-vertices.", hs.HopsParamAccess.ITEM),
     ],
     outputs=[
         hs.HopsMesh("Mesh", "M", "The resulting Mesh.", hs.HopsParamAccess.ITEM),
@@ -431,24 +431,42 @@ def open3d_PoissonMeshNormalsComponent(points,
     "/opencv.DetectContours",
     name="DetectContours",
     nickname="DetCon",
-    description="Detect the largest contour in an image",
+    description="Detect contours in an image using OpenCV.",
     category=None,
     subcategory=None,
     icon=None,
     inputs=[
         hs.HopsString("FilePath", "F", "The filepath of the image.", hs.HopsParamAccess.ITEM),
-        hs.HopsInteger("Threshold", "T", "The threshold for the binary image", hs.HopsParamAccess.ITEM),
+        hs.HopsInteger("BinaryThreshold", "B", "The threshold for binary (black & white) conversion of the image. Defaults to 170.", hs.HopsParamAccess.ITEM),
+        hs.HopsNumber("AreaThreshold", "T", "The area threshold for filtering the returned contours in pixels. Defaults to 100.", hs.HopsParamAccess.ITEM),
     ],
     outputs=[
-        hs.HopsPoint("VertexPositions", "V", "Vertex positions of the contours", hs.HopsParamAccess.LIST),
+        hs.HopsCurve("Contours", "C", "The detected contours as Polylines.", hs.HopsParamAccess.ITEM),
     ])
-def opencv_DetectContoursComponent(filepath, threshold):
-    image, contour = imgcontours.detect_contours(filepath, threshold)
+def opencv_DetectContoursComponent(filepath,
+                                   bthresh=170,
+                                   athresh=100.0):
+    # run contour detection using opencv
+    image, contours = imgprocessing.detect_contours(filepath,
+                                                    bthresh,
+                                                    athresh)
+    # construct polylines from contour output
+    plcs = []
+    for cnt in contours:
+        # crate .NET list because Polyline constructor won't correctly handle
+        # python lists (it took a while to find that out....)
+        if len(cnt) >= 2:
+            ptlist = System.Collections.Generic.List[Rhino.Geometry.Point3d]()
+            [ptlist.Add(Rhino.Geometry.Point3d(float(pt[0][0]),
+                                            float(pt[0][1]),
+                                            0.0)) for pt in cnt]
+            ptlist.Add(Rhino.Geometry.Point3d(float(cnt[0][0][0]),
+                                              float(cnt[0][0][1]),
+                                              0.0))
+            plcs.append(Rhino.Geometry.PolylineCurve(ptlist))
 
-    points = [Rhino.Geometry.Point3d(float(pt[0][0]), float(pt[0][1]), 0.0)
-              for pt in contour]
-
-    return points
+    # return output
+    return plcs
 
 
 # RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------
