@@ -99,4 +99,28 @@ start the server, all available endpoints are printed to the console:
 
 ![Available Endpoints](/resources/readme/readme_01.png)
 
+For a demo you can open the latest example file available in the `gh_dev`
+folder. But you can of course also start from scratch:
 
+Open Rhino and Grasshopper and start by placing a Hops Component on the canvas:
+![Placing a new Hops component](/resources/readme/readme_02.png)
+
+Doubleclick the Hops Component and set it to one of the available endpoints.
+Note that the Hops Server is running under `http://localhost:5000/`.
+![Setting an Endpoint](/resources/readme/readme_03.png)
+
+The respective component that is available at this Endpoint will then be loaded:
+![Setting an Endpoint](/resources/readme/readme_04.png)
+
+I recommend to run the available Hops Components asynchronously because this
+will add a lot of responsiveness to your Grasshopper definition. I did not test
+the caching functionality extensively, so feel free to experiment with that.
+For more info on the available settings, please see [here](https://developer.rhino3d.com/guides/grasshopper/hops-component/#component-settings).
+![Asynchronous execution](/resources/readme/readme_05.png)
+
+You can now use the loaded Hops Component like any other Grasshopper component.
+In this example, I first computed geodesic distances on a mesh from a source
+vertex using the Heat Method available at the `/intri.HeatMethodDistance`
+endpoint. Then I use the resulting values at each vertex to draw isocurves
+on the mesh using the `/igl.MeshIsoCurves` endpoint.
+![Geodesic Heat Isocurves](/resources/readme/readme_06.png)
