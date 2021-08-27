@@ -32,6 +32,9 @@ def detect_contours(filepath: str, thresh_binary: int, thresh_area: float):
 
     return image, contours
 
+
+# TEST MODULE -----------------------------------------------------------------
+
 if __name__ == "__main__":
     # use the demo image to perform some contour detection
     thisfolder = os.path.dirname(os.path.realpath(__file__))

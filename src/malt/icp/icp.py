@@ -56,7 +56,7 @@ def nearest_neighbors(point_cloud_A, point_cloud_B, alg='knn'):
         distances = cost[row_ids, indices]
     else:
         raise NotImplementedError('NN algorithm must be one of: {}'.format(NN_ALGS))
-    
+
     return distances, indices
 
 
@@ -90,20 +90,20 @@ def least_squares_transform(point_cloud_A, point_cloud_B):
     mu_s = (1.0/Ns) * np.sum(point_cloud_A, axis=0)
     # model center
     mu_m = (1.0/Ns) * np.sum(point_cloud_B, axis=0)
-    
+
     # construct W
     W = np.zeros([m,m])
     for i in range(0, Ns):
         # W += np.outer(point_cloud_B[i,:] - mu_m, point_cloud_A[i,:] - mu_s)
         W += np.outer(point_cloud_A[i,:] - mu_s, point_cloud_B[i,:] - mu_m)
-    
+
     u, _, vh = np.linalg.svd(W, full_matrices=True)
     v = vh.T
     uh = u.T
     R = v.dot(np.diag([1., 1., np.linalg.det(v.dot(uh))]).dot(uh))
 
     t = mu_m.T - R.dot(mu_s.T)
-    
+
     X_BA[0:m, 0:m] = R
     X_BA[0:m, -1] = t
 
@@ -130,7 +130,7 @@ def icp(point_cloud_A, point_cloud_B,
     tolerance: float
         the maximum difference in the error between two
         consecutive iterations before stopping
-    
+
     Returns
     -------
     X_BA: 4x4 numpy array
@@ -168,31 +168,31 @@ def icp(point_cloud_A, point_cloud_B,
 
     # assert(point_cloud_A.shape[0] == point_cloud_B.shape[0])
     Ns = point_cloud_A.shape[0]
-    
+
     if np.any(init_guess):
         X_BA = init_guess
-    
+
     while True:
         if num_iters >= max_iterations:
             # print("ICP ends exceeding max_iterations.")
             break
-        
+
         # use c to solve R and t
         point_cloud_Ah_new = X_BA.dot(point_cloud_Ah)
 
         # given R and t, calculate c
         indices = nearest_neighbors(point_cloud_Ah_new.T[:,0:dim], point_cloud_B, alg=nn_alg)[1]
         point_cloud_B_c = np.copy(point_cloud_B[indices])
-        
+
         # transf for next iteration
         X_BA = least_squares_transform(point_cloud_A, point_cloud_B_c)
-        
+
         # check error
         old_mean_error = mean_error
         mean_error = (1.0/Ns) * (np.linalg.norm(point_cloud_Ah_new - point_cloud_Bh[:,indices])**2)        
         if abs(mean_error-old_mean_error)<tolerance:
             break
-            
+
         num_iters += 1
 
     return X_BA, mean_error, num_iters
@@ -217,7 +217,7 @@ def repeat_icp_until_good_fit(point_cloud_A,
     max_tries: int
         stop running ICP after max_tries if it hasn't produced
         a transform with an error < error_threshold.
-    init_guess: 4x4 numpy array 
+    init_guess: 4x4 numpy array
         homogeneous transformation representing an initial guess
         of the transform. If one isn't provided, the 4x4 identity matrix
         will be used.
@@ -245,24 +245,24 @@ def repeat_icp_until_good_fit(point_cloud_A,
     # Transform from point_cloud_B to point_cloud_A
     # Overwrite this with ICP results.
     X_BA = np.identity(4)
-    
+
     if np.any(init_guess)!=True:
         init_guess=np.identity(4)
 
     mean_error = 1e8
     num_runs = 0
     transf_dict = {}
-    
+
     while True:
         if num_runs >= max_tries:
             # print("repeat_ICP exceeds max_iterations, exit.")
             break
         X_BA, mean_error, num_iters = \
             icp(point_cloud_A, point_cloud_B, init_guess, max_iterations, tolerance, nn_alg)
-        
+
         transf_dict[mean_error] = X_BA
         # print("iter %d, mean error %0.8f, inside iters %d \n"%(num_runs, mean_error, num_iters))
-        
+
         init_guess[:3, :3] = Rotation.random().as_matrix()
         if mean_error < error_threshold:
             break
@@ -271,5 +271,5 @@ def repeat_icp_until_good_fit(point_cloud_A,
     s_keys = sorted(transf_dict.keys())
     mean_error = s_keys[0]
     X_BA = transf_dict[mean_error]
-    
+
     return X_BA, mean_error, num_runs
