@@ -97,6 +97,6 @@ python hops_server.py
 Once the server is running, you can query it at different endpoints. When you
 start the server, all available endpoints are printed to the console:
 
-*SCREENSHOT HERE*
+![Available Endpoints](/resources/readme/readme_01.png)
 
 
