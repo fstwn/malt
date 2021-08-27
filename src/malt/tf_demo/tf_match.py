@@ -2,16 +2,21 @@
 # https://github.com/yijiangh/compas_rpc_examples
 # MIT license
 
+# PYTHON STANDARD LIBRARY IMPORTS ---------------------------------------------
+
 import os
-import json
-import numpy as np
 import random
 
+# ADDITIONAL MODULE IMPORTS ---------------------------------------------------
+
+import numpy as np
+
 # https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
-import tensorflow as tf
-from tensorflow import keras
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+from tensorflow import keras # NOQA402
+
+
+# FUNCTION DEFINITIONS --------------------------------------------------------
 
 def nn_forward_pass(x, model_file_path):
     model = keras.models.load_model(model_file_path)
@@ -19,17 +24,15 @@ def nn_forward_pass(x, model_file_path):
     print(y.shape)
     return y
 
-#############################
 
 def get_model():
-  # Create a simple model, just for testing
-  inputs = keras.Input(shape=(32,))
-  outputs = keras.layers.Dense(1)(inputs)
-  model = keras.Model(inputs, outputs)
-  model.compile(optimizer='adam', loss='mean_squared_error')
-  return model
+    # Create a simple model, just for testing
+    inputs = keras.Input(shape=(32,))
+    outputs = keras.layers.Dense(1)(inputs)
+    model = keras.Model(inputs, outputs)
+    model.compile(optimizer='adam', loss='mean_squared_error')
+    return model
 
-#############################
 
 def main():
     here = os.path.dirname(__file__)
@@ -63,6 +66,7 @@ def main():
     # np.testing.assert_allclose(model.predict(test_input), y)
     print(y.shape)
     #print(y)
+
 
 if __name__ == '__main__':
     main()

@@ -4,8 +4,13 @@
 #
 # Modified by Max Eschenbach, DDU, TU Darmstadt
 
+# PYTHON STANDARD LIBRARY IMPORTS ---------------------------------------------
+
 from itertools import product
 import numpy as np
+
+# ADDITIONAL MODULE IMPORTS ---------------------------------------------------
+
 from numpy.linalg import norm
 from sklearn.neighbors import NearestNeighbors
 from scipy.spatial.transform import Rotation
