@@ -87,17 +87,17 @@ print("[INFO] SERVER:  {0}".format(
 print("[INFO] RHINO:   {0}".format(
             "Rhino.Inside.CPython" if _RHINOINSIDE else "rhino3dm"))
 if _NETWORK_ACCESS:
-    print("[INFO] NETWORK: \033[31mNetwork Access Enabled!")
+    print("[INFO] NETWORK: Network Access Enabled!")
     print("[WARNING] ENABLING NETWORK ACCESS MIGHT BE A SECURITY RISK \n"
           "BECAUSE IT POTENTIALLY ALLOWS PEOPLE TO EXECUTE CODE ON YOUR \n"
-          "MACHINE! ONLY USE THIS IN A TRUSTED NETWORK!\033[0m")
+          "MACHINE! ONLY USE THIS IN A TRUSTED NETWORK!")
 else:
     print("[INFO] NETWORK: Localhost Only")
 print("-----------------------------------------------------")
 
 # RHINO.INSIDE OR RHINO3DM
 if _RHINOINSIDE:
-    print("\033[34m[INFO] Loading Rhino.Inside.CPython ...\033[0m")
+    print("[INFO] Loading Rhino.Inside.CPython ...")
     import rhinoinside
     rhinoinside.load()
     import Rhino # NOQA402
@@ -106,18 +106,18 @@ else:
 
 # SYSTEM IF NECESSARY
 if _USING_SYSTEM:
-    print("\033[34m[INFO] Loading System (.NET) ...\033[0m")
+    print("[INFO] Loading System (.NET) ...")
     import System # NOQA402
 
 # GRASSHOPPER IF NECESSARY
 if _USING_GH:
-    print("\033[32m[INFO] Loading Grasshopper ...\033[0m")
+    print("[INFO] Loading Grasshopper ...")
     clr.AddReference("Grasshopper.dll")
     import Grasshopper as gh # NOQA402
 
 # KANGAROO 2 IF NECESSARY
 if _USING_K2:
-    print("\033[33m[INFO] Loading Kangaroo2 ...\033[0m")
+    print("[INFO] Loading Kangaroo2 ...")
     clr.AddReference("KangarooSolver.dll")
     import KangarooSolver as ks # NOQA402
 
@@ -560,8 +560,7 @@ def opencv_DetectContoursComponent(filepath,
 if __name__ == "__main__":
     print("-----------------------------------------------------")
     print("[INFO] Available Hops Components on this Server:")
-    [print("\033[36m{0}\033[0m -> {1}".format(
-        c, hops._components[c].description))
+    [print("{0} -> {1}".format(c, hops._components[c].description))
         for c in hops._components]
     print("-----------------------------------------------------")
 
