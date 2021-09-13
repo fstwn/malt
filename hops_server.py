@@ -2,7 +2,6 @@
 
 import clr
 from itertools import product
-from os.path import normpath
 
 # OPTIONS ---------------------------------------------------------------------
 
@@ -19,9 +18,6 @@ _FLASK = True
 
 # True if you want to run using Rhino.Inside.CPython
 _RHINOINSIDE = True
-
-# System directory of your Rhino installation (for Rhino.Inside.CPython)
-_RHINODIR = r"C:\Program Files\Rhino 7\System"
 
 # Set to True to enable System import
 _USING_SYSTEM = True
@@ -85,35 +81,43 @@ class CustomHops(hs.Hops):
 
 
 print("-----------------------------------------------------")
-print("[INFO] Hops Server Configuration:\n")
+print("[INFO] Hops Server Configuration:")
 print("[INFO] SERVER:  {0}".format(
-        "Flask App" if _FLASK else "Hops HTTP"))
+            "Flask App" if _FLASK else "Hops Default HTTP Server"))
 print("[INFO] RHINO:   {0}".format(
-        "Rhino.Inside.CPython" if _RHINOINSIDE else "rhino3dm"))
-print("[INFO] NETWORK: {0}".format(
-        "Network Access Enabled!" if _NETWORK_ACCESS else "Localhost Only"))
+            "Rhino.Inside.CPython" if _RHINOINSIDE else "rhino3dm"))
+if _NETWORK_ACCESS:
+    print("[INFO] NETWORK: \033[31mNetwork Access Enabled!")
+    print("[WARNING] ENABLING NETWORK ACCESS MIGHT BE A SECURITY RISK \n"
+          "BECAUSE IT POTENTIALLY ALLOWS PEOPLE TO EXECUTE CODE ON YOUR \n"
+          "MACHINE! ONLY USE THIS IN A TRUSTED NETWORK!\033[0m")
+else:
+    print("[INFO] NETWORK: Localhost Only")
 print("-----------------------------------------------------")
 
 # RHINO.INSIDE OR RHINO3DM
 if _RHINOINSIDE:
-    print("[INFO] Loading Rhino.Inside.CPython ...")
+    print("\033[34m[INFO] Loading Rhino.Inside.CPython ...\033[0m")
     import rhinoinside
-    rhinoinside.load(rhino_dir=normpath(_RHINODIR))
+    rhinoinside.load()
     import Rhino # NOQA402
 else:
     import rhino3dm # NOQA402
 
 # SYSTEM IF NECESSARY
 if _USING_SYSTEM:
+    print("\033[34m[INFO] Loading System (.NET) ...\033[0m")
     import System # NOQA402
 
 # GRASSHOPPER IF NECESSARY
 if _USING_GH:
+    print("\033[32m[INFO] Loading Grasshopper ...\033[0m")
     clr.AddReference("Grasshopper.dll")
     import Grasshopper as gh # NOQA402
 
 # KANGAROO 2 IF NECESSARY
 if _USING_K2:
+    print("\033[33m[INFO] Loading Kangaroo2 ...\033[0m")
     clr.AddReference("KangarooSolver.dll")
     import KangarooSolver as ks # NOQA402
 
@@ -555,8 +559,9 @@ def opencv_DetectContoursComponent(filepath,
 
 if __name__ == "__main__":
     print("-----------------------------------------------------")
-    print("[INFO] Available Hops Components on this Server:\n")
-    [print("{0} -> {1}".format(c, hops._components[c].description))
+    print("[INFO] Available Hops Components on this Server:")
+    [print("\033[36m{0}\033[0m -> {1}".format(
+        c, hops._components[c].description))
         for c in hops._components]
     print("-----------------------------------------------------")
 
