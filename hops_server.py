@@ -86,9 +86,12 @@ class CustomHops(hs.Hops):
 
 print("-----------------------------------------------------")
 print("[INFO] Hops Server Configuration:\n")
-print("       SERVER: {0}".format(("Flask App" if _FLASK else "Hops HTTP")))
-print("       RHINO: {0}".format(
-                " Rhino.Inside.CPython" if _RHINOINSIDE else " rhino3dm"))
+print("[INFO] SERVER:  {0}".format(
+        "Flask App" if _FLASK else "Hops HTTP"))
+print("[INFO] RHINO:   {0}".format(
+        "Rhino.Inside.CPython" if _RHINOINSIDE else "rhino3dm"))
+print("[INFO] NETWORK: {0}".format(
+        "Network Access Enabled!" if _NETWORK_ACCESS else "Localhost Only"))
 print("-----------------------------------------------------")
 
 # RHINO.INSIDE OR RHINO3DM
@@ -128,7 +131,7 @@ from malt import icp # NOQA402
 from malt import intri # NOQA402
 from malt import imgprocessing # NOQA402
 
-# REGSISTER FLASK OR RHINOINSIDE HOPS APP -------------------------------------
+# REGSISTER FLASK AND/OR RHINOINSIDE HOPS APP ---------------------------------
 if _FLASK:
     from flask import Flask # NOQA402
     flaskapp = Flask(__name__)
@@ -140,6 +143,31 @@ else:
 
 
 # HOPS COMPONENTS -------------------------------------------------------------
+
+# GET ALL AVAILABLE COMPONENTS ////////////////////////////////////////////////
+
+@hops.component(
+    "/hops.Components",
+    name="AvailableComponents",
+    nickname="Components",
+    description="List all routes of the available components",
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[],
+    outputs=[
+        hs.HopsString("Components", "C", "All available Hops Components on this server.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsString("Description", "D", "The descriptions of the components", hs.HopsParamAccess.LIST), # NOQA501
+    ])
+def hops_AvailableComponentsComponent():
+    comps = []
+    descr = []
+    for c in hops._components:
+        comps.append(str(c))
+        descr.append(hops._components[c].description)
+
+    return comps, descr
+
 
 # ITERATIVE CLOSEST POINT /////////////////////////////////////////////////////
 
