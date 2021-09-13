@@ -25,7 +25,7 @@ _USING_SYSTEM = True
 # Set to True to enable Grasshopper import
 _USING_GH = False
 
-# Set to True to enable Kangaroo 2 import
+# Set to True to enable Kangaroo2 import
 _USING_K2 = False
 
 
@@ -34,10 +34,10 @@ _USING_K2 = False
 import ghhops_server as hs # NOQA402
 
 
-# Define a custom Hops Middleware to enable Rhino.Inside.CPython in
+# Define a custom Hops class to enable Rhino.Inside.CPython in
 # combination with a Flask app (otherwise not possible)
 class CustomHops(hs.Hops):
-    """Custom Hops Middleware allowing Flask app to also run Rhino.Inside"""
+    """Custom Hops class allowing Flask app to also run Rhino.Inside"""
 
     def __new__(cls,
                 app=None,
@@ -88,9 +88,9 @@ print("[INFO] RHINO:   {0}".format(
             "Rhino.Inside.CPython" if _RHINOINSIDE else "rhino3dm"))
 if _NETWORK_ACCESS:
     print("[INFO] NETWORK: Network Access Enabled!")
-    print("[WARNING] ENABLING NETWORK ACCESS MIGHT BE A SECURITY RISK \n"
-          "BECAUSE IT POTENTIALLY ALLOWS PEOPLE TO EXECUTE CODE ON YOUR \n"
-          "MACHINE! ONLY USE THIS IN A TRUSTED NETWORK!")
+    print("[WARNING] Enabling network access is a security risk because \n"
+          "it potentially allows people to execute python code on your \n"
+          "machine! Only use this option in a trusted network/environment!")
 else:
     print("[INFO] NETWORK: Localhost Only")
 print("-----------------------------------------------------")
@@ -136,6 +136,7 @@ from malt import intri # NOQA402
 from malt import imgprocessing # NOQA402
 
 # REGSISTER FLASK AND/OR RHINOINSIDE HOPS APP ---------------------------------
+
 if _FLASK:
     from flask import Flask # NOQA402
     flaskapp = Flask(__name__)
@@ -151,10 +152,10 @@ else:
 # GET ALL AVAILABLE COMPONENTS ////////////////////////////////////////////////
 
 @hops.component(
-    "/hops.Components",
+    "/hops.AvailableComponents",
     name="AvailableComponents",
     nickname="Components",
-    description="List all routes of the available components",
+    description="List all routes (URI's) of the available components",
     category=None,
     subcategory=None,
     icon=None,
