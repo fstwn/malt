@@ -38,7 +38,7 @@ is the time to do it.***
 Set up a new conda virtual environment with the name `ddu_ias_research` using
 the provided environment file by running:
 ```
-conda env create -f "ddu_ias_research.yml"
+conda env create -f "ddu_ias_research_env.yml"
 ```
 *NOTE: This step can take quite some time and will take up a good amount of
 space on your disk. You can expect at least ~5GB!*
