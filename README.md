@@ -129,3 +129,9 @@ endpoint. Then I use the resulting values at each vertex to draw isocurves
 on the mesh using the `/igl.MeshIsoCurves` endpoint.
 
 ![Geodesic Heat Isocurves](/resources/readme/readme_06.png)
+
+## To-Do & Extension Ideas
+
+### Possible Future Integrations
+
+- [Google Mediapipe](https://github.com/google/mediapipe)
