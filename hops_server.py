@@ -6,8 +6,16 @@ from os.path import normpath
 
 # OPTIONS ---------------------------------------------------------------------
 
-# Set to True to run using Flask
-_FLASK = False
+# Set to True to run in debug mode.
+_DEBUG = True
+
+# Set to True to allow access via local network (only works with Flask app!)
+# WARNING: THIS MIGHT BE A SECURITY RISK BECAUSE IT POTENTIALLY ALLOWS PEOPLE
+# TO EXECUTE CODE ON YOUR MACHINE! ONLY USE THIS IN A TRUSTED NETWORK!
+_NETWORK_ACCESS = False
+
+# Set to True to run using Flask as middleware
+_FLASK = True
 
 # True if you want to run using Rhino.Inside.CPython
 _RHINOINSIDE = True
@@ -29,19 +37,59 @@ _USING_K2 = False
 
 import ghhops_server as hs # NOQA402
 
-if _FLASK and _RHINOINSIDE:
-    raise ValueError("Server cannot run using Rhino.Inside *and* Flask. If "
-                     "you want to use Rhino.Inside, use a standard HTTP Hops "
-                     "Server. If you want to run the Server using Flask, you "
-                     "have to use rhino3dm instead of Rhino.Inside "
-                     "(deactivate the _RHINOINSIDE option to do so)!")
-else:
-    print("-----------------------------------------------------")
-    print("[INFO] Hops Server Configuration:\n")
-    print("       SERVER: {0}".format(("Flask" if _FLASK else "Hops HTTP")))
-    print("       RHINO: {0}".format(
-                    "Rhino.Inside.CPython" if _RHINOINSIDE else "rhino3dm"))
-    print("-----------------------------------------------------")
+
+# Define a custom Hops Middleware to enable Rhino.Inside.CPython in
+# combination with a Flask app (otherwise not possible)
+class CustomHops(hs.Hops):
+    """Custom Hops Middleware allowing Flask app to also run Rhino.Inside"""
+
+    def __new__(cls,
+                app=None,
+                debug=False,
+                force_rhinoinside=False,
+                *args,
+                **kwargs) -> hs.base.HopsBase:
+        # set logger level
+        hs.hlogger.setLevel(hs.logging.DEBUG if debug else hs.logging.INFO)
+
+        # determine the correct middleware base on the source app being wrapped
+        # when running standalone with no source apps
+        if app is None:
+            hs.hlogger.debug("Using Hops default http server")
+            hs.params._init_rhino3dm()
+            return hs.middlewares.HopsDefault()
+
+        # if wrapping another app
+        app_type = repr(app)
+        # if app is Flask
+        if app_type.startswith("<Flask"):
+            if force_rhinoinside:
+                hs.hlogger.debug("Using Hops Flask middleware and rhinoinside")
+                hs.params._init_rhinoinside()
+            else:
+                hs.hlogger.debug("Using Hops Flask middleware and rhino3dm")
+                hs.params._init_rhino3dm()
+            return hs.middlewares.HopsFlask(app, *args, **kwargs)
+
+        # if wrapping rhinoinside
+        elif app_type.startswith("<module 'rhinoinside'"):
+            # determine if running with rhino.inside.cpython
+            # and init the param module accordingly
+            if not CustomHops.is_inside():
+                raise Exception("rhinoinside is not loaded yet")
+            hs.hlogger.debug("Using Hops default http server with rhinoinside")
+            hs.params._init_rhinoinside()
+            return hs.middlewares.HopsDefault(*args, **kwargs)
+
+        raise Exception("Unsupported app!")
+
+
+print("-----------------------------------------------------")
+print("[INFO] Hops Server Configuration:\n")
+print("       SERVER: {0}".format(("Flask App" if _FLASK else "Hops HTTP")))
+print("       RHINO: {0}".format(
+                " Rhino.Inside.CPython" if _RHINOINSIDE else " rhino3dm"))
+print("-----------------------------------------------------")
 
 # RHINO.INSIDE OR RHINO3DM
 if _RHINOINSIDE:
@@ -84,11 +132,11 @@ from malt import imgprocessing # NOQA402
 if _FLASK:
     from flask import Flask # NOQA402
     flaskapp = Flask(__name__)
-    hops = hs.Hops(app=flaskapp)
-elif _RHINOINSIDE:
-    hops = hs.Hops(app=rhinoinside)
+    hops = CustomHops(app=flaskapp, force_rhinoinside=_RHINOINSIDE)
+elif not _FLASK and _RHINOINSIDE:
+    hops = CustomHops(app=rhinoinside)
 else:
-    hops = hs.Hops()
+    hops = CustomHops()
 
 
 # HOPS COMPONENTS -------------------------------------------------------------
@@ -485,6 +533,9 @@ if __name__ == "__main__":
     print("-----------------------------------------------------")
 
     if type(hops) == hs.HopsFlask:
-        flaskapp.run()
+        if _NETWORK_ACCESS:
+            flaskapp.run(debug=_DEBUG, host="0.0.0.0")
+        else:
+            flaskapp.run(debug=_DEBUG)
     else:
-        hops.start(debug=True)
+        hops.start(debug=_DEBUG)
