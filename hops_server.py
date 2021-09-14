@@ -512,6 +512,51 @@ def open3d_PoissonMeshNormalsComponent(points,
     return rhino_mesh
 
 
+@hops.component(
+    "/open3d.ConvexHull",
+    name="ConvexHull",
+    nickname="ConvexHull",
+    description="Construct a Mesh from a PointCloud using Open3D convex hull.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsPoint("Points", "P", "The PointClouds Points", hs.HopsParamAccess.LIST), # NOQA501
+    ],
+    outputs=[
+        hs.HopsMesh("Mesh", "M", "The resulting triangle Mesh.", hs.HopsParamAccess.ITEM), # NOQA501
+    ])
+def open3d_ConvexHullComponent(points):
+
+    # convert point list to np array
+    np_points = np.array([[pt.X, pt.Y, pt.Z] for pt in points])
+
+    # create pointcloud
+    pointcloud = o3d.geometry.PointCloud()
+    pointcloud.points = o3d.utility.Vector3dVector(np_points)
+
+    # estimate the normals
+    pointcloud.estimate_normals()
+
+    # compute convex hull triangle mesh
+    convex_hull = pointcloud.compute_convex_hull()
+
+    # create rhino mesh from o3d output and add vertices and faces
+    rhino_mesh = Rhino.Geometry.Mesh()
+    [rhino_mesh.Vertices.Add(v[0], v[1], v[2])
+     for v in np.asarray(convex_hull[0].vertices)]
+    [rhino_mesh.Faces.AddFace(f[0], f[1], f[2])
+     for f in np.asarray(convex_hull[0].triangles)]
+
+    # compute normals and compact
+    rhino_mesh.UnifyNormals()
+    rhino_mesh.Normals.ComputeNormals()
+    rhino_mesh.Compact()
+
+    # return the rhino mesh
+    return rhino_mesh
+
+
 # OPENCV //////////////////////////////////////////////////////////////////////
 
 @hops.component(
