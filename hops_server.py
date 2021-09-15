@@ -320,6 +320,7 @@ def intri_IntrinsicTriangulationComponent(mesh):
     [intri_mesh.Faces.AddFace(face[0], face[1], face[2]) for face in F]
 
     # compute normals and compact
+    intri_mesh.UnifyNormals()
     intri_mesh.Normals.ComputeNormals()
     intri_mesh.Compact()
 
