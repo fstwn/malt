@@ -38,7 +38,7 @@ def next_side(fs):
     :param fs: A face side (f,s)
     :returns: The next face side in the same triangle (f, sn)
     """
-    return (fs[0], (fs[1]+1)%3)
+    return (fs[0], (fs[1]+1) % 3)
 
 
 def other(G, fs):
@@ -81,18 +81,18 @@ def n_verts(F):
 # Geometric subroutines
 ##############################################################
 
-def face_area(l, f):
+def face_area(L, f):
     """
     Computes the area of the face f from edge lengths
 
-    :param l: |F|x3 array of face-side edge lengths
+    :param L: |F|x3 array of face-side edge lengths
     :param f: An integer index specifying the face
     :returns: The area of the face.
     """
     # Gather edge lengths
-    l_a = l[f, 0]
-    l_b = l[f, 1]
-    l_c = l[f, 2]
+    l_a = L[f, 0]
+    l_b = L[f, 1]
+    l_c = L[f, 2]
 
     # Heron's rule
     s = (l_a + l_b + l_c) / 2
@@ -100,40 +100,40 @@ def face_area(l, f):
     return np.sqrt(d)
 
 
-def surface_area(F,l):
+def surface_area(F, L):
     """
     Compute the surface area of a triangulation.
 
     :param F: A |F|x3 vertex-face adjacency list F
-    :param l: F |F|x3 edge-lengths array, giving the length of each face-side
+    :param L: F |F|x3 edge-lengths array, giving the length of each face-side
     :returns: The surface area
     """
     area_tot = 0.
     for f in range(n_faces(F)):
-        area_tot += face_area(l,f)
+        area_tot += face_area(L, f)
 
     return area_tot
 
 
-def opposite_corner_angle(l, fs):
+def opposite_corner_angle(L, fs):
     """
     Computes triangle corner angle opposite the face-side fs.
 
-    :param l: A |F|x3 array of face-side edge lengths
+    :param L: A |F|x3 array of face-side edge lengths
     :param fs: An face-side (f,s)
     :returns: The corner angle, in radians
     """
     # Gather edge lengths
-    l_a = l[fs]
-    l_b = l[next_side(fs)]
-    l_c = l[next_side(next_side(fs))]
+    l_a = L[fs]
+    l_b = L[next_side(fs)]
+    l_c = L[next_side(next_side(fs))]
 
     # Law of cosines (inverse)
-    d = (l_b**2 + l_c**2 - l_a**2) / (2*l_b*l_c);
+    d = (l_b**2 + l_c**2 - l_a**2) / (2 * l_b * l_c)
     return np.arccos(d)
 
 
-def diagonal_length(G, l, fs):
+def diagonal_length(G, L, fs):
     """
     Computes the length of the opposite diagonal of the diamond formed by the
     triangle containing fs, and the neighboring triangle adjacent to fs.
@@ -141,37 +141,37 @@ def diagonal_length(G, l, fs):
     This is the new edge length needed when flipping the edge fs.
 
     :param G: |F|x3x2 gluing map
-    :param l: |F|x3 array of face-side edge lengths
+    :param L: |F|x3 array of face-side edge lengths
     :param fs: A face-side (f,s)
     :returns: The diagonal length
     """
     # Gather lengths and angles
     fs_opp = other(G, fs)
-    u = l[next_side(next_side(fs))]
-    v = l[next_side(fs_opp)]
-    theta_A = opposite_corner_angle(l, next_side(fs))
-    theta_B = opposite_corner_angle(l, next_side(next_side((fs_opp))))
+    u = L[next_side(next_side(fs))]
+    v = L[next_side(fs_opp)]
+    theta_A = opposite_corner_angle(L, next_side(fs))
+    theta_B = opposite_corner_angle(L, next_side(next_side((fs_opp))))
 
     # Law of cosines
     d = u**2 + v**2 - 2 * u * v * np.cos(theta_A + theta_B)
     return np.sqrt(d)
 
 
-def is_delaunay(G, l, fs):
+def is_delaunay(G, L, fs):
     """
     Test if the edge given by face-side fs satisfies the intrinsic Delaunay
     property.
 
     :param G: |F|x3x2 gluing map G,
-    :param l: |F|x3 array of face-side edge lengths
+    :param L: |F|x3 array of face-side edge lengths
     :param fs: A face-side (f,s)
     :returns: True if the edge is Delaunay
     """
 
     fs_opp = other(G, fs)
 
-    theta_A = opposite_corner_angle(l, fs)
-    theta_B = opposite_corner_angle(l, fs_opp)
+    theta_A = opposite_corner_angle(L, fs)
+    theta_B = opposite_corner_angle(L, fs_opp)
 
     # Test against PI - eps to conservatively pass in cases where theta_A
     # + theta_B \approx PI. This ensures the algorithm terminates even in the
@@ -198,21 +198,21 @@ def build_edge_lengths(V, F):
     """
 
     # Allocate an empty Fx3 array to fill
-    l = np.empty((n_faces(F),3))
+    L = np.empty((n_faces(F), 3))
 
     for f in range(n_faces(F)):    # iterate over triangles
         for s in range(3):         # iterate over the three sides
 
             # get the two endpoints (i,j) of this side
-            i = F[f,s]
-            j = F[next_side((f,s))]
+            i = F[f, s]
+            j = F[next_side((f, s))]
 
             # measure the length of the side
             length = np.linalg.norm(V[j] - V[i])
 
-            l[f,s] = length
+            L[f, s] = length
 
-    return l
+    return L
 
 
 def sort_rows(A):
@@ -254,15 +254,14 @@ def build_gluing_map(F):
     """
 
     # In order to construct this array, for each side of a triangle, we need to
-    # find the neighboring side in some other triangle. There are many ways that
-    # this lookup could be accomplished. Here, we use an array-based strategy
-    # which constructs an `Sx4` array (where `S` is the number of face-sides),
-    # where each row holds the vertex indices of a face-side, as well as the face
-    # it comes from and which side it is. We then sort the rows of this array
-    # lexicographically, which puts adjacent face-sides next to each other in the
-    # sorted array. Finally, we walk down the array and populate the gluing map
-    # with adjacent face-side entries.
-
+    # find the neighboring side in some other triangle. There are many ways
+    # that this lookup could be accomplished. Here, we use an array-based
+    # strategy which constructs an `Sx4` array (where `S` is the number of
+    # face-sides), where each row holds the vertex indices of a face-side, as
+    # well as the face it comes from and which side it is. We then sort the
+    # rows of this array lexicographically, which puts adjacent face-sides next
+    # to each other in the sorted array. Finally, we walk down the array and
+    # populate the gluing map with adjacent face-side entries.
 
     # Build a temporary list S of all face-sides, given by tuples (i,j,f,s),
     # where (i,j) are the vertex indices of side s of face f in sorted order
@@ -276,21 +275,23 @@ def build_gluing_map(F):
             # get the two endpoints (i,j) of this side, in sorted order
             i = F[f, s]
             j = F[next_side((f, s))]
-            S[f*3+s] = (min(i, j),max(i, j), f, s)
+            S[f*3+s] = (min(i, j), max(i, j), f, s)
 
     # Sort the list row-wise (so i-j pairs are adjacent)
     S = sort_rows(S)
 
-    # Build the |F|x3 gluing map G, by linking together pairs of sides with the same vertex indices.
+    # Build the |F|x3 gluing map G, by linking together pairs of sides with
+    # the same vertex indices.
     G = np.empty([n_faces(F), 3, 2], dtype=np.int64)
     for p in range(0, n_sides, 2):
         # extra sanity check to fail nicely if a mesh with boundary
         # or nonmanifold mesh is given as input
         if S[p + 0, 0] != S[p + 1, 0] or S[p + 0, 1] != S[p + 1, 1]:
-            raise ValueError("Problem building glue map. Is input closed & manifold?")
+            raise ValueError("Problem building glue map. "
+                             "Is input closed & manifold?")
 
-        fs0 = tuple(S[p+0,2:4])
-        fs1 = tuple(S[p+1,2:4])
+        fs0 = tuple(S[p + 0, 2:4])
+        fs1 = tuple(S[p + 1, 2:4])
         glue_together(G, fs0, fs1)
 
     # A sanity-check test
@@ -310,21 +311,25 @@ def validate_gluing_map(G, F):
     for f in range(n_faces(F)):
         for s in range(3):
 
-            fs = (f,s)
+            fs = (f, s)
             fs_other = other(G, fs)
 
             if fs == fs_other:
-                raise ValueError("gluing map points face-side to itself {}".format(fs))
+                raise ValueError(
+                    "gluing map points face-side to itself {}".format(fs))
 
             if fs != other(G, fs_other):
-                raise ValueError("gluing map is not involution (applying it twice does not return the original face-side) {} -- {} -- {}".format(fs, fs_other, other(G, fs_other)))
+                raise ValueError(("gluing map is not involution (applying it "
+                                  "twice does not return the original "
+                                  "face-side) {} -- {} -- {}").format(
+                                        fs, fs_other, other(G, fs_other)))
 
 
 ##############################################################
 # Intrinsic Delaunay and edge flipping
 ##############################################################
 
-def flip_edge(F, G, l, s0):
+def flip_edge(F, G, L, s0):
     """
     Performs an intrinsic edge flip on the edge given by face-side s0. The
     arrays F, G, and l are updated in-place.
@@ -335,7 +340,7 @@ def flip_edge(F, G, l, s0):
 
     :param F: |F|x3 vertex-face adjacency list F
     :param G: |F|x3x2 gluing map G
-    :param l: |F|x3 edge-lengths array, giving the length of each face-side
+    :param L: |F|x3 edge-lengths array, giving the length of each face-side
     :param s0: A face-side of the edge that we want to flip
 
     :returns: The new identity of the side fs_a
@@ -349,7 +354,7 @@ def flip_edge(F, G, l, s0):
     s4, s5 = next_side(s1), next_side(next_side(s1))
 
     # Get the sides glued to each edge of the diamond
-    s6, s7, s8, s9 = other(G,s2), other(G,s3), other(G,s4), other(G,s5)
+    s6, s7, s8, s9 = other(G, s2), other(G, s3), other(G, s4), other(G, s5)
 
     # Get vertex indices for the vertices of the diamond
     v0, v1, v2, v3 = F[s0], F[s2], F[s3], F[s5]
@@ -358,10 +363,10 @@ def flip_edge(F, G, l, s0):
     f0, f1 = s0[0], s1[0]
 
     # Get the original lengths of the outside edges of the diamond
-    l2, l3, l4, l5 = l[s2], l[s3], l[s4], l[s5]
+    l2, l3, l4, l5 = L[s2], L[s3], L[s4], L[s5]
 
     # Compute the length of the new edge
-    new_length = diagonal_length(G, l, s0)
+    new_length = diagonal_length(G, L, s0)
 
     # Update the adjacency list F
     F[f0] = (v3, v2, v0)
@@ -370,14 +375,20 @@ def flip_edge(F, G, l, s0):
     # Re-label elements.
     # Usually this does nothing, but in a Delta-complex one of the neighbors of
     # these faces might be one of the faces themselves! In that case, this
-    # re-labels the neighbors according to the updated labels after the edge flip.
+    # re-labels the neighbors according to the updated labels after the edge
+    # flip.
     def relabel(s):
-        # NOTE: these variables (s2, f0, etc) are automatically accessed from the outer scope
-        # in Python; in other languages we could add them as additional arguments.
-        if s == s2 : return (f1, 2)
-        if s == s3 : return (f0, 1)
-        if s == s4 : return (f0, 2)
-        if s == s5 : return (f1, 1)
+        # NOTE: these variables (s2, f0, etc) are automatically accessed from
+        # the outer scope in Python;
+        # in other languages we could add them as additional arguments.
+        if s == s2:
+            return (f1, 2)
+        if s == s3:
+            return (f0, 1)
+        if s == s4:
+            return (f0, 2)
+        if s == s5:
+            return (f1, 1)
         return s
     s6, s7, s8, s9 = relabel(s6), relabel(s7), relabel(s8), relabel(s9)
 
@@ -389,27 +400,29 @@ def flip_edge(F, G, l, s0):
     glue_together(G, (f1, 2), s6)
 
     # Update the edge lengths
-    # Note that even the edges we didn't flip have been re-labeled, so we need to
-    # update those too.
-    l[f0] = (new_length, l3, l4)
-    l[f1] = (new_length, l5, l2)
+    # Note that even the edges we didn't flip have been re-labeled, so we need
+    # to update those too.
+    L[f0] = (new_length, l3, l4)
+    L[f1] = (new_length, l5, l2)
 
     return f0, 0
 
 
-def flip_to_delaunay(F, G, l):
+def flip_to_delaunay(F, G, L):
     """
-    Flip edges in the triangulation until it satisifes the intrinsic Delaunay criterion.
+    Flip edges in the triangulation until it satisifes the intrinsic Delaunay
+    criterion.
 
-    For simplicity, we will implement this algorithm in terms of face-sides, checking if
-    each face-side satisfies the criterion. Technically, this means we are testing each
-    edge twice, which is unecessary, but makes our implementation simpler.
+    For simplicity, we will implement this algorithm in terms of face-sides,
+    checking if each face-side satisfies the criterion. Technically, this
+    means we are testing each edge twice, which is unecessary, but makes our
+    implementation simpler.
 
-    The arrays F,G,l are modified in-place.
+    The arrays F,G,L are modified in-place.
 
     :param F: |F|x3 vertex-face adjacency list F
     :param G: |F|x3x2 gluing map G
-    :param l: |F|x3 edge-lengths array, giving the length of each face-side
+    :param L: |F|x3 edge-lengths array, giving the length of each face-side
     """
 
     from collections import deque
@@ -423,9 +436,9 @@ def flip_to_delaunay(F, G, l):
     # Whenever we flip an edge, the face-sides of the two triangles involved in
     # the flip get re-labelled. This means that the face-side entries in
     # to_process will become stale, and potentially point to a different
-    # face-side than was intended. However, this implementation is still correct
-    # regardless, because all of the re-labelled face-sides will immediately get
-    # re-added to the queue.
+    # face-side than was intended. However, this implementation is still
+    # correct regardless, because all of the re-labelled face-sides will
+    # immediately get re-added to the queue.
 
     # NOTE: This implementation may add many repeated entries of the same
     # face-side in to the queue, which is wasteful. For performance, another
@@ -437,23 +450,24 @@ def flip_to_delaunay(F, G, l):
         for s in range(3):      # iterate over the three sides
             to_process.append((f, s))
 
-
     n_flips = 0
-    while to_process: # while the queue is not empty
+    # while the queue is not empty
+    while to_process:
 
         # Get the next face-side in the queue
         fs = to_process.pop()
 
         # Check if it satisfies the Delaunay criterion
-        if not is_delaunay(G, l, fs):
+        if not is_delaunay(G, L, fs):
 
             # Flip the edge
             # Note that we need to update the current face-side fs,
             # because it is re-labelled during the flip.
-            fs = flip_edge(F, G, l, fs)
+            fs = flip_edge(F, G, L, fs)
             n_flips += 1
 
-            # Enqueue neighbors for processing, as they may have become non-Delaunay
+            # Enqueue neighbors for processing, as they may have
+            # become non-Delaunay
             neighbors = [
                 next_side(fs),
                 next_side(next_side(fs)),
@@ -466,35 +480,35 @@ def flip_to_delaunay(F, G, l):
     print("performed {} edge flips to Delaunay".format(n_flips))
 
 
-def check_delaunay(F, G, l):
+def check_delaunay(F, G, L):
     """
     Check if a triangulation satisifies the intrinsic Delaunay property.
 
     :param F: |F|x3 vertex-face adjacency list F
     :param G: |F|x3x2 gluing map G
-    :param l: |F|x3 edge-lengths array, giving the length of each face-side
+    :param L: |F|x3 edge-lengths array, giving the length of each face-side
     :returns: True if the triangulation is intrinsic Delaunay.
     """
     for f in range(n_faces(F)):
         for s in range(3):
-            if not is_delaunay(G,l,(f,s)):
+            if not is_delaunay(G, L, (f, s)):
                 return False
     return True
 
 
-def print_info(F, G, l):
+def print_info(F, G, L):
     """
     Print some info about a mesh
 
     :param F: |F|x3 vertex-face adjacency list F
     :param G: |F|x3x2 gluing map G
-    :param l: |F|x3 edge-lengths array, giving the length of each face-side
+    :param L: |F|x3 edge-lengths array, giving the length of each face-side
     """
 
     print("  n_verts = {}".format(n_verts(F)))
     print("  n_faces = {}".format(n_faces(F)))
-    print("  surface area = {}".format(surface_area(F,l)))
-    print("  is Delaunay = {}".format(check_delaunay(F,G,l)))
+    print("  surface area = {}".format(surface_area(F, L)))
+    print("  is Delaunay = {}".format(check_delaunay(F, G, L)))
 
 
 ##############################################################
@@ -509,121 +523,130 @@ def print_info(F, G, l):
 # Weischedel, Wardetzky (2017).
 
 # This algorithm makes use of the Laplace matrix, and we will see that applying
-# the Delaunay edge flipping routine from above automatically improves results on
-# low-quality triangulations.
+# the Delaunay edge flipping routine from above automatically improves results
+# on low-quality triangulations.
 
 # we will use Scipy for sparse matrix operations
 
 
-def build_cotan_laplacian(F, l):
+def build_cotan_laplacian(F, L):
     """
     Build the cotan-Laplace matrix for a triangulation.
 
     :param F: |F|x3 vertex-face adjacency list F
-    :param l: |F|x3 edge-lengths array, giving the length of each face-side
+    :param L: |F|x3 edge-lengths array, giving the length of each face-side
     :returns: The Laplace matrix, as a sparse, |V|x|V| real scipy matrix
     """
 
     # Initialize empty sparse matrix
     N = n_verts(F)
-    L = scipy.sparse.lil_matrix((N,N))
+    Lp = scipy.sparse.lil_matrix((N, N))
 
     # Construct the matrix by summing contributions from each triangle
     for f in range(n_faces(F)):
         for s in range(3):
-            i = F[f,s]
-            j = F[f,(s+1)%3]
+            i = F[f, s]
+            j = F[f, (s+1) % 3]
 
-            opp_theta = opposite_corner_angle(l, (f,s))
-            opp_cotan =  1. / np.tan(opp_theta)
+            opp_theta = opposite_corner_angle(L, (f, s))
+            opp_cotan = 1. / np.tan(opp_theta)
             cotan_weight = 0.5 * opp_cotan
 
-            L[i,j] -= cotan_weight
-            L[j,i] -= cotan_weight
-            L[i,i] += cotan_weight
-            L[j,j] += cotan_weight
+            Lp[i, j] -= cotan_weight
+            Lp[j, i] -= cotan_weight
+            Lp[i, i] += cotan_weight
+            Lp[j, j] += cotan_weight
 
-    return L.tocsr() # convert to a compressed sparse row matrix
+    # convert to a compressed sparse row matrix
+    return Lp.tocsr()
 
 
-def build_lumped_mass(F, l):
+def build_lumped_mass(F, L):
     """
-    Build the lumped mass matrix for a triangulation, which associates an area with each vertex.
+    Build the lumped mass matrix for a triangulation, which associates an area
+    with each vertex.
 
     :param F: |F|x3 vertex-face adjacency list F
-    :param l: |F|x3 edge-lengths array, giving the length of each face-side
+    :param L: |F|x3 edge-lengths array, giving the length of each face-side
     :returns: The mass matrix, as a sparse, |V|x|V| real scipy matrix (which
     happens to be a diagonal matrix)
     """
 
     # Initialize empty sparse matrix
     N = n_verts(F)
-    M = scipy.sparse.lil_matrix((N,N))
+    M = scipy.sparse.lil_matrix((N, N))
 
     # Construct the matrix by summing contributions from each triangle
     for f in range(n_faces(F)):
-        area = face_area(l,f)
+        area = face_area(L, f)
         for s in range(3):
-            i = F[f,s]
-            M[i,i] += area / 3.
+            i = F[f, s]
+            M[i, i] += area / 3.
 
-    return M.tocsr() # convert to a compressed sparse row matrix
+    # convert to a compressed sparse row matrix
+    return M.tocsr()
 
 
-def edge_in_face_basis(l, fs):
+def edge_in_face_basis(L, fs):
     """
     We associate a 2D-coordinate system with each face in a triangulation.
     Given a face-side, this routine returns the vector of the corresponding
     edge in that face.
 
-    :param l: |F|x3 edge-lengths array, giving the length of each face-side
+    :param L: |F|x3 edge-lengths array, giving the length of each face-side
     :returns: The edge vector, as little length-2 numpy array
     """
 
     # Gather data about the triangle
     f, s = fs
-    theta = opposite_corner_angle(l, (f,1))
+    theta = opposite_corner_angle(L, (f, 1))
 
     # Construct local positions for each of the triangles vertices.
-    # Note that this operation is local to each triangle, and depends on on edge lengths,
-    # and thus can be applied to an intrinsic triangulation without issue.
+    # Note that this operation is local to each triangle, and depends on on
+    # edge lengths, and thus can be applied to an intrinsic triangulation
+    # without issue.
     local_vert_positions = np.array([
-                [ 0, 0 ],       # first vertex at origin
-                [ l[f,0], 0] ,  # second vertex along x-axis
-                [ np.cos(theta) * l[f,2], np.sin(theta) * l[f,2] ] # third vertex is nontrivial
+                # first vertex at origin
+                [0, 0],
+                # second vertex along x-axis
+                [L[f, 0], 0],
+                # third vertex is nontrivial
+                [np.cos(theta) * L[f, 2], np.sin(theta) * L[f, 2]]
             ])
 
     # The edge vector is the difference of vertex positions in the local frame
-    edge_vec = local_vert_positions[(s+1)%3] - local_vert_positions[s]
+    edge_vec = local_vert_positions[(s+1) % 3] - local_vert_positions[s]
     return edge_vec
 
 
-def evaluate_gradient_at_faces(F, l, x):
+def evaluate_gradient_at_faces(F, L, x):
     """
     Given a scalar function at vertices, compute its gradient in each face.
     The gradients are defined in a tangent-coordinate system in each face as
     specified by edge_in_face_basis().
 
     :param F: |F|x3 vertex-face adjacency list F
-    :param l: |F|x3 edge-lengths array, giving the length of each face-side
-    :param x: A scalar function as a length-|V| numpy array, holding one value per vertex
+    :param L: |F|x3 edge-lengths array, giving the length of each face-side
+    :param x: A scalar function as a length-|V| numpy array, holding one value
+              per vertex
     :returns: |F|x2 array of gradient vectors per-face
     """
 
-    grads = np.empty((n_faces(F),2))
+    grads = np.empty((n_faces(F), 2))
 
     # Evaluate gradients independently in each triangle
     for f in range(n_faces(F)):
 
-        # This is an expression for the gradient of a piecewise-linear function in a triangle,
-        # from the triangle geometry and the function values at vertices.
-        face_grad = np.array([0.,0.])
+        # This is an expression for the gradient of a piecewise-linear
+        # function in a triangle, from the triangle geometry and the function
+        # values at vertices.
+        face_grad = np.array([0., 0.])
         for s in range(3):
-            i = F[f,s]
-            edge_vec = edge_in_face_basis(l, next_side((f,s)))
+            i = F[f, s]
+            edge_vec = edge_in_face_basis(L, next_side((f, s)))
             edge_vec_rot = np.array([-edge_vec[1], edge_vec[0]])
             face_grad += x[i] * edge_vec_rot
-        area = face_area(l,f)
+        area = face_area(L, f)
         face_grad /= (2. * area)
 
         grads[f] = face_grad
@@ -631,14 +654,14 @@ def evaluate_gradient_at_faces(F, l, x):
     return grads
 
 
-def evaluate_divergence_at_vertices(F, l, v):
+def evaluate_divergence_at_vertices(F, L, v):
     """
     Given a vector field defined by a collection of gradient vectors at the
     faces of a triangulation, evaluate the divergence of the vector field as
     a scalar value at vertices.
 
     :param F: |F|x3 vertex-face adjacency list F
-    :param l: |F|x3 edge-lengths array, giving the length of each face-side
+    :param L: |F|x3 edge-lengths array, giving the length of each face-side
     :param v: |F|x3 edge-lengths array, giving the length of each face-side
     :returns: The divergences as a length-|V| numpy array
     """
@@ -650,15 +673,15 @@ def evaluate_divergence_at_vertices(F, l, v):
 
         grad_vec = v[f]
 
-        # This is the contribution of each triangle to the divergence at the 
+        # This is the contribution of each triangle to the divergence at the
         # adjacent vertices.
         for s in range(3):
-            i = F[f,s]
-            j = F[f,(s+1)%3]
+            i = F[f, s]
+            j = F[f, (s+1) % 3]
 
-            edge_vec = edge_in_face_basis(l, (f,s))
-            opp_theta = opposite_corner_angle(l, (f,s))
-            opp_cotan =  1. / np.tan(opp_theta)
+            edge_vec = edge_in_face_basis(L, (f, s))
+            opp_theta = opposite_corner_angle(L, (f, s))
+            opp_cotan = 1. / np.tan(opp_theta)
             cotan_weight = 0.5 * opp_cotan
             div_contrib = cotan_weight * np.dot(edge_vec, grad_vec)
 
@@ -668,7 +691,7 @@ def evaluate_divergence_at_vertices(F, l, v):
     return divs
 
 
-def heat_method_distance_from_vertex(F, l, source_vert):
+def heat_method_distance_from_vertex(F, L, source_vert):
     """
     Use the Heat Method to compute geodesic distance along a surface from
     a source vertex.
@@ -680,21 +703,21 @@ def heat_method_distance_from_vertex(F, l, source_vert):
     if the triangulation is intrinsic Delaunay, accuracy will be improved.
 
     :param F: |F|x3 vertex-face adjacency list F
-    :param l: |F|x3 edge-lengths array, giving the length of each face-side
+    :param L: |F|x3 edge-lengths array, giving the length of each face-side
     :param source_vert: The index of a vertex to use as the source.
     :returns: The distances from the source vertex, as a length-|V| numpy array
     """
 
     # Build matrices
-    L = build_cotan_laplacian(F, l)
-    M = build_lumped_mass(F, l)
+    Lp = build_cotan_laplacian(F, L)
+    M = build_lumped_mass(F, L)
 
     # Compute mean edge length h
-    mean_edge_length = np.mean(l)
+    mean_edge_length = np.mean(L)
     short_time = mean_edge_length**2
 
     # Build the heat operator
-    H = (M + short_time*L)
+    H = (M + short_time * Lp)
 
     # Build the initial conditions
     init_RHS = np.zeros(n_verts(F))
@@ -704,12 +727,14 @@ def heat_method_distance_from_vertex(F, l, source_vert):
     heat = scipy.sparse.linalg.spsolve(H, init_RHS)
 
     # Compute gradients and normalize
-    grads = evaluate_gradient_at_faces(F, l, heat)
-    grads = grads / np.linalg.norm(grads, axis=1, keepdims=True) # normalize in each face
+    grads = evaluate_gradient_at_faces(F, L, heat)
+    # normalize in each face
+    grads = grads / np.linalg.norm(grads, axis=1, keepdims=True)
 
     # Solve for the function which has those gradients
-    div = evaluate_divergence_at_vertices(F, l, grads)
-    dist = scipy.sparse.linalg.spsolve(L + scipy.sparse.eye(L.shape[0]) * 1e-6, div)
+    div = evaluate_divergence_at_vertices(F, L, grads)
+    dist = scipy.sparse.linalg.spsolve(
+                Lp + scipy.sparse.eye(Lp.shape[0]) * 1e-6, div)
 
     # Shift so the source has distance 0
     dist -= dist[source_vert]
@@ -720,12 +745,21 @@ def heat_method_distance_from_vertex(F, l, source_vert):
 if __name__ == "__main__":
 
     ##############################################################
-    ### Run the code: flip to intrinsic Delaunay
+    # Run the code: flip to intrinsic Delaunay
     ##############################################################
 
     # Some test data: a simple shape with 5 vertices
-    V = np.array([ [0, 5., 0], [0, 1, -3.], [-4., 0, 0], [0, 1, 3.], [4., 0, 0] ])
-    F = np.array([ [0, 1, 2], [0, 2, 3], [0, 3, 4], [0, 4, 1], [1, 4, 2], [2, 4, 3] ])
+    V = np.array([[0, 5., 0],
+                  [0, 1, -3.],
+                  [-4., 0, 0],
+                  [0, 1, 3.],
+                  [4., 0, 0]])
+    F = np.array([[0, 1, 2],
+                  [0, 2, 3],
+                  [0, 3, 4],
+                  [0, 4, 1],
+                  [1, 4, 2],
+                  [2, 4, 3]])
     source_vert = 0
 
     # Use these lines to load any triangle mesh you would like.
@@ -734,49 +768,53 @@ if __name__ == "__main__":
     # import potpourri3d as pp3d
 
     # uncomment these lines to run on the meshes included with the tutorial
-    # (note that they additionally set a good source vertex for the later example)
+    # (note that they additionally set a good source vertex for the later
+    # example)
     # (V, F), source_vert = pp3d.read_mesh("example_data/terrain8k.obj"), 2894
     # (V, F), source_vert = pp3d.read_mesh("example_data/pegasus.obj"), 1669
-    # (V, F), source_vert = pp3d.read_mesh("example_data/rocketship.ply"), 26403
-
+    # (V, F), source_vert = pp3d.read_mesh("example_data/rocketship.ply"),26403
     # use this line to run on your own mesh of interest
     # V, F = pp3d.read_mesh("path/to/your/mesh.obj")
 
     # initialize the glue map and edge lengths arrays from the input data
     G = build_gluing_map(F)
-    l = build_edge_lengths(V, F)
+    L = build_edge_lengths(V, F)
 
     print("Initial mesh:")
-    print_info(F,G,l)
+    print_info(F, G, L)
 
     # make a copy (so we preserve the original mesh), and flip to Delaunay
-    F_delaunay= F.copy()
+    F_delaunay = F.copy()
     G_delaunay = G.copy()
-    l_delaunay = l.copy()
+    l_delaunay = L.copy()
     flip_to_delaunay(F_delaunay, G_delaunay, l_delaunay)
 
     print("After Delaunay flips:")
     print_info(F_delaunay, G_delaunay, l_delaunay)
 
-
     ##############################################################
-    ### Run the code: compute distance
+    # Run the code: compute distance
     ##############################################################
 
     # Remember: choose what mesh to run on in the in the flipping example above
 
     # Compute distance using the heat method, both before and after flipping
     print("computing distance on original triangulation...")
-    dists_before = heat_method_distance_from_vertex(F,l,source_vert)
+    dists_before = heat_method_distance_from_vertex(F, L, source_vert)
     print("computing distance on Delaunay triangulation...")
-    dists_after = heat_method_distance_from_vertex(F_delaunay,l_delaunay,source_vert)
+    dists_after = heat_method_distance_from_vertex(F_delaunay,
+                                                   l_delaunay,
+                                                   source_vert)
 
     # Visualize the geodesic distances
-    # (click the 'enable' checkbox on the left sidebar to inspect the distances)
+    # (click the 'enable' checkbox on the left sidebar to inspect the dists)
     # print("Visualizing in Polyscope window")
     # import polyscope as ps
     # ps.init()
     # ps_mesh = ps.register_surface_mesh("test mesh", V, F)
-    # ps_mesh.add_distance_quantity("distance on initial triangulation", dists_before, enabled=True)
-    # ps_mesh.add_distance_quantity("distance after Delaunay flips", dists_after)
+    # ps_mesh.add_distance_quantity("distance on initial triangulation",
+    #                               dists_before,
+    #                               enabled=True)
+    # ps_mesh.add_distance_quantity("distance after Delaunay flips",
+    #                               dists_after)
     # ps.show()
