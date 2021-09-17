@@ -65,7 +65,7 @@ def main():
     y = nn_forward_pass(x_input, model_path)
     # np.testing.assert_allclose(model.predict(test_input), y)
     print(y.shape)
-    #print(y)
+    # print(y)
 
 
 if __name__ == '__main__':
