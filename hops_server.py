@@ -298,7 +298,7 @@ def igl_MeshIsocurvesComponent(mesh, values, count):
         hs.HopsMesh("Mesh", "M", "The triangle mesh to create intrinsic triangulation for.", hs.HopsParamAccess.ITEM), # NOQA501
     ],
     outputs=[
-        hs.HopsMesh("Mesh", "M", "The resulting Mesh with an intrinsic triangulation.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsMesh("IntrinsicTriangulation", "T", "The resulting Mesh with an intrinsic triangulation.", hs.HopsParamAccess.ITEM), # NOQA501
     ])
 def intri_IntrinsicTriangulationComponent(mesh):
 
@@ -384,6 +384,51 @@ def intri_HeatMethodDistanceComponent(mesh,
 
 
 # OPEN3D //////////////////////////////////////////////////////////////////////
+
+@hops.component(
+    "/open3d.ConvexHull",
+    name="ConvexHull",
+    nickname="ConvexHull",
+    description="Construct a Mesh from a PointCloud using Open3D convex hull.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsPoint("Points", "P", "The PointClouds Points", hs.HopsParamAccess.LIST), # NOQA501
+    ],
+    outputs=[
+        hs.HopsMesh("Mesh", "M", "The resulting triangle Mesh.", hs.HopsParamAccess.ITEM), # NOQA501
+    ])
+def open3d_ConvexHullComponent(points):
+
+    # convert point list to np array
+    np_points = np.array([[pt.X, pt.Y, pt.Z] for pt in points])
+
+    # create pointcloud
+    pointcloud = o3d.geometry.PointCloud()
+    pointcloud.points = o3d.utility.Vector3dVector(np_points)
+
+    # estimate the normals
+    pointcloud.estimate_normals()
+
+    # compute convex hull triangle mesh
+    convex_hull = pointcloud.compute_convex_hull()
+
+    # create rhino mesh from o3d output and add vertices and faces
+    rhino_mesh = Rhino.Geometry.Mesh()
+    [rhino_mesh.Vertices.Add(v[0], v[1], v[2])
+     for v in np.asarray(convex_hull[0].vertices)]
+    [rhino_mesh.Faces.AddFace(f[0], f[1], f[2])
+     for f in np.asarray(convex_hull[0].triangles)]
+
+    # compute normals and compact
+    rhino_mesh.UnifyNormals()
+    rhino_mesh.Normals.ComputeNormals()
+    rhino_mesh.Compact()
+
+    # return the rhino mesh
+    return rhino_mesh
+
 
 @hops.component(
     "/open3d.PoissonMesh",
@@ -513,51 +558,6 @@ def open3d_PoissonMeshNormalsComponent(points,
     return rhino_mesh
 
 
-@hops.component(
-    "/open3d.ConvexHull",
-    name="ConvexHull",
-    nickname="ConvexHull",
-    description="Construct a Mesh from a PointCloud using Open3D convex hull.", # NOQA501
-    category=None,
-    subcategory=None,
-    icon=None,
-    inputs=[
-        hs.HopsPoint("Points", "P", "The PointClouds Points", hs.HopsParamAccess.LIST), # NOQA501
-    ],
-    outputs=[
-        hs.HopsMesh("Mesh", "M", "The resulting triangle Mesh.", hs.HopsParamAccess.ITEM), # NOQA501
-    ])
-def open3d_ConvexHullComponent(points):
-
-    # convert point list to np array
-    np_points = np.array([[pt.X, pt.Y, pt.Z] for pt in points])
-
-    # create pointcloud
-    pointcloud = o3d.geometry.PointCloud()
-    pointcloud.points = o3d.utility.Vector3dVector(np_points)
-
-    # estimate the normals
-    pointcloud.estimate_normals()
-
-    # compute convex hull triangle mesh
-    convex_hull = pointcloud.compute_convex_hull()
-
-    # create rhino mesh from o3d output and add vertices and faces
-    rhino_mesh = Rhino.Geometry.Mesh()
-    [rhino_mesh.Vertices.Add(v[0], v[1], v[2])
-     for v in np.asarray(convex_hull[0].vertices)]
-    [rhino_mesh.Faces.AddFace(f[0], f[1], f[2])
-     for f in np.asarray(convex_hull[0].triangles)]
-
-    # compute normals and compact
-    rhino_mesh.UnifyNormals()
-    rhino_mesh.Normals.ComputeNormals()
-    rhino_mesh.Compact()
-
-    # return the rhino mesh
-    return rhino_mesh
-
-
 # OPENCV //////////////////////////////////////////////////////////////////////
 
 @hops.component(
@@ -570,15 +570,15 @@ def open3d_ConvexHullComponent(points):
     icon=None,
     inputs=[
         hs.HopsString("FilePath", "F", "The filepath of the image.", hs.HopsParamAccess.ITEM), # NOQA501
-        hs.HopsInteger("BinaryThreshold", "B", "The threshold for binary (black & white) conversion of the image. Defaults to 170.", hs.HopsParamAccess.ITEM), # NOQA501
-        hs.HopsNumber("AreaThreshold", "T", "The area threshold for filtering the returned contours in pixels. Defaults to 100.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("BinaryThreshold", "B", "The threshold for binary (black & white) conversion of the image. Defaults to 127.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsNumber("AreaThreshold", "T", "The area threshold for filtering the returned contours in pixels. Deactivated if set to 0. Defaults to 0.", hs.HopsParamAccess.ITEM), # NOQA501
     ],
     outputs=[
-        hs.HopsCurve("Contours", "C", "The detected contours as Polylines.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsCurve("Contours", "C", "The detected contours as Polylines.", hs.HopsParamAccess.LIST), # NOQA501
     ])
 def opencv_DetectContoursComponent(filepath,
-                                   bthresh=170,
-                                   athresh=100.0):
+                                   bthresh=127,
+                                   athresh=0.0):
     # run contour detection using opencv
     image, contours = imgprocessing.detect_contours(filepath,
                                                     bthresh,
