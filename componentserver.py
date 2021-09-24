@@ -413,14 +413,16 @@ def open3d_AlphaShapeComponent(points, alpha=1.0):
     pointcloud.estimate_normals()
 
     # compute convex hull triangle mesh
-    alpha_shape = o3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(pointcloud, alpha)
+    a_shape = o3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(
+                                                                    pointcloud,
+                                                                    alpha)
 
     # create rhino mesh from o3d output and add vertices and faces
     rhino_mesh = Rhino.Geometry.Mesh()
     [rhino_mesh.Vertices.Add(v[0], v[1], v[2])
-     for v in np.asarray(alpha_shape.vertices)]
+     for v in np.asarray(a_shape.vertices)]
     [rhino_mesh.Faces.AddFace(f[0], f[1], f[2])
-     for f in np.asarray(alpha_shape.triangles)]
+     for f in np.asarray(a_shape.triangles)]
 
     # compute normals and compact
     rhino_mesh.UnifyNormals()
