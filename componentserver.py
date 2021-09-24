@@ -386,6 +386,52 @@ def intri_HeatMethodDistanceComponent(mesh,
 # OPEN3D //////////////////////////////////////////////////////////////////////
 
 @hops.component(
+    "/open3d.AlphaShape",
+    name="AlphaShape",
+    nickname="AlphaShape",
+    description="Construct a Mesh from a PointCloud using Open3D alpha shape algorithm.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsPoint("Points", "P", "The PointClouds Points", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("Alpha", "A", "The Alpha value for the algorithm. Defaults to 1.0.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsMesh("Mesh", "M", "The resulting triangle Mesh.", hs.HopsParamAccess.ITEM), # NOQA501
+    ])
+def open3d_AlphaShapeComponent(points, alpha=1.0):
+
+    # convert point list to np array
+    np_points = np.array([[pt.X, pt.Y, pt.Z] for pt in points])
+
+    # create pointcloud
+    pointcloud = o3d.geometry.PointCloud()
+    pointcloud.points = o3d.utility.Vector3dVector(np_points)
+
+    # estimate the normals
+    pointcloud.estimate_normals()
+
+    # compute convex hull triangle mesh
+    alpha_shape = o3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(pointcloud, alpha)
+
+    # create rhino mesh from o3d output and add vertices and faces
+    rhino_mesh = Rhino.Geometry.Mesh()
+    [rhino_mesh.Vertices.Add(v[0], v[1], v[2])
+     for v in np.asarray(alpha_shape.vertices)]
+    [rhino_mesh.Faces.AddFace(f[0], f[1], f[2])
+     for f in np.asarray(alpha_shape.triangles)]
+
+    # compute normals and compact
+    rhino_mesh.UnifyNormals()
+    rhino_mesh.Normals.ComputeNormals()
+    rhino_mesh.Compact()
+
+    # return the rhino mesh
+    return rhino_mesh
+
+
+@hops.component(
     "/open3d.ConvexHull",
     name="ConvexHull",
     nickname="ConvexHull",
@@ -422,6 +468,144 @@ def open3d_ConvexHullComponent(points):
      for f in np.asarray(convex_hull[0].triangles)]
 
     # compute normals and compact
+    rhino_mesh.UnifyNormals()
+    rhino_mesh.Normals.ComputeNormals()
+    rhino_mesh.Compact()
+
+    # return the rhino mesh
+    return rhino_mesh
+
+
+@hops.component(
+    "/open3d.BallPivotingMesh",
+    name="BallPivotingMesh",
+    nickname="BallPivotingMesh",
+    description="Construct a Mesh from a PointCloud and corresponding normals using Open3D ball pivoting reconstruction.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsPoint("Points", "P", "The PointClouds Points", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsInteger("Depth", "D", "Depth parameter for the poisson algorithm. Defaults to 8.", hs.HopsParamAccess.ITEM), # NOQA501
+        ],
+    outputs=[
+        hs.HopsMesh("Mesh", "M", "The resulting Mesh.", hs.HopsParamAccess.ITEM), # NOQA501
+    ])
+def open3d_BallPivotingMeshComponent(points,
+                                     triangles=100000):
+
+    # convert point list to np array
+    np_points = hsutil.rhino_points_to_np_array(points)
+
+    # create pointcloud
+    pointcloud = o3d.geometry.PointCloud()
+    pointcloud.points = o3d.utility.Vector3dVector(np_points)
+
+    # estimate normals of the pcd
+    pointcloud.estimate_normals()
+
+    # compute radius for bpa algorithm
+    distances = pointcloud.compute_nearest_neighbor_distance()
+    avg_dist = np.mean(distances)
+    radius = 3 * avg_dist
+
+    # create poisson mesh reconstruction
+    bpa_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(
+                        pointcloud,
+                        o3d.utility.DoubleVector([radius,
+                                                  radius * 2,
+                                                  radius * 3]))
+
+    # downsample mesh to a lower number of triangles
+    if triangles > 0:
+        bpa_mesh = bpa_mesh.simplify_quadric_decimation(triangles)
+
+    # remove artifacts and ensure mesh consistency
+    bpa_mesh.remove_degenerate_triangles()
+    bpa_mesh.remove_duplicated_triangles()
+    bpa_mesh.remove_duplicated_vertices()
+    bpa_mesh.remove_non_manifold_edges()
+
+    # create rhino mesh from o3d output and vertices and faces
+    rhino_mesh = Rhino.Geometry.Mesh()
+    [rhino_mesh.Vertices.Add(v[0], v[1], v[2])
+     for v in np.asarray(bpa_mesh.vertices)]
+    [rhino_mesh.Faces.AddFace(f[0], f[1], f[2])
+     for f in np.asarray(bpa_mesh.triangles)]
+
+    # unify and compute normals and compact
+    rhino_mesh.UnifyNormals()
+    rhino_mesh.Normals.ComputeNormals()
+    rhino_mesh.Compact()
+
+    # return the rhino mesh
+    return rhino_mesh
+
+
+@hops.component(
+    "/open3d.BallPivotingMeshNormals",
+    name="BallPivotingMeshNormals",
+    nickname="BallPivotingMeshNormals",
+    description="Construct a Mesh from a PointCloud and corresponding normals using Open3D ball pivoting reconstruction.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsPoint("Points", "P", "The PointClouds Points", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsVector("Normals", "N", "The Normals of the pointcloud to be used in reconstruction", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsInteger("Triangles", "T", "Number of triangles the resulting mesh gets downsampled to. No downsampling will happen if 0 is supplied.. Defaults to 100000.", hs.HopsParamAccess.ITEM), # NOQA501
+        ],
+    outputs=[
+        hs.HopsMesh("Mesh", "M", "The resulting Mesh.", hs.HopsParamAccess.ITEM), # NOQA501
+    ])
+def open3d_BallPivotingMeshNormalsComponent(points,
+                                            normals,
+                                            triangles=100000):
+
+    # convert point list to np array
+    np_points = hsutil.rhino_points_to_np_array(points)
+
+    # create pointcloud
+    pointcloud = o3d.geometry.PointCloud()
+    pointcloud.points = o3d.utility.Vector3dVector(np_points)
+
+    # if normals are present, use them, otherwise estimate using subroutine
+    if normals:
+        np_normals = np.array([[n.X, n.Y, n.Z] for n in normals])
+        pointcloud.normals = o3d.utility.Vector3dVector(np_normals)
+    else:
+        pointcloud.estimate_normals()
+
+    # compute radius for bpa algorithm
+    distances = pointcloud.compute_nearest_neighbor_distance()
+    avg_dist = np.mean(distances)
+    radius = 3 * avg_dist
+
+    # create poisson mesh reconstruction
+    bpa_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(
+                        pointcloud,
+                        o3d.utility.DoubleVector([radius,
+                                                  radius * 2,
+                                                  radius * 3]))
+
+    # downsample mesh to a lower number of triangles
+    if triangles > 0:
+        bpa_mesh = bpa_mesh.simplify_quadric_decimation(triangles)
+
+    # remove artifacts and ensure mesh consistency
+    bpa_mesh.remove_degenerate_triangles()
+    bpa_mesh.remove_duplicated_triangles()
+    bpa_mesh.remove_duplicated_vertices()
+    bpa_mesh.remove_non_manifold_edges()
+
+    # create rhino mesh from o3d output and vertices and faces
+    rhino_mesh = Rhino.Geometry.Mesh()
+    [rhino_mesh.Vertices.Add(v[0], v[1], v[2])
+     for v in np.asarray(bpa_mesh.vertices)]
+    [rhino_mesh.Faces.AddFace(f[0], f[1], f[2])
+     for f in np.asarray(bpa_mesh.triangles)]
+
+    # unify and compute normals and compact
     rhino_mesh.UnifyNormals()
     rhino_mesh.Normals.ComputeNormals()
     rhino_mesh.Compact()

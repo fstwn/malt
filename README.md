@@ -80,7 +80,7 @@ this so that we can call the functions not just by using Hops but also by using
 
 ## 5. Running the Hops Server in the Virtual Environment
 
-Make sure your current working directory is the directory where `hops_server.py` 
+Make sure your current working directory is the directory where `componentserver.py` 
 is located. Otherwise browse to this directory using `cd` (as we did in step 3).
  Make sure the `ddu_ias_research` conda environment is active, otherwise run:
 ```
@@ -89,7 +89,7 @@ conda activate ddu_ias_research
 
 Now you can start the Hops Server by running:
 ```
-python hops_server.py
+python componentserver.py
 ```
 
 ## 6. Using one of the provided Hops Components in Grasshopper
