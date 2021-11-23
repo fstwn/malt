@@ -821,7 +821,7 @@ def sklearn_TSNE(data,
                  method=0,
                  rnd_seed=0):
     # loop over tree and extract data points
-    paths, np_data = hsutil.gh_tree_to_np_array(data, gh)
+    paths, np_data = hsutil.gh_tree_to_np_array(data)
     # convert method string
     if method <= 0:
         method_str = "barnes_hut"
