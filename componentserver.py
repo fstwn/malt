@@ -123,10 +123,11 @@ if _USING_K2:
 
 # MODULE IMPORTS --------------------------------------------------------------
 
-import numpy as np # NOQA402
-from sklearn.manifold import TSNE # NOQA402
-import open3d as o3d # NOQA402
 import igl # NOQA402
+import numpy as np # NOQA402
+import open3d as o3d # NOQA402
+from sklearn.manifold import TSNE # NOQA402
+from sklearn.decomposition import PCA # NOQA402
 
 
 # LOCAL MODULE IMPORTS --------------------------------------------------------
@@ -812,7 +813,7 @@ def opencv_DetectContoursComponent(filepath,
     outputs=[
         hs.HopsNumber("Points", "T", "The transformed points", hs.HopsParamAccess.TREE), # NOQA501
     ])
-def sklearn_TSNE(data,
+def sklearn_TSNEComponent(data,
                  n_components=2,
                  perplexity=30,
                  early_exaggeration=12.0,
@@ -821,7 +822,7 @@ def sklearn_TSNE(data,
                  method=0,
                  rnd_seed=0):
     # loop over tree and extract data points
-    paths, np_data = hsutil.gh_tree_to_np_array(data)
+    paths, np_data = hsutil.hops_tree_to_np_array(data)
     # convert method string
     if method <= 0:
         method_str = "barnes_hut"
@@ -837,11 +838,35 @@ def sklearn_TSNE(data,
                 method=method_str)
     # run t-SNE solver on incoming data
     tsne_result = tsne.fit_transform(np_data)
-    # convert result to datatree for output
-    tree = {}
-    for i, pt in enumerate(tsne_result):
-        tree[paths[i].strip("}{")] = [float(v) for v in pt]
-    return tree
+    # return data as hops tree (dict)
+    return hsutil.np_array_to_hops_tree(tsne_result, paths)
+
+
+@hops.component(
+    "/sklearn.PCA",
+    name="PCA",
+    nickname="PCA",
+    description="Principal component analysis.",
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsNumber("Data", "D", "Point Data to be reduced using PCA as a DataTree, where each Branch represents one Point.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsInteger("Components", "N", "Number of components (dimensions) to keep.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsNumber("Points", "T", "The transformed points", hs.HopsParamAccess.TREE), # NOQA501
+    ])
+def sklearn_PCAComponent(data,
+                n_components=2):
+    # loop over tree and extract data points
+    paths, np_data = hsutil.hops_tree_to_np_array(data)
+    # initialize PCA solver class
+    pca = PCA(n_components=n_components)
+    # run PCA solver on incoming data
+    pca_result = pca.fit_transform(np_data)
+    # return data as hops tree (dict)
+    return hsutil.np_array_to_hops_tree(pca_result, paths)
 
 
 # RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------

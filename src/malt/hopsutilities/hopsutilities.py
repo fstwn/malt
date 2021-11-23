@@ -26,10 +26,10 @@ def rhino_mesh_to_np_arrays(mesh):
     return V, F
 
 
-def gh_tree_to_np_array(data_tree):
+def hops_tree_to_np_array(data_tree: dict):
     """
-    Converts a Grasshopper.DataTree to a numpy array. Returns a tuple of the
-    paths and the actual array.
+    Converts a Hops DataTree (dict with paths as keys) to a numpy array.
+    Returns a tuple of the paths and the actual array.
     """
     paths = list(data_tree.keys())
     np_data = np.array([data_tree[p] for p in paths])
@@ -67,3 +67,15 @@ def np_array_to_rhino_points(pt_np_array: np.array, Rhino=None):
         raise ValueError("No Rhino instance supplied!")
     return [Rhino.Geometry.Point3d(float(v[0]), float(v[1]), float(v[2]))
             for v in pt_np_array]
+
+
+def np_array_to_hops_tree(np_array: np.array, paths: list=[]):
+    """
+    Converts a numpy array to a Hops DataTree (dict with paths as keys).
+    """
+    if not paths:
+        paths = ["{0;" + str(x) + "}" for x in range(np_array.shape[0])]
+    tree = {}
+    for i, pt in enumerate(np_array):
+        tree[paths[i].strip("}{")] = [float(v) for v in pt]
+    return tree
