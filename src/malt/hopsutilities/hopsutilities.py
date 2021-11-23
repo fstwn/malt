@@ -26,6 +26,16 @@ def rhino_mesh_to_np_arrays(mesh):
     return V, F
 
 
+def gh_tree_to_np_array(data_tree):
+    """
+    Converts a Grasshopper.DataTree to a numpy array. Returns a tuple of the
+    paths and the actual array.
+    """
+    paths = list(data_tree.keys())
+    np_data = np.array([data_tree[p] for p in paths])
+    return (paths, np_data)
+
+
 def np_array_to_rhino_transform(xform_np_array: np.array, Rhino=None):
     """
     Converts a 4x4 numpy array to a Rhino.Geometry.Transform transformation
