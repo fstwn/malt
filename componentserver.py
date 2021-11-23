@@ -23,7 +23,7 @@ _RHINOINSIDE = True
 _USING_SYSTEM = True
 
 # Set to True to enable Grasshopper import
-_USING_GH = False
+_USING_GH = True
 
 # Set to True to enable Kangaroo2 import
 _USING_K2 = False
@@ -124,6 +124,7 @@ if _USING_K2:
 # MODULE IMPORTS --------------------------------------------------------------
 
 import numpy as np # NOQA402
+from sklearn.manifold import TSNE # NOQA402
 import open3d as o3d # NOQA402
 import igl # NOQA402
 
@@ -786,6 +787,61 @@ def opencv_DetectContoursComponent(filepath,
 
     # return output
     return plcs
+
+
+# SKLEARN /////////////////////////////////////////////////////////////////////
+
+@hops.component(
+    "/sklearn.TSNE",
+    name="TSNE",
+    nickname="TSNE",
+    description="T-distributed Stochastic Neighbor Embedding.",
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsNumber("Data", "D", "Point Data to be reduced using t-SNE as a DataTree, where each Branch represents one Point.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsInteger("Components", "N", "Dimension of the embedded space.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Perplexity", "P", "The perplexity is related to the number of nearest neighbors that are used in other manifold learning algorithms. Consider selecting a value between 5 and 50. Defaults to 30.", hs.HopsParamAccess.ITEM, ), # NOQA501
+        hs.HopsNumber("EarlyExaggeration", "E", "Controls how tight natural clusters in the original space are in the embedded space and how much space will be between them. Defaults to 12.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsNumber("LearningRate", "R", "The learning rate for t-SNE is usually in the range (10.0, 1000.0). Defaults to 200.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Iterations", "I", "Maximum number of iterations for the optimization. Should be at least 250. Defaults to 1000.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Method", "M", "Barnes-Hut approximation (0) runs in O(NlogN) time. Exact method (1) will run on the slower, but exact, algorithm in O(N^2) time. Defaults to 0.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("RandomSeed", "S", "Determines the random number generator. Pass an int for reproducible results across multiple function calls. Note that different initializations might result in different local minima of the cost function. Defaults to None.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsNumber("Points", "T", "The transformed points", hs.HopsParamAccess.TREE), # NOQA501
+    ])
+def sklearn_TSNE(data,
+                 n_components=2,
+                 perplexity=30,
+                 early_exaggeration=12.0,
+                 learning_rate=200.0,
+                 n_iter=1000,
+                 method=0,
+                 rnd_seed=0):
+    # loop over tree and extract data points
+    paths, np_data = hsutil.gh_tree_to_np_array(data, gh)
+    # convert method string
+    if method <= 0:
+        method_str = "barnes_hut"
+    else:
+        method_str = "exact"
+    # initialize t-SNE solver class
+    tsne = TSNE(n_components=n_components,
+                perplexity=perplexity,
+                early_exaggeration=early_exaggeration,
+                learning_rate=learning_rate,
+                n_iter=n_iter,
+                random_state=rnd_seed,
+                method=method_str)
+    # run t-SNE solver on incoming data
+    tsne_result = tsne.fit_transform(np_data)
+    # convert result to datatree for output
+    tree = {}
+    for i, pt in enumerate(tsne_result):
+        tree[paths[i].strip("}{")] = [float(v) for v in pt]
+    return tree
 
 
 # RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------
