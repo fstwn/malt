@@ -111,7 +111,7 @@ Note that the Hops Server is running under `http://localhost:5000/`.
 
 ![Setting an Endpoint](/resources/readme/readme_03.png)
 
-The respective component that is available at this Endpoint will then be loaded:
+The component that is available at this endpoint will then be loaded:
 
 ![Setting an Endpoint](/resources/readme/readme_04.png)
 

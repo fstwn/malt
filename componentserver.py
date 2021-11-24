@@ -172,7 +172,6 @@ def hops_AvailableComponentsComponent():
     for c in hops._components:
         comps.append(str(c))
         descr.append(hops._components[c].description)
-
     return comps, descr
 
 
@@ -814,13 +813,13 @@ def opencv_DetectContoursComponent(filepath,
         hs.HopsNumber("Points", "T", "The transformed points", hs.HopsParamAccess.TREE), # NOQA501
     ])
 def sklearn_TSNEComponent(data,
-                 n_components=2,
-                 perplexity=30,
-                 early_exaggeration=12.0,
-                 learning_rate=200.0,
-                 n_iter=1000,
-                 method=0,
-                 rnd_seed=0):
+                          n_components=2,
+                          perplexity=30,
+                          early_exaggeration=12.0,
+                          learning_rate=200.0,
+                          n_iter=1000,
+                          method=0,
+                          rnd_seed=0):
     # loop over tree and extract data points
     paths, np_data = hsutil.hops_tree_to_np_array(data)
     # convert method string
@@ -858,7 +857,7 @@ def sklearn_TSNEComponent(data,
         hs.HopsNumber("Points", "T", "The transformed points", hs.HopsParamAccess.TREE), # NOQA501
     ])
 def sklearn_PCAComponent(data,
-                n_components=2):
+                         n_components=2):
     # loop over tree and extract data points
     paths, np_data = hsutil.hops_tree_to_np_array(data)
     # initialize PCA solver class
