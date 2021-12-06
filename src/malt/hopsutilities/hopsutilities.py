@@ -69,7 +69,28 @@ def np_array_to_rhino_points(pt_np_array: np.array, Rhino=None):
             for v in pt_np_array]
 
 
-def np_array_to_hops_tree(np_array: np.array, paths: list=[]):
+def np_array_to_rhino_vectors(vec_np_array: np.array, Rhino=None):
+    """
+    Converts a Nx3 numpy array to a list of Rhino.Geometry.Vector3d objects.
+
+    Remarks
+    -------
+    Caller needs to pass an imported Rhino to run this function. This is to
+    avoid rhinoinside.load multiple times.
+    """
+    if not Rhino:
+        raise ValueError("No Rhino instance supplied!")
+    dims = vec_np_array.shape[1]
+    assert dims == 2 or dims == 3, "Rhino Vectors can only be 2D or 3D!"
+    if dims == 2:
+        return [Rhino.Geometry.Vector3d(float(v[0]), float(v[1]), 0.0)
+                for v in vec_np_array]
+    else:
+        return [Rhino.Geometry.Vector3d(float(v[0]), float(v[1]), float(v[2]))
+                for v in vec_np_array]
+
+
+def np_array_to_hops_tree(np_array: np.array, paths: list = []):
     """
     Converts a numpy array to a Hops DataTree (dict with paths as keys).
     """

@@ -50,7 +50,7 @@ conda activate ddu_ias_research
 
 ## 3. Installing the malt python package
 
-Using a Windows Terminal or Powershell, `cd` into the directory where you have 
+Using a Windows Terminal or Powershell, `cd` into the directory where **you** have 
 cloned/unpacked the `malt` repository. For me that's running:
 ```
 cd "C:\source\repos\malt"

@@ -2,8 +2,14 @@
 
 import clr
 from itertools import product
+import logging
 
 # OPTIONS ---------------------------------------------------------------------
+
+# Deactivate Mmatplotlib logger to prevent mpl imports in referenced libraries
+# from triggering a wall of mpl debug messages.
+mpl_logger = logging.getLogger("matplotlib")
+mpl_logger.setLevel(logging.WARNING)
 
 # Set to True to run in debug mode.
 _DEBUG = True
@@ -126,9 +132,9 @@ if _USING_K2:
 import igl # NOQA402
 import numpy as np # NOQA402
 import open3d as o3d # NOQA402
+import potpourri3d as pp3d # NOQA402
 from sklearn.manifold import TSNE # NOQA402
 from sklearn.decomposition import PCA # NOQA402
-
 
 # LOCAL MODULE IMPORTS --------------------------------------------------------
 
@@ -136,6 +142,7 @@ import malt.hopsutilities as hsutil # NOQA402
 from malt import icp # NOQA402
 from malt import intri # NOQA402
 from malt import imgprocessing # NOQA402
+from malt import shapedescriptor # NOQA402
 
 # REGSISTER FLASK AND/OR RHINOINSIDE HOPS APP ---------------------------------
 
@@ -789,6 +796,201 @@ def opencv_DetectContoursComponent(filepath,
     return plcs
 
 
+# POTPOURRI3D /////////////////////////////////////////////////////////////////
+
+@hops.component(
+    "/pp3d.MeshHeatMethodDistance",
+    name="MeshHeatMethodDistance",
+    nickname="MeshHeatDist",
+    description="Compute geodesic distances using the heat method.",
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsMesh("Mesh", "M", "The triangle mesh to compute geodesic distances on.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Sources", "S", "The indices of the source vertices from which to compute geodesic distances using the heat method. Defaults to 0.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("TextureScale", "T", "The texturescale used for setting the normalized values to the texture coordinates.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsMesh("Mesh", "M", "The mesh with texture coordinates set to the normalized values.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsNumber("Distances", "D", "The geodesic distances to all mesh vertices.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("Values", "V", "The normalized values for every mesh vertex.", hs.HopsParamAccess.LIST), # NOQA501
+    ])
+def pp3d_HeatMethodDistanceComponent(mesh,
+                                     sources,
+                                     texture_scale=1.0):
+
+    # ensure that the user picked a feasible source
+    for v in list(sources):
+        assert v <= mesh.Vertices.Count - 1, ("The index of the "
+                                              "source vertex cannot "
+                                              "exceed the vertex "
+                                              "count!")
+
+    # get vertex and face array
+    V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
+
+    # compute geodesic heat distances
+    if len(source) == 1:
+        geodists = [float(x) for x in
+                    pp3d.compute_distance(V, F, sources[0])]
+    else:
+        geodists = [float(x) for x in
+                    pp3d.compute_distance_multisource(V, F, sources)]
+
+    # normalize all values for setting texture coordinates
+    vmin = min(geodists)
+    vmax = max(geodists)
+    mult = 1.0 / (vmax - vmin)
+    values = [mult * (v - vmin) for v in geodists]
+
+    # set texture coordinates of output mesh
+    out_mesh = mesh.Duplicate()
+    for i in range(out_mesh.Vertices.Count):
+        out_mesh.TextureCoordinates.SetTextureCoordinate(
+                    i,
+                    Rhino.Geometry.Point2f(0.0, values[i] * texture_scale))
+
+    # return results
+    return out_mesh, geodists, values
+
+
+@hops.component(
+    "/pp3d.MeshVectorHeatExtendScalar",
+    name="MeshVectorHeatExtendScalar",
+    nickname="MeshVecHeatExtScal",
+    description="Extend scalar values along a mesh using the vector heat method.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsMesh("Mesh", "M", "The triangle mesh to extend scalar on.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Sources", "S", "The indices of the source vertices from which to extend the scalar values.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("Values", "V", "The scalar values to extend per source vertex.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("TextureScale", "T", "The texturescale used for setting the normalized values to the texture coordinates.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsMesh("Mesh", "M", "The mesh with texture coordinates set to the normalized values.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsNumber("ExtendedScalars", "E", "The extended scalar values for every mesh vertex.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("NormalizedValues", "N", "The normalized extended scalar values for every mesh vertex.", hs.HopsParamAccess.LIST), # NOQA501
+    ])
+def pp3d_MeshVectorHeatExtendScalarComponent(mesh,
+                                             sources,
+                                             values,
+                                             texture_scale=1.0):
+
+    # ensure that the user picked feasible sources
+    for v in list(sources):
+        assert v >= 0, "Vertex index cannot be negative!"
+        assert v <= mesh.Vertices.Count - 1, ("The index of the "
+                                              "source vertex cannot "
+                                              "exceed the vertex "
+                                              "count!")
+
+    # sanitize input list lengths
+    assert len(sources) == len(values), ("Number of sources and tangent "
+                                          "vectors has to correspond!")
+
+    # get vertex and face array
+    V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
+
+    # Init vector heat solver
+    vhmsolver = pp3d.MeshVectorHeatSolver(V, F)
+
+    # extend the scalar
+    extended_scalars = [float(v) for v in
+                        vhmsolver.extend_scalar(sources, values)]
+
+    # normalize all values for setting texture coordinates
+    vmin = min(extended_scalars)
+    vmax = max(extended_scalars)
+    mult = 1.0 / (vmax - vmin)
+    nrmvalues = [mult * (v - vmin) for v in extended_scalars]
+
+    # set texture coordinates of output mesh
+    out_mesh = mesh.Duplicate()
+    for i in range(out_mesh.Vertices.Count):
+        out_mesh.TextureCoordinates.SetTextureCoordinate(
+                    i,
+                    Rhino.Geometry.Point2f(0.0, nrmvalues[i] * texture_scale))
+
+    return out_mesh, extended_scalars, nrmvalues
+
+
+@hops.component(
+    "/pp3d.MeshVectorHeatParallelTransport",
+    name="MeshVectorHeatParallelTransport",
+    nickname="MeshVecHeatTransp",
+    description="Parallel transport a vector along the surface.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsMesh("Mesh", "M", "The triangle mesh to use for parallel transport.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Sources", "S", "The indices of the source vertices from which to transport the tangent vectors.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsVector("Vectors", "V", "The 2d tangent vectors to parallel transport per source vertex.", hs.HopsParamAccess.LIST), # NOQA501
+    ],
+    outputs=[
+        hs.HopsVector("TangentFrames", "F", "The tangent frames used by the solver.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsVector("TransportVectors", "T", "The tangent vectors after parallel transport.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsVector("MappedVectors", "M", "The tangent vectors after parallel transport mapped to 3D.", hs.HopsParamAccess.LIST), # NOQA501
+    ])
+def pp3d_MeshVectorHeatParallelTransportComponent(mesh,
+                                                  sources,
+                                                  vectors):
+
+    # ensure that the user picked feasible sources
+    for v in list(sources):
+        assert v >= 0, "Vertex index cannot be negative!"
+        assert v <= mesh.Vertices.Count - 1, ("The index of the "
+                                              "source vertex cannot "
+                                              "exceed the vertex "
+                                              "count!")
+
+    # sanitize input list lengths
+    assert len(sources) == len(vectors), ("Number of sources and tangent "
+                                          "vectors has to correspond!")
+
+    # get vertex and face array
+    V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
+
+    # sanitize rhino vectors to 2d tangent space
+    tvectors = []
+    for v in vectors:
+        tvectors.append([v.X, v.Y])
+
+    # init vector heat solver
+    vhmsolver = pp3d.MeshVectorHeatSolver(V, F)
+
+    # get tangent frames and convert them to rhino planes
+    basisX, basisY, basisN = vhmsolver.get_tangent_frames()
+    frames = {}
+    for i, (bX, bY, bN) in enumerate(zip(basisX, basisY, basisN)):
+        origin = Rhino.Geometry.Vector3d(Rhino.Geometry.Point3d(mesh.Vertices[i]))
+        xaxis = Rhino.Geometry.Vector3d(bX[0], bX[1], bX[2])
+        yaxis = Rhino.Geometry.Vector3d(bY[0], bY[1], bY[2])
+        frames[str(i)] = [origin, xaxis, yaxis]
+
+    # extend the vector via parallel transport
+    if len(sources) > 1:
+        ext_vectors = vhmsolver.transport_tangent_vectors(sources,
+                                                          tvectors)
+    else:
+        ext_vectors = vhmsolver.transport_tangent_vector(sources[0],
+                                                         tvectors[0])
+
+    # map extended vectors to 3d space
+    ext_vectors_3d = (ext_vectors[:, 0, np.newaxis] * basisX +
+                      ext_vectors[:, 1, np.newaxis] * basisY)
+
+    # convert vectors to rhino
+    rh_vectors = hsutil.np_array_to_rhino_vectors(ext_vectors, Rhino)
+    rh_vectors_3d = hsutil.np_array_to_rhino_vectors(ext_vectors_3d, Rhino)
+
+    # return the results of the parallel transport
+    return frames, rh_vectors, rh_vectors_3d
+
+
 # SKLEARN /////////////////////////////////////////////////////////////////////
 
 @hops.component(
@@ -866,6 +1068,41 @@ def sklearn_PCAComponent(data,
     pca_result = pca.fit_transform(np_data)
     # return data as hops tree (dict)
     return hsutil.np_array_to_hops_tree(pca_result, paths)
+
+
+# SHAPE DESCRIPTORS ///////////////////////////////////////////////////////////
+
+@hops.component(
+    "/sd.MeshSphericalHarmonicsDescriptor",
+    name="MeshSphericaHarmonicsDescriptor",
+    nickname="MeshSHD",
+    description="Description of mesh using a complex function on the sphere.",
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsMesh("Mesh", "M", "The triangle mesh to compute the shape descriptor for.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Dimensions", "D", "Number of dimensions/coefficients for the computation. Defaults to 13.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsNumber("FeatureVector", "F", "The feature vector for the shape descriptor.", hs.HopsParamAccess.LIST), # NOQA501
+    ])
+def sd_MeshSphericalHarmonicsDescriptorComponents(mesh, dims=13):
+    # check if mesh is all triangles
+    if mesh.Faces.QuadCount > 0:
+        raise ValueError("Mesh has to be triangular!")
+
+    # get np arrays of vertices and faces
+    V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
+
+    # compute shape descriptor
+    sdescr = shapedescriptor.descriptorCS(V, F, coef_num_sqrt=dims)
+
+    # convert descriptor values to floats
+    sdescr = [float(x) for x in sdescr]
+
+    # return results
+    return sdescr
 
 
 # RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------
