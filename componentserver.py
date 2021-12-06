@@ -831,7 +831,7 @@ def pp3d_HeatMethodDistanceComponent(mesh,
     V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
 
     # compute geodesic heat distances
-    if len(source) == 1:
+    if len(sources) == 1:
         geodists = [float(x) for x in
                     pp3d.compute_distance(V, F, sources[0])]
     else:
@@ -889,7 +889,7 @@ def pp3d_MeshVectorHeatExtendScalarComponent(mesh,
 
     # sanitize input list lengths
     assert len(sources) == len(values), ("Number of sources and tangent "
-                                          "vectors has to correspond!")
+                                         "vectors has to correspond!")
 
     # get vertex and face array
     V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
@@ -966,7 +966,8 @@ def pp3d_MeshVectorHeatParallelTransportComponent(mesh,
     basisX, basisY, basisN = vhmsolver.get_tangent_frames()
     frames = {}
     for i, (bX, bY, bN) in enumerate(zip(basisX, basisY, basisN)):
-        origin = Rhino.Geometry.Vector3d(Rhino.Geometry.Point3d(mesh.Vertices[i]))
+        origin = Rhino.Geometry.Vector3d(
+                        Rhino.Geometry.Point3d(mesh.Vertices[i]))
         xaxis = Rhino.Geometry.Vector3d(bX[0], bX[1], bX[2])
         yaxis = Rhino.Geometry.Vector3d(bY[0], bY[1], bY[2])
         frames[str(i)] = [origin, xaxis, yaxis]
