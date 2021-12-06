@@ -1087,7 +1087,7 @@ def sklearn_PCAComponent(data,
     outputs=[
         hs.HopsNumber("FeatureVector", "F", "The feature vector for the shape descriptor.", hs.HopsParamAccess.LIST), # NOQA501
     ])
-def sd_MeshSphericalHarmonicsDescriptorComponents(mesh, dims=13):
+def sd_MeshSphericalHarmonicsDescriptorComponent(mesh, dims=13):
     # check if mesh is all triangles
     if mesh.Faces.QuadCount > 0:
         raise ValueError("Mesh has to be triangular!")
