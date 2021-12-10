@@ -1,4 +1,5 @@
 # script by Yijiang Huang
+#
 # https://github.com/yijiangh/compas_rpc_examples
 # MIT license
 
@@ -13,7 +14,8 @@ import numpy as np
 
 # https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-from tensorflow import keras # NOQA402
+
+import tensorflow.keras as keras # NOQA402
 
 
 # FUNCTION DEFINITIONS --------------------------------------------------------
