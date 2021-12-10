@@ -11,6 +11,7 @@ import malt.imgprocessing as imgprocessing # NOQA402
 import malt.intri as intri # NOQA402
 import malt.shapedescriptor as shapedescriptor # NOQA402
 # import tf_demo as tf_demo # NOQA402
+import malt.tf_shapenet as tf_shapenet # NOQA402
 
 if sys.platform == "win32":
     import malt.hopsutilities as hopsutilities # NOQA402
