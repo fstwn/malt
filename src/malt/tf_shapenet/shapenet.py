@@ -20,6 +20,7 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 
+# PATH TO THIS DIRECTIORY -----------------------------------------------------
 _HERE = os.path.dirname(__file__)
 
 
@@ -30,12 +31,10 @@ def initial_train(model_name: str,
                   test_result: np.array,
                   epochs: int = 100,
                   overwrite: bool = False):
-    # convert to dataframes ?
-    # train_input = pd.DataFrame(train_input)
-    # train_result = pd.DataFrame(train_result)
-    # test_input = pd.DataFrame(test_input)
-    # test_result = pd.DataFrame(test_result)
-
+    """
+    Create a tensorflow keras model and run initial training for a specified
+    number of epochs.
+    """
     # check if model exists and throw error if it does
     model_file = os.path.normpath(os.path.join(_HERE, model_name + ".h5"))
     if os.path.isfile(model_file) and not overwrite:
@@ -86,6 +85,10 @@ def load_and_train(model_name: str,
                    train_input: np.array,
                    train_result: np.array,
                    epochs: int = 1000):
+    """
+    Load an existing tensorflow keras model and train it further for the
+    specified number of epochs.
+    """
     # load the model with the specified name
     model_file = os.path.normpath(os.path.join(_HERE, model_name + ".h5"))
     model = tf.keras.models.load_model(model_file)
@@ -99,7 +102,14 @@ def load_and_train(model_name: str,
 
 
 def forward_pass(data_input: np.array, model_name: str):
+    """
+    Load an existing tensorflow keras model and let it make a prediction based
+    on the input data.
+    """
     # load the model with the specified name
-    model = tf.keras.models.load_model(os.path.normpath(os.path.join(_HERE, model_name + ".h5")))
+    model_file = os.path.normpath(os.path.join(_HERE, model_name + ".h5"))
+    model = tf.keras.models.load_model(model_file)
+    # let the model make a prediction based on the input data
     prediction = model.predict(data_input)
+    # return the prediction result
     return prediction
