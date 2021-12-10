@@ -29,7 +29,7 @@ _RHINOINSIDE = True
 _USING_SYSTEM = True
 
 # Set to True to enable Grasshopper import
-_USING_GH = True
+_USING_GH = False
 
 # Set to True to enable Kangaroo2 import
 _USING_K2 = False
@@ -129,6 +129,7 @@ if _USING_K2:
     clr.AddReference("KangarooSolver.dll")
     import KangarooSolver as ks # NOQA402
 
+
 # MODULE IMPORTS --------------------------------------------------------------
 
 import igl # NOQA402
@@ -138,6 +139,7 @@ import potpourri3d as pp3d # NOQA402
 from sklearn.manifold import TSNE # NOQA402
 from sklearn.decomposition import PCA # NOQA402
 
+
 # LOCAL MODULE IMPORTS --------------------------------------------------------
 
 import malt.hopsutilities as hsutil # NOQA402
@@ -146,6 +148,7 @@ from malt import intri # NOQA402
 from malt import imgprocessing # NOQA402
 from malt import sshd # NOQA402
 from malt import tf_shapenet # NOQA402
+
 
 # REGSISTER FLASK AND/OR RHINOINSIDE HOPS APP ---------------------------------
 
