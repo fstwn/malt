@@ -12,7 +12,7 @@ mpl_logger = logging.getLogger("matplotlib")
 mpl_logger.setLevel(logging.WARNING)
 
 # Set to True to run in debug mode.
-_DEBUG = True
+_DEBUG = False
 
 # Set to True to allow access via local network (only works with Flask app!)
 # WARNING: THIS MIGHT BE A SECURITY RISK BECAUSE IT POTENTIALLY ALLOWS PEOPLE
@@ -143,6 +143,7 @@ from malt import icp # NOQA402
 from malt import intri # NOQA402
 from malt import imgprocessing # NOQA402
 from malt import shapedescriptor # NOQA402
+from malt import tf_shapenet # NOQA402
 
 # REGSISTER FLASK AND/OR RHINOINSIDE HOPS APP ---------------------------------
 
@@ -1010,6 +1011,7 @@ def pp3d_MeshVectorHeatParallelTransportComponent(mesh,
         hs.HopsNumber("LearningRate", "R", "The learning rate for t-SNE is usually in the range (10.0, 1000.0). Defaults to 200.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("Iterations", "I", "Maximum number of iterations for the optimization. Should be at least 250. Defaults to 1000.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("Method", "M", "Barnes-Hut approximation (0) runs in O(NlogN) time. Exact method (1) will run on the slower, but exact, algorithm in O(N^2) time. Defaults to 0.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Initialization", "I", "Initialization method. Random (0) or PCA (1).", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("RandomSeed", "S", "Determines the random number generator. Pass an int for reproducible results across multiple function calls. Note that different initializations might result in different local minima of the cost function. Defaults to None.", hs.HopsParamAccess.ITEM), # NOQA501
     ],
     outputs=[
@@ -1022,6 +1024,7 @@ def sklearn_TSNEComponent(data,
                           learning_rate=200.0,
                           n_iter=1000,
                           method=0,
+                          init=0,
                           rnd_seed=0):
     # loop over tree and extract data points
     paths, np_data = hsutil.hops_tree_to_np_array(data)
@@ -1030,6 +1033,10 @@ def sklearn_TSNEComponent(data,
         method_str = "barnes_hut"
     else:
         method_str = "exact"
+    if init <= 0:
+        init_str = "random"
+    else:
+        init_str = "pca"
     # initialize t-SNE solver class
     tsne = TSNE(n_components=n_components,
                 perplexity=perplexity,
@@ -1037,7 +1044,8 @@ def sklearn_TSNEComponent(data,
                 learning_rate=learning_rate,
                 n_iter=n_iter,
                 random_state=rnd_seed,
-                method=method_str)
+                method=method_str,
+                init=init_str)
     # run t-SNE solver on incoming data
     tsne_result = tsne.fit_transform(np_data)
     # return data as hops tree (dict)
@@ -1071,7 +1079,7 @@ def sklearn_PCAComponent(data,
     return hsutil.np_array_to_hops_tree(pca_result, paths)
 
 
-# SHAPE DESCRIPTORS ///////////////////////////////////////////////////////////
+# SPEHRICAL HARMONICS SHAPE DESCRIPTOR ////////////////////////////////////////
 
 @hops.component(
     "/sd.MeshSphericalHarmonicsDescriptor",
@@ -1104,6 +1112,115 @@ def sd_MeshSphericalHarmonicsDescriptorComponent(mesh, dims=13):
 
     # return results
     return sdescr
+
+
+# TENSORFLOW SHAPENET INTERFACE ///////////////////////////////////////////////
+
+@hops.component(
+    "/tfsn.InitialTrain",
+    name="ShapeNetInitialTrain",
+    nickname="SNInitTrain",
+    description="Initial training of shapenet neural network using tensorflow.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsNumber("TrainInput", "I", "Training Input Data.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsNumber("TrainResult", "R", "Training Result Data.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsNumber("TestInput", "T", "Test Input Data.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsNumber("TestResult", "TR", "Test Result Data.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsString("ModelName", "N", "The name of the model to be trained.", hs.HopsParamAccess.ITEM, ), # NOQA501
+        hs.HopsBoolean("Overwrite", "O", "Overwrite the model if it already exists?", hs.HopsParamAccess.ITEM, ), # NOQA501
+        hs.HopsInteger("Epochs", "E", "The number of epochs for the initial training.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsNumber("Prediction", "P", "The result/prediction for the test input data.", hs.HopsParamAccess.TREE), # NOQA501
+    ])
+def tfsn_InitialTrainComponent(train_input,
+                               train_result,
+                               data_input,
+                               data_result,
+                               model_name,
+                               overwrite=False,
+                               epochs=100):
+
+    # loop over tree and extract data points
+    ti_paths, train_input = hsutil.hops_tree_to_np_array(train_input)
+    tr_paths, train_result = hsutil.hops_tree_to_np_array(train_result)
+    di_paths, data_input = hsutil.hops_tree_to_np_array(data_input)
+    dr_paths, data_result = hsutil.hops_tree_to_np_array(data_result)
+
+    # train the model and make a first prediction
+    prediction = tf_shapenet.initial_train(model_name,
+                                           train_input,
+                                           train_result,
+                                           data_input,
+                                           data_result,
+                                           epochs,
+                                           overwrite)
+
+    # return the prediction as a hops tree
+    return hsutil.np_array_to_hops_tree(prediction, dr_paths)
+
+
+@hops.component(
+    "/tfsn.LoadAndTrain",
+    name="ShapeNetLoadAndTrain",
+    nickname="SNLoadTrain",
+    description="Training of shapenet neural network using tensorflow.",
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsNumber("TrainInput", "I", "Training Input Data.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsNumber("TrainResult", "R", "Training Result Data.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsString("ModelName", "N", "The name of the model to be trained.", hs.HopsParamAccess.ITEM, ), # NOQA501
+        hs.HopsInteger("Epochs", "E", "The number of epochs for the initial training.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        # hs.HopsNumber("Prediction", "P", "The result/prediction for the test input data.", hs.HopsParamAccess.TREE), # NOQA501
+    ])
+def tfsn_LoadAndTrainComponent(train_input,
+                               train_result,
+                               model_name,
+                               epochs=100):
+
+    # loop over tree and extract data points
+    ti_paths, train_input = hsutil.hops_tree_to_np_array(train_input)
+    tr_paths, train_result = hsutil.hops_tree_to_np_array(train_result)
+
+    tf_shapenet.load_and_train(model_name,
+                               train_input,
+                               train_result,
+                               epochs)
+
+
+@hops.component(
+    "/tfsn.ForwardPass",
+    name="ShapeNetForwardPass",
+    nickname="SNFwPass",
+    description="Forward pass of shapenet neural network using tensorflow.",
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsNumber("Input", "I", "Forward pass input Data.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsString("ModelName", "N", "The name of the model to be trained.", hs.HopsParamAccess.ITEM, ), # NOQA501
+    ],
+    outputs=[
+        hs.HopsNumber("Prediction", "P", "The result/prediction for the test input data.", hs.HopsParamAccess.TREE), # NOQA501
+    ])
+def tfsn_ForwardPassComponent(data_input,
+                              model_name):
+
+    # loop over tree and extract data points
+    di_paths, data_input = hsutil.hops_tree_to_np_array(data_input)
+
+    # create prediction using neural network
+    prediction = tf_shapenet.forward_pass(data_input, model_name)
+
+    # return the prediction as a hops tree
+    return hsutil.np_array_to_hops_tree(prediction, di_paths)
 
 
 # RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------
