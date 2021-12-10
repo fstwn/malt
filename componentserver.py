@@ -42,8 +42,10 @@ import ghhops_server as hs # NOQA402
 
 # Define a custom Hops class to enable Rhino.Inside.CPython in
 # combination with a Flask app (otherwise not possible)
-class CustomHops(hs.Hops):
-    """Custom Hops class allowing Flask app to also run Rhino.Inside"""
+class ExtendedHops(hs.Hops):
+    """
+    Custom extended Hops class allowing Flask app to also run Rhino.Inside.
+    """
 
     def __new__(cls,
                 app=None,
@@ -77,7 +79,7 @@ class CustomHops(hs.Hops):
         elif app_type.startswith("<module 'rhinoinside'"):
             # determine if running with rhino.inside.cpython
             # and init the param module accordingly
-            if not CustomHops.is_inside():
+            if not ExtendedHops.is_inside():
                 raise Exception("rhinoinside is not loaded yet")
             hs.hlogger.debug("Using Hops default http server with rhinoinside")
             hs.params._init_rhinoinside()
@@ -150,11 +152,11 @@ from malt import tf_shapenet # NOQA402
 if _FLASK:
     from flask import Flask # NOQA402
     flaskapp = Flask(__name__)
-    hops = CustomHops(app=flaskapp, force_rhinoinside=_RHINOINSIDE)
+    hops = ExtendedHops(app=flaskapp, force_rhinoinside=_RHINOINSIDE)
 elif not _FLASK and _RHINOINSIDE:
-    hops = CustomHops(app=rhinoinside)
+    hops = ExtendedHops(app=rhinoinside)
 else:
-    hops = CustomHops()
+    hops = ExtendedHops()
 
 
 # HOPS COMPONENTS -------------------------------------------------------------
