@@ -8,7 +8,9 @@ from itertools import product
 import numpy as np
 
 
-# NUMPY & RHINO ---------------------------------------------------------------
+# FUNCTION DEFINITIONS --------------------------------------------------------
+
+# NUMPY & RHINO ///////////////////////////////////////////////////////////////
 
 def rhino_points_to_np_array(points):
     """
@@ -24,16 +26,6 @@ def rhino_mesh_to_np_arrays(mesh):
     V = np.array([[v.X, v.Y, v.Z] for _, v in enumerate(mesh.Vertices)])
     F = np.array([[f.A, f.B, f.C] for _, f in enumerate(mesh.Faces)])
     return V, F
-
-
-def hops_tree_to_np_array(data_tree: dict):
-    """
-    Converts a Hops DataTree (dict with paths as keys) to a numpy array.
-    Returns a tuple of the paths and the actual array.
-    """
-    paths = list(data_tree.keys())
-    np_data = np.array([data_tree[p] for p in paths])
-    return (paths, np_data)
 
 
 def np_array_to_rhino_transform(xform_np_array: np.array, Rhino=None):
@@ -88,6 +80,18 @@ def np_array_to_rhino_vectors(vec_np_array: np.array, Rhino=None):
     else:
         return [Rhino.Geometry.Vector3d(float(v[0]), float(v[1]), float(v[2]))
                 for v in vec_np_array]
+
+# NUMPY & HOPS DATA ///////////////////////////////////////////////////////////
+
+
+def hops_tree_to_np_array(data_tree: dict):
+    """
+    Converts a Hops DataTree (dict with paths as keys) to a numpy array.
+    Returns a tuple of the paths and the actual array.
+    """
+    paths = list(data_tree.keys())
+    np_data = np.array([data_tree[p] for p in paths])
+    return (paths, np_data)
 
 
 def np_array_to_hops_tree(np_array: np.array, paths: list = []):

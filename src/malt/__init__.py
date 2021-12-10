@@ -9,7 +9,7 @@ from .__version__ import (__author__, __author_email__, __copyright__,
 import malt.icp as icp # NOQA402
 import malt.imgprocessing as imgprocessing # NOQA402
 import malt.intri as intri # NOQA402
-import malt.shapedescriptor as shapedescriptor # NOQA402
+import malt.sshd as sshd # NOQA402
 # import tf_demo as tf_demo # NOQA402
 import malt.tf_shapenet as tf_shapenet # NOQA402
 

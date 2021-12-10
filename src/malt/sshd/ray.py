@@ -1,3 +1,7 @@
+# Implementation of the paper:
+# "Description of 3D-shape using a complex function on the sphere"
+# by D.V. Vranic, D. Saupe, 2002"
+#
 # Script by GitHub User ReNicole
 # https://github.com/ReNicole/ShapeDescriptor
 #
@@ -23,10 +27,13 @@
 # then det = dot(P,E1),
 # and t = dot(Q,E2) / det, u = dot(P,T) / det, v = dot(Q,D) / det
 
+
 # THIRD PARTY LIBRARY IMPORTS -------------------------------------------------
 
 import numpy as np
 
+
+# FUNCTION DEFINITIONS --------------------------------------------------------
 
 def ray_triangle_intersect(triangle, origin, direction):
     """

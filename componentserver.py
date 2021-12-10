@@ -144,7 +144,7 @@ import malt.hopsutilities as hsutil # NOQA402
 from malt import icp # NOQA402
 from malt import intri # NOQA402
 from malt import imgprocessing # NOQA402
-from malt import shapedescriptor # NOQA402
+from malt import sshd # NOQA402
 from malt import tf_shapenet # NOQA402
 
 # REGSISTER FLASK AND/OR RHINOINSIDE HOPS APP ---------------------------------
@@ -1084,7 +1084,7 @@ def sklearn_PCAComponent(data,
 # SPEHRICAL HARMONICS SHAPE DESCRIPTOR ////////////////////////////////////////
 
 @hops.component(
-    "/sd.MeshSphericalHarmonicsDescriptor",
+    "/sshd.MeshSphericalHarmonicsDescriptor",
     name="MeshSphericaHarmonicsDescriptor",
     nickname="MeshSHD",
     description="Description of mesh using a complex function on the sphere.",
@@ -1098,7 +1098,7 @@ def sklearn_PCAComponent(data,
     outputs=[
         hs.HopsNumber("FeatureVector", "F", "The feature vector for the shape descriptor.", hs.HopsParamAccess.LIST), # NOQA501
     ])
-def sd_MeshSphericalHarmonicsDescriptorComponent(mesh, dims=13):
+def sshd_MeshSphericalHarmonicsDescriptorComponent(mesh, dims=13):
     # check if mesh is all triangles
     if mesh.Faces.QuadCount > 0:
         raise ValueError("Mesh has to be triangular!")
@@ -1107,7 +1107,7 @@ def sd_MeshSphericalHarmonicsDescriptorComponent(mesh, dims=13):
     V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
 
     # compute shape descriptor
-    sdescr = shapedescriptor.descriptorCS(V, F, coef_num_sqrt=dims)
+    sdescr = sshd.descriptorCS(V, F, coef_num_sqrt=dims)
 
     # convert descriptor values to floats
     sdescr = [float(x) for x in sdescr]

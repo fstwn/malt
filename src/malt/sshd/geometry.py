@@ -1,12 +1,20 @@
+# Implementation of the paper:
+# "Description of 3D-shape using a complex function on the sphere"
+# by D.V. Vranic, D. Saupe, 2002"
+#
 # Script by GitHub User ReNicole
 # https://github.com/ReNicole/ShapeDescriptor
 #
 # Modified by Max Eschenbach, DDU, TU-Darmstadt
 
-# THIRD PARTY LIBRARY IMPORTS
+
+# THIRD PARTY LIBRARY IMPORTS -------------------------------------------------
+
 import numpy as np
 from scipy.spatial import cKDTree as kdtree
 
+
+# FUNCTION DEFINITIONS --------------------------------------------------------
 
 def get_area(vertices):
     """
