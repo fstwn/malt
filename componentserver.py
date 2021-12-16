@@ -144,8 +144,9 @@ from sklearn.decomposition import PCA # NOQA402
 
 import malt.hopsutilities as hsutil # NOQA402
 from malt import icp # NOQA402
-from malt import intri # NOQA402
 from malt import imgprocessing # NOQA402
+from malt import intri # NOQA402
+from malt import shapesph # NOQA402
 from malt import sshd # NOQA402
 from malt import tf_shapenet # NOQA402
 
@@ -1081,7 +1082,7 @@ def sklearn_PCAComponent(data,
     # run PCA solver on incoming data
     pca_result = pca.fit_transform(np_data)
     # return data as hops tree (dict)
-    return hsutil.np_array_to_hops_tree(pca_result, paths)
+    return hsutil.np_float_array_to_hops_tree(pca_result, paths)
 
 
 # SPEHRICAL HARMONICS SHAPE DESCRIPTOR ////////////////////////////////////////
@@ -1111,6 +1112,38 @@ def sshd_MeshSphericalHarmonicsDescriptorComponent(mesh, dims=13):
 
     # compute shape descriptor
     sdescr = sshd.descriptorCS(V, F, coef_num_sqrt=dims)
+
+    # convert descriptor values to floats
+    sdescr = [float(x) for x in sdescr]
+
+    # return results
+    return sdescr
+
+
+@hops.component(
+    "/shapesph.MeshSphericalHarmonicsDescriptorRI",
+    name="MeshSphericaHarmonicsDescriptorRI",
+    nickname="MeshSHD",
+    description="Description of mesh using rotation invariant spherical harmonics descriptor", # NOQA501
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsMesh("Mesh", "M", "The triangle mesh to compute the shape descriptor for.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsNumber("FeatureVector", "F", "The feature vector for the shape descriptor.", hs.HopsParamAccess.LIST), # NOQA501
+    ])
+def shapesph_MeshSphericalHarmonicsDescriptorRIComponent(mesh):
+    # check if mesh is all triangles
+    if mesh.Faces.QuadCount > 0:
+        raise ValueError("Mesh has to be triangular!")
+
+    # get np arrays of vertices and faces
+    V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
+
+    # compute shape descriptor
+    sdescr = shapesph.compute_descriptor(V, F)
 
     # convert descriptor values to floats
     sdescr = [float(x) for x in sdescr]
@@ -1165,7 +1198,7 @@ def tfsn_InitialTrainComponent(train_input,
                                            overwrite)
 
     # return the prediction as a hops tree
-    return hsutil.np_array_to_hops_tree(prediction, dr_paths)
+    return hsutil.np_float_array_to_hops_tree(prediction, dr_paths)
 
 
 @hops.component(
@@ -1225,7 +1258,7 @@ def tfsn_ForwardPassComponent(data_input,
     prediction = tf_shapenet.forward_pass(data_input, model_name)
 
     # return the prediction as a hops tree
-    return hsutil.np_array_to_hops_tree(prediction, di_paths)
+    return hsutil.np_float_array_to_hops_tree(prediction, di_paths)
 
 
 # RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------
