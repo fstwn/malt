@@ -38,13 +38,6 @@ def _write_ply_tempfile(vertices: np.array, faces: np.array):
     """
     Write temporary .PLY file to execute shapedescriptor on...
     """
-    vertices = np.array([(v[0], v[1], v[2]) for v in vertices],
-                        dtype=[('x', 'f4'), ('y', 'f4'),
-                               ('z', 'f4')])
-    faces = np.array([([f[0], f[1], f[2]], 0, 0, 0) for f in faces],
-                     dtype=[('vertex_indices', 'i4', (3,)),
-                            ('red', 'u1'), ('green', 'u1'),
-                            ('blue', 'u1')])
     el_v = PlyElement.describe(vertices, "vertex")
     el_f = PlyElement.describe(faces, "face")
     with open(_TEMPFILE, mode="wb") as f:
@@ -76,6 +69,8 @@ def compute_descriptor(vertices: np.array, faces: np.array):
     print(return_code)
     return _read_result()
 
+
+# TESTING ---------------------------------------------------------------------
 
 if __name__ == "__main__":
     command = (_SHAPEDESCRIPTOR_EXEC +

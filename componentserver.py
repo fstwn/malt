@@ -1139,8 +1139,8 @@ def shapesph_MeshSphericalHarmonicsDescriptorRIComponent(mesh):
     if mesh.Faces.QuadCount > 0:
         raise ValueError("Mesh has to be triangular!")
 
-    # get np arrays of vertices and faces
-    V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
+    # get plyfile elements of vertices and faces
+    V, F = hsutil.rhino_mesh_to_ply_elements(mesh)
 
     # compute shape descriptor
     sdescr = shapesph.compute_descriptor(V, F)
