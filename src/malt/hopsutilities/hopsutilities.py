@@ -23,6 +23,8 @@ def rhino_mesh_to_np_arrays(mesh):
     """
     Converts a Rhino.Geometry.Mesh to numpy arrays of vertices and faces.
     """
+    if mesh.Faces.QuadCount > 0:
+        raise ValueError("Mesh has to be triangular!")
     V = np.array([[v.X, v.Y, v.Z] for _, v in enumerate(mesh.Vertices)])
     F = np.array([[f.A, f.B, f.C] for _, f in enumerate(mesh.Faces)])
     return V, F
@@ -94,13 +96,34 @@ def hops_tree_to_np_array(data_tree: dict):
     return (paths, np_data)
 
 
-def np_array_to_hops_tree(np_array: np.array, paths: list = []):
+def np_float_array_to_hops_tree(np_array: np.array, paths: list = []):
     """
     Converts a numpy array to a Hops DataTree (dict with paths as keys).
     """
     if not paths:
         paths = ["{0;" + str(x) + "}" for x in range(np_array.shape[0])]
     tree = {}
-    for i, pt in enumerate(np_array):
-        tree[paths[i].strip("}{")] = [float(v) for v in pt]
+    for i, branch in enumerate(np_array):
+        tree[paths[i].strip("}{")] = [float(v) for v in branch]
     return tree
+
+
+# RHINO & PLYFILE /////////////////////////////////////////////////////////////
+
+def rhino_mesh_to_ply_elements(mesh):
+    """
+    Return vertex and face elements to write a plyfile
+    """
+    if mesh.Faces.QuadCount > 0:
+        raise ValueError("Mesh has to be triangular!")
+    V = np.array([(v.X, v.Y, v.Z) for _, v in enumerate(mesh.Vertices)],
+                 dtype=[("x", "f4"), ("y", "f4"), ("z", "f4")])
+
+    F = np.array([([f.A, f.B, f.C], 0, 0, 0)
+                  for _, f in enumerate(mesh.Faces)],
+                 dtype=[("vertex_indices", "i4", (3,)),
+                        ("red", "u1"),
+                        ("green", "u1"),
+                        ("blue", "u1")])
+
+    return V, F
