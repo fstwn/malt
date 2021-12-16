@@ -19,7 +19,7 @@ If you want to use the provided Hops Components, you need the following:
 - Windows (unfortunately Hops and Rhino.Inside.Cpython won't work under OSX for now)
 - [Anaconda / Miniconda](https://www.anaconda.com/products/individual)
 - Rhino 7.4 or newer
-- [Hops](https://developer.rhino3d.com/guides/grasshopper/hops-component/) ([Install using Rhino package manager](rhino://package/search?name=hops))
+- [Hops](https://developer.rhino3d.com/guides/grasshopper/hops-component/) ([Install using Rhino package manager by using the `_PackageManager` command](rhino://package/search?name=hops))
 
 # Installation
 
@@ -129,6 +129,15 @@ endpoint. Then I use the resulting values at each vertex to draw isocurves
 on the mesh using the `/igl.MeshIsoCurves` endpoint.
 
 ![Geodesic Heat Isocurves](/resources/readme/readme_06.png)
+
+## Licensing & References
+
+- Original code is licensed under the MIT License.
+- The `malt.ipc` and `malt.tf_shapenet` modules are based on code by Yijiang Huang. This code is licensed under the MIT License found under `licenses/compas_rpc_example`.
+- The `malt.intri` module is based on the [intrinsic-triangulations-tutorial](https://github.com/nmwsharp/intrinsic-triangulations-tutorial) code by Nicholas Sharp and Mark Gillespie & Keenan Crane. Unfortunately, no license is provided by its authors for this public open-source code. The code is based on the paper *"Navigating Intrinsic Triangulations" by Nicholas Sharp, Yousuf Soliman & Keenan Crane, ACM Transactions on Graphics, 2019*.
+- The redistributed executables of [ShapeSPH](https://github.com/mkazhdan/ShapeSPH) are licensed under the MIT License found under `licenses/ShapeSPH`.
+- The [FFTW](http://www.fftw.org/) .dlls that are redistributed with the ShapeSPH executables are licensed under the GNU General Public License founde under `licenses/FFTW`.
+- The `malt.sshd` module is based on [ShapeDescriptor](https://github.com/ReNicole/ShapeDescriptor) by GitHub user [ReNicole](https://github.com/ReNicole). Unfortunately, no license is provided by its author for this public open-source code. The code is based on the paper *"Description of 3D-shape using a complex function on the sphere" by D.V. Vranic, D. Saupe, 2002*.
 
 ## To-Do & Extension Ideas
 
