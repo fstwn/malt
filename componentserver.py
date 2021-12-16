@@ -1055,7 +1055,7 @@ def sklearn_TSNEComponent(data,
     # run t-SNE solver on incoming data
     tsne_result = tsne.fit_transform(np_data)
     # return data as hops tree (dict)
-    return hsutil.np_array_to_hops_tree(tsne_result, paths)
+    return hsutil.np_float_array_to_hops_tree(tsne_result, paths)
 
 
 @hops.component(
