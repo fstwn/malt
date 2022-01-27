@@ -10,6 +10,9 @@ hopscomponents
 # CACHED PYTHON FILES
 __pycache__/
 
+# GUROBI TESTS
+/src/malt/ghgurobi/tests/
+
 # MISC
 
 _archive
