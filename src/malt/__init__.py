@@ -5,6 +5,7 @@ from .__version__ import (__author__, __author_email__, __copyright__,
                           __version__)
 
 
+import malt.ghgurobi as ghgurobi # NOQA402
 import malt.icp as icp # NOQA402
 import malt.imgprocessing as imgprocessing # NOQA402
 import malt.intri as intri # NOQA402
