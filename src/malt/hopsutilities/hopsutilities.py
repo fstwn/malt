@@ -98,13 +98,33 @@ def hops_tree_to_np_array(data_tree: dict):
 
 def np_float_array_to_hops_tree(np_array: np.array, paths: list = []):
     """
-    Converts a numpy array to a Hops DataTree (dict with paths as keys).
+    Converts a numpy float array to a Hops DataTree (dict with paths as keys).
     """
     if not paths:
         paths = ["{0;" + str(x) + "}" for x in range(np_array.shape[0])]
     tree = {}
-    for i, branch in enumerate(np_array):
-        tree[paths[i].strip("}{")] = [float(v) for v in branch]
+    if len(np_array.shape) == 1:
+        for i, branch in enumerate(np_array):
+            tree[paths[i].strip("}{")] = [float(branch)]
+    elif len(np_array.shape) == 2:
+        for i, branch in enumerate(np_array):
+            tree[paths[i].strip("}{")] = [float(v) for v in branch]
+    return tree
+
+
+def np_int_array_to_hops_tree(np_array: np.array, paths: list = []):
+    """
+    Converts a numpy int array to a Hops DataTree (dict with paths as keys).
+    """
+    if not paths:
+        paths = ["{0;" + str(x) + "}" for x in range(np_array.shape[0])]
+    tree = {}
+    if len(np_array.shape) == 1:
+        for i, branch in enumerate(np_array):
+            tree[paths[i].strip("}{")] = [int(branch)]
+    elif len(np_array.shape) == 2:
+        for i, branch in enumerate(np_array):
+            tree[paths[i].strip("}{")] = [int(v) for v in branch]
     return tree
 
 
