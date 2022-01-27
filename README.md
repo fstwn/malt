@@ -35,6 +35,12 @@ working directory of your choice. For the purpose of this guide, I will use
 [Anaconda / Miniconda](https://www.anaconda.com/products/individual) yet, NOW
 is the time to do it.***
 
+Using a Windows Terminal or Powershell, `cd` into the directory where **you** have 
+cloned/unpacked the `malt` repository. For me that's running:
+```
+cd "C:\source\repos\malt"
+```
+
 Set up a new conda virtual environment with the name `ddu_ias_research` using
 the provided environment file by running:
 ```
@@ -49,12 +55,6 @@ conda activate ddu_ias_research
 ```
 
 ## 3. Installing the malt python package
-
-Using a Windows Terminal or Powershell, `cd` into the directory where **you** have 
-cloned/unpacked the `malt` repository. For me that's running:
-```
-cd "C:\source\repos\malt"
-```
 
 With the virtual environment activated and while in the root directory of the
 malt repository (where `setup.py` is located!), run the following command:
