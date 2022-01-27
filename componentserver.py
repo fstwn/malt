@@ -143,6 +143,7 @@ from sklearn.decomposition import PCA # NOQA402
 # LOCAL MODULE IMPORTS --------------------------------------------------------
 
 import malt.hopsutilities as hsutil # NOQA402
+from malt import ghgurobi # NOQA402
 from malt import icp # NOQA402
 from malt import imgprocessing # NOQA402
 from malt import intri # NOQA402
@@ -187,6 +188,50 @@ def hops_AvailableComponentsComponent():
         comps.append(str(c))
         descr.append(hops._components[c].description)
     return comps, descr
+
+
+# GUROBI INTERFACE COMPONENTS /////////////////////////////////////////////////
+
+@hops.component(
+    "/gurobi.SolveAssignmentPoints",
+    name="SolveAssignmentPoints",
+    nickname="SolveAssignmentPoints",
+    description="Solve an assignment problem given the datapoints using Gurobi.",
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsNumber("Design", "D", "The datapoints that define the design as DataTree of Numbers, where each Branch represents one Point.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsNumber("Inventory", "I", "The datapoints that define the inventory from which to choose the assignment as DataTree of Numbers, where each Branch represents one Point.", hs.HopsParamAccess.TREE), # NOQA501
+    ],
+    outputs=[
+        hs.HopsInteger("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsNumber("Cost", "C", "The cost values for the optimal solution.", hs.HopsParamAccess.TREE), # NOQA501
+    ])
+def gurobi_SolveAssignmentPointsComponent(design,
+                                          inventory):
+
+    # loop over trees and extract data points as numpy arrays
+    design_p, np_design = hsutil.hops_tree_to_np_array(design)
+    inventory_p, np_inventory = hsutil.hops_tree_to_np_array(inventory)
+
+    # verify feasibility of input datapoints
+    if np_design.shape[0] > np_inventory.shape[0]:
+        raise ValueError("Number of Design datapoints needs to be smaller " + 
+                         "than or equal to number of Inventory datapoints!")
+
+    # compute cost matrix
+    cost = np.zeros((np_design.shape[0], np_inventory.shape[0]))
+    for i, pt1 in enumerate(np_design):
+        for j, pt2 in enumerate(np_inventory):
+            cost[i, j] = np.linalg.norm(pt2 - pt1, ord=2)
+
+    # solve the assignment problem using the gurobi interface
+    assignment, assignment_cost = ghgurobi.solve_assignment(cost)
+
+    # return data as hops tree
+    return (hsutil.np_int_array_to_hops_tree(assignment, design_p),
+            hsutil.np_float_array_to_hops_tree(assignment_cost, inventory_p))
 
 
 # ITERATIVE CLOSEST POINT /////////////////////////////////////////////////////
