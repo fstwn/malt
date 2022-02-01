@@ -196,8 +196,8 @@ if __name__ == "__main__":
 
     # import sample inventory data
     inventory = []
-    i_file = "assignment_3d_inventory_sample_data.txt"
-    i_path = os.path.normpath(os.path.join(_HERE, "sampledata", i_file))
+    i_file = "sampledata/assignment_3d_inventory_sample_data.txt"
+    i_path = os.path.normpath(os.path.join(_HERE, i_file))
     with open(i_path, mode="r") as f:
         inventory = f.readlines()
     np_inventory = np.zeros((4, 108, 368))
@@ -224,8 +224,8 @@ if __name__ == "__main__":
 
     # import sample design data
     design = []
-    d_file = "assignment_3d_design_sample_data.txt"
-    d_path = os.path.normpath(os.path.join(_HERE, "sampledata", d_file))
+    d_file = "sampledata/assignment_3d_design_sample_data.txt"
+    d_path = os.path.normpath(os.path.join(_HERE, d_file))
     with open(d_path, mode="r") as f:
         design = f.readlines()
 
