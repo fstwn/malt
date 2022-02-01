@@ -1,2 +1,3 @@
-from .assignment import (solve_assignment, # NOQA402
+from .assignment import (solve_assignment_2d, # NOQA402
+                         solve_assignment_3d,
                          )
