@@ -81,3 +81,4 @@ if __name__ == "__main__":
     print(return_code)
     result = _read_result()
     print(result)
+    print(len(result))

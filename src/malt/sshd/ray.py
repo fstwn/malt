@@ -1,3 +1,4 @@
+# flake8: NOQA
 # Implementation of the paper:
 # "Description of 3D-shape using a complex function on the sphere"
 # by D.V. Vranic, D. Saupe, 2002"
