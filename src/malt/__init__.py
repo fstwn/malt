@@ -23,13 +23,20 @@ import malt.hopsutilities as hopsutilities # NOQA402
 
 # DEFINITIONS -----------------------------------------------------------------
 
-BASE = os.path.dirname(__file__)
+def sanitize(path):
+    return os.path.normpath(os.path.abspath(path))
+
+
+ROOTDIR = os.path.dirname(__file__)
 """str: Path to the root folder of the malt package."""
 
-DATADIR = os.path.normpath(os.path.abspath(os.path.join(BASE, "../../data")))
+REPODIR = sanitize(os.path.join(ROOTDIR, "../.."))
+"""str: Path to the root folder of the malt repository."""
+
+DATADIR = sanitize(os.path.join(ROOTDIR, "../../data"))
 """str: Path to the data folder of the malt repository."""
 
-TESTDIR = os.path.normpath(os.path.abspath(os.path.join(BASE, "../../tests")))
+TESTDIR = sanitize(os.path.join(ROOTDIR, "../../tests"))
 """str: Path to the tests folder of the malt repository."""
 
 
