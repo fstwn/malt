@@ -11,7 +11,7 @@ hopscomponents
 __pycache__/
 
 # GUROBI TESTS
-/src/malt/ghgurobi/tests/
+/src/malt/ghgurobi/dev_files/
 
 # MISC
 
