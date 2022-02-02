@@ -1,6 +1,3 @@
-# PYTHON STANDARD LIBRARY IMPORTS ---------------------------------------------
-import os
-
 # ADDITIONAL MODULE IMPORTS ---------------------------------------------------
 
 import gurobipy as gp
@@ -15,9 +12,9 @@ from malt import hopsutilities as hsutil
 
 def solve_assignment_2d(cost: np.array, verbose: bool = False):
     """
-    Solves an assignment problem defined by a given 2d cost matrix using 
+    Solves an assignment problem defined by a given 2d cost matrix using
     Gurobi.
-    
+
     The cost matrix does not need to be square, but num of columns
     (tasks/inventory) has to be larger or equal to num of rows
     (workers/design).
@@ -125,8 +122,8 @@ def solve_assignment_3d(cost: np.array, verbose: bool = False):
                       for j in range(cost.shape[1])) <= 1
                      for k in range(cost.shape[2])), name="orient_workload")
 
-    # add constraint so that each inventory object j can be used by exactly one
-    # design object i
+    # add constraint so that each inventory object j can be used by exactly
+    # one design object i
     # sum_{j = 1}^{n} x_{ij} = 1 for all i
     model.addConstrs((gp.quicksum(select[i, j]
                       for j in range(cost.shape[1])) == 1
@@ -177,88 +174,3 @@ def solve_assignment_3d(cost: np.array, verbose: bool = False):
 
     # return the optimal solution
     return np.array(assignment_result), np.array(assignment_cost)
-
-
-# TESTING ---------------------------------------------------------------------
-
-if __name__ == "__main__":
-    # TEST 2D-ASSIGNMENT USING RANDOM COST MATRIX
-    cost_matrix = np.random.uniform(1, 100, (10, 100))
-    solve_assignment_2d(cost_matrix, verbose=True)
-
-    # TEST 3D-ASSIGNMENT
-    _HERE = os.path.dirname(__file__)
-
-    # DATA FORMAT OF INVENTORY SAMPLE DATA:
-    # 4 OBJECTS
-    # 368 VALUES PER DESCRIPTOR
-    # 108 ORIENTATIONS PER OBJECT
-
-    # import sample inventory data
-    inventory = []
-    i_file = "sampledata/assignment_3d_inventory_sample_data.txt"
-    i_path = os.path.normpath(os.path.join(_HERE, i_file))
-    with open(i_path, mode="r") as f:
-        inventory = f.readlines()
-    np_inventory = np.zeros((4, 108, 368))
-    i = 0
-    j = 0
-    k = 0
-    for x, val in enumerate(inventory):
-        np_inventory[i, j, k] = val
-        if j != 107 and k == 367:
-            k = 0
-            j += 1
-            continue
-        elif j == 107 and k == 367:
-            i += 1
-            j = 0
-            k = 0
-            continue
-        k += 1
-
-    # DATA FORMAT OF DESIGN SAMPLE DATA:
-    # 2 OBJECTS
-    # 368 VALUES PER DESCRIPTOR
-    # 1 ORIENTATION PER OBJECT
-
-    # import sample design data
-    design = []
-    d_file = "sampledata/assignment_3d_design_sample_data.txt"
-    d_path = os.path.normpath(os.path.join(_HERE, d_file))
-    with open(d_path, mode="r") as f:
-        design = f.readlines()
-
-    np_design = np.zeros((2, 368))
-    i = 0
-    k = 0
-    for x, val in enumerate(design):
-        np_design[i, k] = val
-        if k == 367:
-            k = 0
-            i += 1
-        else:
-            k += 1
-
-    # GENERATE 3D COST MATRIX FROM SAMPLE DATA
-    # compare every design with all 108 orientations of all 4 objects and get
-    # cost!
-
-    # COST MATRIX STRUCTURE
-    # i = 2
-    # j = 4
-    # k = 108
-    cost = np.zeros((2, 4, 108))
-    # loop over all design objects
-    for i, d_obj in enumerate(np_design):
-        # loop over all objects in the inventory per design object
-        for j in range(np_inventory.shape[0]):
-            # loop over orientations for every object in the inventory
-            for k in range(np_inventory.shape[1]):
-                pt1 = d_obj
-                pt2 = np_inventory[j, k]
-                cost_value = np.linalg.norm(pt2 - pt1, ord=2)
-                cost[i, j, k] = cost_value
-
-    # solve the sample data cost matrix
-    solve_assignment_3d(cost, verbose=True)

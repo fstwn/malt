@@ -15,16 +15,17 @@ from os.path import (abspath,
 
 # ADDITIONAL MODULE IMPORTS ---------------------------------------------------
 
-from setuptools import find_packages, setup
+from setuptools import (find_packages,
+                        setup)
 
 # REQUIREMENTS CHECKING -------------------------------------------------------
 
-here = abspath(dirname(__file__))
+HERE = abspath(dirname(__file__))
 
 
 def read(*names, **kwargs):
     return io.open(
-        join(here, *names),
+        join(HERE, *names),
         encoding=kwargs.get('encoding', 'utf8')
     ).read()
 
@@ -77,9 +78,9 @@ def fix_from_result_func():
     try:
         import ghhops_server
     except ImportError:
-        raise RuntimeError("WARNING! ghhops_server could not be imported. If"
-                           "ghhops_server is not installed, the component "
-                           "server of MALT can't run!")
+        raise RuntimeError("WARNING! ghhops_server could not be imported. If "
+                           "ghhops_server is not installed, the MALT "
+                           "componentserver can't run!")
     # define original function source code to look for
     original_func_src = ("""
     def from_result(self, value):

@@ -12,7 +12,7 @@ mpl_logger = logging.getLogger("matplotlib")
 mpl_logger.setLevel(logging.WARNING)
 
 # Set to True to run in debug mode.
-_DEBUG = False
+_DEBUG = True
 
 # Set to True to allow access via local network (only works with Flask app!)
 # WARNING: THIS MIGHT BE A SECURITY RISK BECAUSE IT POTENTIALLY ALLOWS PEOPLE
@@ -193,10 +193,10 @@ def hops_AvailableComponentsComponent():
 # GUROBI INTERFACE COMPONENTS /////////////////////////////////////////////////
 
 @hops.component(
-    "/gurobi.SolveAssignmentPoints",
-    name="SolveAssignmentPoints",
-    nickname="SolveAssignmentPoints",
-    description="Solve an assignment problem given the datapoints using Gurobi.",
+    "/gurobi.SolveAssignment2DPoints",
+    name="SolveAssignment2DPoints",
+    nickname="SolveAssignment2DPoints",
+    description="Solve a 2d assignment problem given the datapoints using Gurobi.", # NOQA502
     category=None,
     subcategory=None,
     icon=None,
@@ -208,8 +208,8 @@ def hops_AvailableComponentsComponent():
         hs.HopsInteger("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.TREE), # NOQA501
         hs.HopsNumber("Cost", "C", "The cost values for the optimal solution.", hs.HopsParamAccess.TREE), # NOQA501
     ])
-def gurobi_SolveAssignmentPointsComponent(design,
-                                          inventory):
+def gurobi_SolveAssignment2DPointsComponent(design,
+                                            inventory):
 
     # loop over trees and extract data points as numpy arrays
     design_p, np_design = hsutil.hops_tree_to_np_array(design)
@@ -217,7 +217,7 @@ def gurobi_SolveAssignmentPointsComponent(design,
 
     # verify feasibility of input datapoints
     if np_design.shape[0] > np_inventory.shape[0]:
-        raise ValueError("Number of Design datapoints needs to be smaller " + 
+        raise ValueError("Number of Design datapoints needs to be smaller " +
                          "than or equal to number of Inventory datapoints!")
 
     # compute cost matrix
@@ -227,11 +227,79 @@ def gurobi_SolveAssignmentPointsComponent(design,
             cost[i, j] = np.linalg.norm(pt2 - pt1, ord=2)
 
     # solve the assignment problem using the gurobi interface
-    assignment, assignment_cost = ghgurobi.solve_assignment(cost)
+    assignment, assignment_cost = ghgurobi.solve_assignment_2d(cost)
 
     # return data as hops tree
     return (hsutil.np_int_array_to_hops_tree(assignment, design_p),
-            hsutil.np_float_array_to_hops_tree(assignment_cost, inventory_p))
+            hsutil.np_float_array_to_hops_tree(assignment_cost, design_p))
+
+
+@hops.component(
+    "/gurobi.SolveAssignment3DPoints",
+    name="SolveAssignment3DPoints",
+    nickname="SolveAssignment3DPoints",
+    description="Solve a 3d assignment problem given the datapoints using Gurobi.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon=None,
+    inputs=[
+        hs.HopsNumber("Design", "D", "The datapoints that define the design as DataTree of Numbers, where each Branch represents one Point.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsNumber("Inventory", "I", "The datapoints that define the inventory from which to choose the assignment as DataTree of Numbers, where each Branch represents one Point.", hs.HopsParamAccess.TREE), # NOQA501
+    ],
+    outputs=[
+        hs.HopsInteger("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsNumber("Cost", "C", "The cost values for the optimal solution.", hs.HopsParamAccess.TREE), # NOQA501
+    ])
+def gurobi_SolveAssignment3DPointsComponent(design,
+                                            inventory):
+
+    # verify tree integrity
+    if (not hsutil.hops_tree_verify(design) or
+            not hsutil.hops_tree_verify(inventory)):
+        raise ValueError("DataTree structure is inconsistent! All paths have "
+                         "to be of the same shape!")
+
+    # loop over design tree and extract data points as numpy arrays
+    design_p, np_design = hsutil.hops_tree_to_np_array(design)
+
+    # build inventory numpy array
+    inventory_p, np_inventory = hsutil.hops_tree_to_np_array(inventory, True)
+    inventory_shape = (len(set(p[0] for p in inventory_p)),
+                       len(set(p[1] for p in inventory_p)),
+                       len(np_inventory[0]))
+    np_inventory_2d = np.zeros(inventory_shape)
+    for path, data in zip(inventory_p, np_inventory):
+        i = path[0]
+        j = path[1]
+        for k, d in enumerate(data):
+            np_inventory_2d[i, j, k] = d
+
+    # verify tree integrity
+    if np_design.shape[0] > np_inventory_2d.shape[0]:
+        raise ValueError("Number of Design datapoints needs to be smaller "
+                         "than or equal to number of Inventory datapoints!")
+
+    # create empty 3d cost martix as np array
+    cost = np.zeros((np_design.shape[0],
+                     inventory_shape[0],
+                     inventory_shape[1]))
+
+    # loop over all design objects
+    for i, d_obj in enumerate(np_design):
+        # loop over all objects in the inventory per design object
+        for j in range(np_inventory_2d.shape[0]):
+            # loop over orientations for every object in the inventory
+            for k in range(np_inventory_2d.shape[1]):
+                pt1 = d_obj
+                pt2 = np_inventory_2d[j, k]
+                cost[i, j, k] = np.linalg.norm(pt2 - pt1, ord=2)
+
+    # solve the assignment problem using the gurobi interface
+    assignment, assignment_cost = ghgurobi.solve_assignment_3d(cost)
+
+    # return data as hops tree
+    return (hsutil.np_int_array_to_hops_tree(assignment, design_p),
+            hsutil.np_float_array_to_hops_tree(assignment_cost, design_p))
 
 
 # ITERATIVE CLOSEST POINT /////////////////////////////////////////////////////
