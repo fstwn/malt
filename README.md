@@ -92,6 +92,11 @@ Now you can start the Hops Server by running:
 python componentserver.py
 ```
 
+Note that you can also run the componentserver using different command line options:
+- `python componentserver.py -d` will run the server in debug mode.
+- `python componentserver.py -f` will run the server without using Flask.
+- `python componentserver.py -n` will run the server in network access mode. **WARNING: THIS IS POTENTIALLY *VERY* DANGEROUS!**
+
 ## 6. Using one of the provided Hops Components in Grasshopper
 
 Once the server is running, you can query it at different endpoints. When you
@@ -129,6 +134,43 @@ endpoint. Then I use the resulting values at each vertex to draw isocurves
 on the mesh using the `/igl.MeshIsoCurves` endpoint.
 
 ![Geodesic Heat Isocurves](/resources/readme/readme_06.png)
+
+## 7. Development
+
+### 7.1 Components
+
+If you want to contribute to malt development, the easiest way is to develop
+own components and add them to `componentserver.py`. For now, all components
+have to be defined in this file, since Hops does not support it in any other
+way yet.
+
+### 7.2 Submodules
+
+If you want to contribute by adding submodules, please add your modules in the
+`/malt` directory. Make sure that you have installed the malt package in
+development mode using `pip install -e`.
+
+### 7.3 Tests
+
+Malt uses `pytest` for testing. It is included in the conda environment file
+and does not need to be installed separately.
+Tests go in the `/tests` directory. They are organized the same way as the
+structure of the malt package and its submodules.
+
+To run all available test, call
+```
+invoke test
+```
+
+### 7.4 Linting
+
+Please use flake8 when contributing code to malt. It is included in the conda
+environment file and does not need to be installed separately.
+
+To lint all code, call
+```
+invoke lint
+```
 
 ## Licensing & References
 
