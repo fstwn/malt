@@ -12,10 +12,7 @@ __pycache__/
 
 # GUROBI TESTS
 /src/malt/ghgurobi/dev_files/
-
-# GOURCE FILES
-/a1_s1_overview.mp4
-/a1_s1_overview.ppm
+/viz/
 
 # MISC
 

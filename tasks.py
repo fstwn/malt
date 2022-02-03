@@ -65,18 +65,33 @@ def test(c):
 @task()
 def gource(c):
     """
-    Create gource video.
+    Create gource video in /viz folder.
     """
-    log.info("Creating gource visualization...")
-    with chdir(malt.REPODIR):
+    repodir = malt.REPODIR
+    with chdir(repodir):
+        vizpath = os.path.join(repodir, "viz")
+        if not os.path.exists(vizpath):
+            os.makedirs(vizpath)
+        # overview
+        log.info("Creating gource overview visualization...")
         c.run(("gource {0} -1920x1080 -f --multi-sampling -a 1 -s 1 "
                "--hide bloom,mouse,progress --camera-mode overview -r 60 -o "
-               "a1_s1_overview.ppm").format(malt.REPODIR))
-        log.write("Converting using FFMPEG...")
+               "viz/overview.ppm").format(repodir))
+        log.info("Converting using FFMPEG...")
         c.run("ffmpeg -y -r 60 -f image2pipe -vcodec ppm -i "
-              "a1_s1_overview.ppm -vcodec libx264 -preset medium "
-              "-pix_fmt yuv420p -crf 1 -threads 0 -bf 0 a1_s1_overview.mp4")
-        os.remove("a1_s1_overview.ppm")
+              "viz/overview.ppm -vcodec libx264 -preset medium "
+              "-pix_fmt yuv420p -crf 1 -threads 0 -bf 0 viz/overview.mp4")
+        os.remove("viz/overview.ppm")
+        # track
+        log.info("Creating gource track visualization...")
+        c.run(("gource {0} -1920x1080 -f --multi-sampling -a 1 -s 1 --hide "
+               "bloom,mouse,progress --camera-mode track -r 60 -o "
+               "viz/track.ppm").format(repodir))
+        log.info("Converting using FFMPEG...")
+        c.run("ffmpeg -y -r 60 -f image2pipe -vcodec ppm -i "
+              "viz/track.ppm -vcodec libx264 -preset medium "
+              "-pix_fmt yuv420p -crf 1 -threads 0 -bf 0 viz/track.mp4")
+        os.remove("viz/track.ppm")
 
 
 # CONTEXT ---------------------------------------------------------------------
