@@ -17,10 +17,12 @@ import os
 
 # THIRD PARTY IMPORTS ---------------------------------------------------------
 
+
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
+
 
 # PATH TO THIS DIRECTIORY -----------------------------------------------------
 

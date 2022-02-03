@@ -33,12 +33,17 @@ arg_parser.add_argument("-f", "--noflask",
 # Parse all command line arguments
 cl_args = arg_parser.parse_args()
 
+
 # OPTIONS ---------------------------------------------------------------------
 
-# Deactivate Mmatplotlib logger to prevent mpl imports in referenced libraries
-# from triggering a wall of mpl debug messages.
-mpl_logger = logging.getLogger("matplotlib")
-mpl_logger.setLevel(logging.WARNING)
+# Make matplotlib logger less verbose to prevent imports in
+# referenced libraries from triggering a wall of debug messages.
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
+
+# Make tensorflow logger less verbose to prevent imports in
+# referenced libraries from triggering a wall of debug messages.
+import tensorflow as tf # NOQA402
+logging.getLogger("tensorflow").setLevel(logging.WARNING)
 
 # Set to True to run in debug mode.
 _DEBUG = cl_args.debug
