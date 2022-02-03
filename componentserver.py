@@ -1410,7 +1410,6 @@ def tfsn_ForwardPassComponent(data_input,
 
 # RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------
 
-
 if __name__ == "__main__":
     print("-----------------------------------------------------")
     print("[INFO] Available Hops Components on this Server:")

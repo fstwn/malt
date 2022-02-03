@@ -28,7 +28,7 @@ class Log(object):
 
     def write(self, message):
         self.flush()
-        self.out.write("[STAT] %s" % message)
+        self.out.write("%s" % message)
         self.out.flush()
 
     def info(self, message):
@@ -48,7 +48,7 @@ def lint(c):
     """
     Check the coding style using flake8 python linter.
     """
-    log.write("Running flake8 python linter on source folder...")
+    log.info("Running flake8 python linter on source folder...")
     c.run("flake8 src")
 
 
@@ -57,7 +57,7 @@ def test(c):
     """
     Run all tests.
     """
-    log.write("Running all tests...")
+    log.info("Running all tests...")
     with chdir(malt.TESTDIR):
         c.run("pytest")
 
@@ -67,7 +67,7 @@ def gource(c):
     """
     Create gource video.
     """
-    log.write("Creating gource visualization...")
+    log.info("Creating gource visualization...")
     with chdir(malt.REPODIR):
         c.run(("gource {0} -1920x1080 -f --multi-sampling -a 1 -s 1 "
                "--hide bloom,mouse,progress --camera-mode overview -r 60 -o "
