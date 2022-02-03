@@ -148,7 +148,7 @@ way yet.
 
 If you want to contribute by adding submodules, please add your modules in the
 `/malt` directory. Make sure that you have installed the malt package in
-development mode using `pip install -e`.
+development mode using `pip install -e .`.
 
 ### 7.3 Tests
 
