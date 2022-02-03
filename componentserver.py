@@ -1,8 +1,37 @@
 # PYTHON STANDARD LIBRARY IMPORTS ---------------------------------------------
 
+import argparse
 import clr
 from itertools import product
 import logging
+
+
+# COMMAND LINE ARGUMENT PARSING -----------------------------------------------
+
+# Create argument parser
+arg_parser = argparse.ArgumentParser(description="Process arguments for MALT "
+                                                 "component server.")
+# Create arguments
+arg_parser.add_argument("-d", "--debug",
+                        action="store_true",
+                        required=False,
+                        help="Activates Flask debug mode. "
+                             "Defaults to False.",
+                        dest="debug")
+arg_parser.add_argument("-n", "--networkaccess",
+                        action="store_true",
+                        required=False,
+                        help="Activates network access mode. "
+                             "Defaults to False.",
+                        dest="networkaccess")
+arg_parser.add_argument("-f", "--noflask",
+                        action="store_false",
+                        required=False,
+                        help="Runs server using Hops standard HTTP server. "
+                             "Defaults to False (uses Flask as middleware).",
+                        dest="flask")
+# Parse all command line arguments
+cl_args = arg_parser.parse_args()
 
 # OPTIONS ---------------------------------------------------------------------
 
@@ -12,15 +41,15 @@ mpl_logger = logging.getLogger("matplotlib")
 mpl_logger.setLevel(logging.WARNING)
 
 # Set to True to run in debug mode.
-_DEBUG = True
+_DEBUG = cl_args.debug
 
 # Set to True to allow access via local network (only works with Flask app!)
 # WARNING: THIS MIGHT BE A SECURITY RISK BECAUSE IT POTENTIALLY ALLOWS PEOPLE
 # TO EXECUTE CODE ON YOUR MACHINE! ONLY USE THIS IN A TRUSTED NETWORK!
-_NETWORK_ACCESS = False
+_NETWORK_ACCESS = cl_args.networkaccess
 
 # Set to True to run using Flask as middleware
-_FLASK = True
+_FLASK = cl_args.flask
 
 # True if you want to run using Rhino.Inside.CPython
 _RHINOINSIDE = True
@@ -1376,13 +1405,13 @@ def tfsn_ForwardPassComponent(data_input,
 
 # RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------
 
+
 if __name__ == "__main__":
     print("-----------------------------------------------------")
     print("[INFO] Available Hops Components on this Server:")
     [print("{0} -> {1}".format(c, hops._components[c].description))
-        for c in hops._components]
+     for c in hops._components]
     print("-----------------------------------------------------")
-
     if type(hops) == hs.HopsFlask:
         if _NETWORK_ACCESS:
             flaskapp.run(debug=_DEBUG, host="0.0.0.0")
