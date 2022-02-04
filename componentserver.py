@@ -209,7 +209,7 @@ else:
     description="List all routes (URI's) of the available components",
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[],
     outputs=[
         hs.HopsString("Components", "C", "All available Hops Components on this server.", hs.HopsParamAccess.LIST), # NOQA501
@@ -233,7 +233,7 @@ def hops_AvailableComponentsComponent():
     description="Solve a 2d assignment problem given the datapoints using Gurobi.", # NOQA502
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsNumber("Design", "D", "The datapoints that define the design as DataTree of Numbers, where each Branch represents one Point.", hs.HopsParamAccess.TREE), # NOQA501
         hs.HopsNumber("Inventory", "I", "The datapoints that define the inventory from which to choose the assignment as DataTree of Numbers, where each Branch represents one Point.", hs.HopsParamAccess.TREE), # NOQA501
@@ -275,7 +275,7 @@ def gurobi_SolveAssignment2DPointsComponent(design,
     description="Solve a 3d assignment problem given the datapoints using Gurobi.", # NOQA501
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsNumber("Design", "D", "The datapoints that define the design as DataTree of Numbers, where each Branch represents one Point.", hs.HopsParamAccess.TREE), # NOQA501
         hs.HopsNumber("Inventory", "I", "The datapoints that define the inventory from which to choose the assignment as DataTree of Numbers, where each Branch represents one Point.", hs.HopsParamAccess.TREE), # NOQA501
@@ -345,7 +345,7 @@ def gurobi_SolveAssignment3DPointsComponent(design,
     description="Register a Scene PointCloud with a given Model PointCloud.",
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsPoint("ScenePoints", "S", "ScenePoints to evaluate", hs.HopsParamAccess.LIST), # NOQA501
         hs.HopsPoint("ModelPoints", "M", "ModelPoints for ICP", hs.HopsParamAccess.LIST), # NOQA501
@@ -413,7 +413,7 @@ def icp_RegisterPointCloudsComponent(scene_pts,
     description="Compute isocurves based on a function using libigl",
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsMesh("Mesh", "M", "The triangle mesh to compute isocurves on.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsNumber("Values", "V", "The function to compute as a list of values at each vertex position of the mesh.", hs.HopsParamAccess.LIST), # NOQA501
@@ -455,7 +455,7 @@ def igl_MeshIsocurvesComponent(mesh, values, count):
     description="Compute intrinsic triangulation of a triangle mesh.",
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsMesh("Mesh", "M", "The triangle mesh to create intrinsic triangulation for.", hs.HopsParamAccess.ITEM), # NOQA501
     ],
@@ -497,7 +497,7 @@ def intri_IntrinsicTriangulationComponent(mesh):
     description="Compute geodesic distances using the heat method.",
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsMesh("Mesh", "M", "The triangle mesh to compute geodesic distances on.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("SourceVertex", "S", "The index of the source vertex from which to compute geodesic distances using the heat method. Defaults to 0.", hs.HopsParamAccess.ITEM), # NOQA501
@@ -554,7 +554,7 @@ def intri_HeatMethodDistanceComponent(mesh,
     description="Construct a Mesh from a PointCloud using Open3D alpha shape algorithm.", # NOQA501
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsPoint("Points", "P", "The PointClouds Points", hs.HopsParamAccess.LIST), # NOQA501
         hs.HopsNumber("Alpha", "A", "The Alpha value for the algorithm. Defaults to 1.0.", hs.HopsParamAccess.ITEM), # NOQA501
@@ -602,7 +602,7 @@ def open3d_AlphaShapeComponent(points, alpha=1.0):
     description="Construct a Mesh from a PointCloud using Open3D convex hull.", # NOQA501
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsPoint("Points", "P", "The PointClouds Points", hs.HopsParamAccess.LIST), # NOQA501
     ],
@@ -647,7 +647,7 @@ def open3d_ConvexHullComponent(points):
     description="Construct a Mesh from a PointCloud and corresponding normals using Open3D ball pivoting reconstruction.", # NOQA501
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsPoint("Points", "P", "The PointClouds Points", hs.HopsParamAccess.LIST), # NOQA501
         hs.HopsInteger("Depth", "D", "Depth parameter for the poisson algorithm. Defaults to 8.", hs.HopsParamAccess.ITEM), # NOQA501
@@ -713,7 +713,7 @@ def open3d_BallPivotingMeshComponent(points,
     description="Construct a Mesh from a PointCloud and corresponding normals using Open3D ball pivoting reconstruction.", # NOQA501
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsPoint("Points", "P", "The PointClouds Points", hs.HopsParamAccess.LIST), # NOQA501
         hs.HopsVector("Normals", "N", "The Normals of the pointcloud to be used in reconstruction", hs.HopsParamAccess.LIST), # NOQA501
@@ -785,7 +785,7 @@ def open3d_BallPivotingMeshNormalsComponent(points,
     description="Construct a Mesh from a PointCloud using Open3D poisson mesh reconstruction.", # NOQA501
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsPoint("Points", "P", "The PointClouds Points", hs.HopsParamAccess.LIST), # NOQA501
         hs.HopsInteger("Depth", "D", "Depth parameter for the poisson algorithm. Defaults to 8.", hs.HopsParamAccess.ITEM), # NOQA501
@@ -846,7 +846,7 @@ def open3d_PoissonMeshComponent(points,
     description="Construct a Mesh from a PointCloud and corresponding normals using Open3D poisson mesh reconstruction.", # NOQA501
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsPoint("Points", "P", "The PointClouds Points", hs.HopsParamAccess.LIST), # NOQA501
         hs.HopsVector("Normals", "N", "The Normals of the pointcloud to be used in reconstruction", hs.HopsParamAccess.LIST), # NOQA501
@@ -915,7 +915,7 @@ def open3d_PoissonMeshNormalsComponent(points,
     description="Detect contours in an image using OpenCV.",
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsString("FilePath", "F", "The filepath of the image.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("BinaryThreshold", "B", "The threshold for binary (black & white) conversion of the image. Defaults to 127.", hs.HopsParamAccess.ITEM), # NOQA501
@@ -959,7 +959,7 @@ def opencv_DetectContoursComponent(filepath,
     description="Compute geodesic distances using the heat method.",
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsMesh("Mesh", "M", "The triangle mesh to compute geodesic distances on.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("Sources", "S", "The indices of the source vertices from which to compute geodesic distances using the heat method. Defaults to 0.", hs.HopsParamAccess.LIST), # NOQA501
@@ -1016,7 +1016,7 @@ def pp3d_HeatMethodDistanceComponent(mesh,
     description="Extend scalar values along a mesh using the vector heat method.", # NOQA501
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsMesh("Mesh", "M", "The triangle mesh to extend scalar on.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("Sources", "S", "The indices of the source vertices from which to extend the scalar values.", hs.HopsParamAccess.LIST), # NOQA501
@@ -1078,7 +1078,7 @@ def pp3d_MeshVectorHeatExtendScalarComponent(mesh,
     description="Parallel transport a vector along the surface.", # NOQA501
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsMesh("Mesh", "M", "The triangle mesh to use for parallel transport.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("Sources", "S", "The indices of the source vertices from which to transport the tangent vectors.", hs.HopsParamAccess.LIST), # NOQA501
@@ -1124,7 +1124,7 @@ def pp3d_MeshVectorHeatParallelTransportComponent(mesh,
                         Rhino.Geometry.Point3d(mesh.Vertices[i]))
         xaxis = Rhino.Geometry.Vector3d(bX[0], bX[1], bX[2])
         yaxis = Rhino.Geometry.Vector3d(bY[0], bY[1], bY[2])
-        frames[str(i)] = [origin, xaxis, yaxis]
+        frames["{%s}" % str(i)] = (origin, xaxis, yaxis)
 
     # extend the vector via parallel transport
     if len(sources) > 1:
@@ -1155,7 +1155,7 @@ def pp3d_MeshVectorHeatParallelTransportComponent(mesh,
     description="T-distributed Stochastic Neighbor Embedding.",
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsNumber("Data", "D", "Point Data to be reduced using t-SNE as a DataTree, where each Branch represents one Point.", hs.HopsParamAccess.TREE), # NOQA501
         hs.HopsInteger("Components", "N", "Dimension of the embedded space.", hs.HopsParamAccess.ITEM), # NOQA501
@@ -1212,7 +1212,7 @@ def sklearn_TSNEComponent(data,
     description="Principal component analysis.",
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsNumber("Data", "D", "Point Data to be reduced using PCA as a DataTree, where each Branch represents one Point.", hs.HopsParamAccess.TREE), # NOQA501
         hs.HopsInteger("Components", "N", "Number of components (dimensions) to keep.", hs.HopsParamAccess.ITEM), # NOQA501
@@ -1241,7 +1241,7 @@ def sklearn_PCAComponent(data,
     description="Description of mesh using a complex function on the sphere.",
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsMesh("Mesh", "M", "The triangle mesh to compute the shape descriptor for.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("Dimensions", "D", "Number of dimensions/coefficients for the computation. Defaults to 13.", hs.HopsParamAccess.ITEM), # NOQA501
@@ -1274,7 +1274,7 @@ def sshd_MeshSphericalHarmonicsDescriptorComponent(mesh, dims=13):
     description="Description of mesh using rotation invariant spherical harmonics descriptor", # NOQA501
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsMesh("Mesh", "M", "The triangle mesh to compute the shape descriptor for.", hs.HopsParamAccess.ITEM), # NOQA501
     ],
@@ -1308,7 +1308,7 @@ def shapesph_MeshSphericalHarmonicsDescriptorRIComponent(mesh):
     description="Initial training of shapenet neural network using tensorflow.", # NOQA501
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsNumber("TrainInput", "I", "Training Input Data.", hs.HopsParamAccess.TREE), # NOQA501
         hs.HopsNumber("TrainResult", "R", "Training Result Data.", hs.HopsParamAccess.TREE), # NOQA501
@@ -1355,7 +1355,7 @@ def tfsn_InitialTrainComponent(train_input,
     description="Training of shapenet neural network using tensorflow.",
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsNumber("TrainInput", "I", "Training Input Data.", hs.HopsParamAccess.TREE), # NOQA501
         hs.HopsNumber("TrainResult", "R", "Training Result Data.", hs.HopsParamAccess.TREE), # NOQA501
@@ -1387,7 +1387,7 @@ def tfsn_LoadAndTrainComponent(train_input,
     description="Forward pass of shapenet neural network using tensorflow.",
     category=None,
     subcategory=None,
-    icon=None,
+    icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsNumber("Input", "I", "Forward pass input Data.", hs.HopsParamAccess.TREE), # NOQA501
         hs.HopsString("ModelName", "N", "The name of the model to be trained.", hs.HopsParamAccess.ITEM, ), # NOQA501

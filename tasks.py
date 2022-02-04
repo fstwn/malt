@@ -35,7 +35,7 @@ class Log(object):
         self.write("[INFO] %s" % message)
 
     def warn(self, message):
-        self.write("[WARN] %s" % message)
+        self.write("[WARNING] %s" % message)
 
 
 log = Log()
