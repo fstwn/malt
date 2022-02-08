@@ -123,7 +123,7 @@ def hops_tree_verify(data_tree: dict):
     return True if all([len(tp[0]) == len(p) for p in tp]) else False
 
 
-def np_float_array_to_hops_tree(np_array: np.array, paths: list = []):
+def np_float_array_to_hops_tree(np_array: np.array, paths: List[str] = []):
     """
     Converts a numpy float array to a Hops DataTree (dict with paths as keys).
     """
@@ -139,7 +139,7 @@ def np_float_array_to_hops_tree(np_array: np.array, paths: list = []):
     return tree
 
 
-def np_int_array_to_hops_tree(np_array: np.array, paths: list = []):
+def np_int_array_to_hops_tree(np_array: np.array, paths: List[str] = []):
     """
     Converts a numpy int array to a Hops DataTree (dict with paths as keys).
     """
