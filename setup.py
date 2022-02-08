@@ -17,7 +17,6 @@ from os.path import (abspath,
 
 from setuptools import (find_packages,
                         setup)
-from setuptools.command.install import install
 
 # REQUIREMENTS CHECKING -------------------------------------------------------
 
@@ -76,15 +75,8 @@ setup(
 
 # DEFINE FUNC FOR REPLACING  CODE IN PARAMS.PY ---- !!! DANGER ZONE !!! -------
 
-def fix_from_result_func():
+def _fix_from_result_func(params_file):
     """Replace some source code in params.py to support datatree output."""
-    # import ghhops_server here
-    try:
-        import ghhops_server
-    except ImportError:
-        raise RuntimeError("[ERROR] ghhops_server could not be imported. If"
-                           "ghhops_server is not installed, the component "
-                           "server of MALT can't run!")
     # define original function source code to look for
     original_func_src = ("""
     def from_result(self, value):
@@ -143,33 +135,198 @@ def fix_from_result_func():
             },
         }
         return output""")
+    # open file and read source code
+    params_source = None
+    with open(params_file, mode="r") as f:
+        params_source = f.read()
+    # if the original source code is in the file, replace it with the
+    # augmented version for outputting trees
+    if replacement_func_src in params_source:
+        print("[INFO] MALT post installation steps done!")
+        print("[INFO] Source code in params.py already replaced before!")
+    elif (original_func_src in params_source and
+          replacement_func_src not in params_source):
+        params_source = params_source.replace(original_func_src,
+                                              replacement_func_src)
+        with open(params_file, mode="w") as f:
+            f.write(params_source)
+        print("[INFO] MALT post installation steps done!")
+        print("[INFO] Source code in params.py was successfully replaced!")
+    else:
+        raise RuntimeError(
+            "[ERROR] MALT post installation steps not completed! \n"
+            "[ERROR] Source not found in params.py file!")
+
+
+def _add_circle_param(params_file):
+    """Replace some source code and add support for Circles as params"""
+    # define original function source code to look for
+    deactivated_key = ('    # "HopsCircle",')
+    original_func_src = ("""
+class HopsBrep(_GHParam):
+    \"\"\"Wrapper for GH Brep\"\"\"
+
+    param_type = \"Brep\"
+    result_type = \"Rhino.Geometry.Brep"
+
+
+class HopsCurve(_GHParam):""")
+    # this is the fixed replacement source code
+    activated_key = ('    "HopsCircle",')
+    replacement_func_src = ("""
+class HopsBrep(_GHParam):
+    \"\"\"Wrapper for GH Brep\"\"\"
+
+    param_type = "Brep"
+    result_type = "Rhino.Geometry.Brep"
+
+
+class HopsCircle(_GHParam):
+    \"\"\"Wrapper for GH_Circle\"\"\"
+
+    param_type = "Circle"
+    result_type = "Rhino.Geometry.Circle"
+
+    coercers = {
+        "Rhino.Geometry.Circle": lambda d: HopsCircle._make_circle(
+            HopsPlane._make_plane(d["Plane"]["Origin"],
+                                  d["Plane"]["XAxis"],
+                                  d["Plane"]["YAxis"]),
+            d["Radius"]
+        )
+    }
+
+    @staticmethod
+    def _make_circle(p, r):
+        if RHINO_GEOM.__name__ == "rhino3dm":
+            raise NotImplementedError("Can't create plane-aligned circle "
+                                      "using rhino3dm due to missing "
+                                      "implementation!")
+        return RHINO_GEOM.Circle(p, r)
+
+
+class HopsCurve(_GHParam):""")
+    # open file and read source code
+    params_source = None
+    with open(params_file, mode="r") as f:
+        params_source = f.read()
+    # if the original source code is in the file, replace it with the
+    # augmented version for outputting trees
+    if replacement_func_src in params_source:
+        print("[INFO] MALT post installation steps done!")
+        print("[INFO] Source code in params.py already replaced before!")
+    elif (original_func_src in params_source and
+          replacement_func_src not in params_source):
+        params_source = params_source.replace(deactivated_key,
+                                              activated_key)
+        params_source = params_source.replace(original_func_src,
+                                              replacement_func_src)
+        with open(params_file, mode="w") as f:
+            f.write(params_source)
+        print("[INFO] MALT post installation steps done!")
+        print("[INFO] Source code in params.py was successfully replaced!")
+    else:
+        raise RuntimeError(
+            "[ERROR] MALT post installation steps not completed! \n"
+            "[ERROR] Source not found in params.py file!")
+
+
+def _add_plane_param(params_file):
+    """Replace some source code and add support for Planes as params"""
+    # define original function source code to look for
+    deactivated_key = ('    # "HopsPlane",')
+    original_func_src = ("""
+class HopsNumber(_GHParam):
+    \"\"\"Wrapper for GH Number\"\"\"
+
+    param_type = "Number"
+    result_type = "System.Double"
+
+    coercers = {
+        "System.Double": lambda d: float(d),
+    }
+
+
+class HopsPoint(_GHParam):""")
+    # this is the fixed replacement source code
+    activated_key = ('    "HopsPlane",')
+    replacement_func_src = ("""
+class HopsNumber(_GHParam):
+    \"\"\"Wrapper for GH Number\"\"\"
+
+    param_type = "Number"
+    result_type = "System.Double"
+
+    coercers = {
+        "System.Double": lambda d: float(d),
+    }
+
+
+class HopsPlane(_GHParam):
+    \"\"\"Wrapper for GH_Plane\"\"\"
+
+    param_type ="Plane"
+    result_type = "Rhino.Geometry.Plane"
+
+    coercers = {
+        "Rhino.Geometry.Plane": lambda p: HopsPlane._make_plane(p["Origin"],
+                                                                p["XAxis"],
+                                                                p["YAxis"])
+    }
+
+    @staticmethod
+    def _make_plane(o, x, y):
+        return RHINO_GEOM.Plane(RHINO_GEOM.Point3d(o["X"], o["Y"], o["Z"]),
+                                RHINO_GEOM.Vector3d(x["X"], x["Y"], x["Z"]),
+                                RHINO_GEOM.Vector3d(y["X"], y["Y"], y["Z"]))
+
+
+class HopsPoint(_GHParam):""")
+    # open file and read source code
+    params_source = None
+    with open(params_file, mode="r") as f:
+        params_source = f.read()
+    # if the original source code is in the file, replace it with the
+    # augmented version for outputting trees
+    if replacement_func_src in params_source:
+        print("[INFO] MALT post installation steps done!")
+        print("[INFO] Source code in params.py already replaced before!")
+    elif (original_func_src in params_source and
+          replacement_func_src not in params_source):
+        params_source = params_source.replace(deactivated_key,
+                                              activated_key)
+        params_source = params_source.replace(original_func_src,
+                                              replacement_func_src)
+        with open(params_file, mode="w") as f:
+            f.write(params_source)
+        print("[INFO] MALT post installation steps done!")
+        print("[INFO] Source code in params.py was successfully replaced!")
+    else:
+        raise RuntimeError(
+            "[ERROR] MALT post installation steps not completed! \n"
+            "[ERROR] Source not found in params.py file!")
+
+
+def run_post_install_steps():
+    """Run all post install steps"""
+    # import ghhops_server here
+    try:
+        import ghhops_server
+    except ImportError:
+        raise RuntimeError("[ERROR] ghhops_server could not be imported. If"
+                           "ghhops_server is not installed, the component "
+                           "server of MALT can't run!")
     # get ghhops server path
     ghh_path = abspath(ghhops_server.__file__)
     # get params.py file
     params_file = normpath("\\".join(ghh_path.split("\\")[:-1] +
                                      ["params.py"]))
     print("[INFO] params.py file: " + str(params_file))
-    # if file exists, open it and read source code
     if (isfile(params_file) and ghhops_server.__version__ == "1.4.1"):
-        params_source = None
-        with open(params_file, mode="r") as f:
-            params_source = f.read()
-        # if the original source code is in the file, replace it with the
-        # augmented version for outputting trees
-        if original_func_src in params_source:
-            params_source = params_source.replace(original_func_src,
-                                                  replacement_func_src)
-            with open(params_file, mode="w") as f:
-                f.write(params_source)
-            print("[INFO] MALT post installation steps done!")
-            print("[INFO] Source code in params.py was successfully replaced!")
-        elif replacement_func_src in params_source:
-            print("[INFO] MALT post installation steps done!")
-            print("[INFO] Source code in params.py already replaced before!")
-        else:
-            raise RuntimeError(
-                "[ERROR] MALT post installation steps not completed! \n"
-                "[ERROR] Source not found in params.py file!")
+        # run subroutine post install steps
+        _fix_from_result_func(params_file)
+        _add_circle_param(params_file)
+        _add_plane_param(params_file)
     else:
         if ghhops_server.__version__ != "1.4.1":
             raise RuntimeError(
@@ -182,4 +339,4 @@ def fix_from_result_func():
 
 # RUN POST INSTALLATION STEPS -------------------------------------------------
 
-fix_from_result_func()
+run_post_install_steps()
