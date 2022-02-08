@@ -152,8 +152,8 @@ development mode using `pip install -e .`.
 
 ### 7.3 Tests
 
-Malt uses `pytest` for testing. It is included in the conda environment file
-and does not need to be installed separately.
+Malt uses `pytest` for testing. It is included in the `ddu_ias_research.yml`
+conda environment file and does not need to be installed separately.
 Tests go in the `/tests` directory. They are organized the same way as the
 structure of the malt package and its submodules.
 
@@ -164,8 +164,9 @@ invoke test
 
 ### 7.4 Linting
 
-Please use flake8 when contributing code to malt. It is included in the conda
-environment file and does not need to be installed separately.
+Please use the `flake8` linter when contributing code to malt. It is included
+in the `ddu_ias_research.yml` conda environment file and does not need to be
+installed separately.
 
 To lint all code, call
 ```

@@ -176,8 +176,8 @@ from sklearn.decomposition import PCA # NOQA402
 
 # LOCAL MODULE IMPORTS --------------------------------------------------------
 
-import malt.hopsutilities as hsutil # NOQA402
 from malt import ghgurobi # NOQA402
+from malt import hopsutilities as hsutil # NOQA402
 from malt import icp # NOQA402
 from malt import imgprocessing # NOQA402
 from malt import intri # NOQA402
