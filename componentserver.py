@@ -1408,6 +1408,52 @@ def tfsn_ForwardPassComponent(data_input,
     return hsutil.np_float_array_to_hops_tree(prediction, di_paths)
 
 
+# PARAMETER TEST COMPONENTS ///////////////////////////////////////////////////
+
+
+@hops.component(
+    "/paramtest.Circle",
+    name="ptCircle",
+    nickname="ptCircle",
+    description="Test Circle Param.",
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsCircle("InCircle", "I", "Input Circle.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsCircle("OutCircle", "O", "Output Circle.", hs.HopsParamAccess.ITEM), # NOQA501
+    ])
+def paramtest_CircleComponent(in_cicle):
+
+    if not in_cicle:
+        return Rhino.Geometry.Circle(Rhino.Geometry.Plane.WorldXY,
+                                     1.0)
+    return in_cicle
+
+
+@hops.component(
+    "/paramtest.Plane",
+    name="ptPlane",
+    nickname="ptPlane",
+    description="Test Plane Param.",
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsPlane("InPlane", "I", "Input Plane.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsPlane("OutPlane", "O", "Output Plane.", hs.HopsParamAccess.ITEM), # NOQA501
+    ])
+def paramtest_PlaneComponent(in_plane):
+
+    if not in_plane:
+        return Rhino.Geometry.Plane.WorldXY
+    return in_plane
+
+
 # RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------
 
 if __name__ == "__main__":
