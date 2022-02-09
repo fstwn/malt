@@ -219,8 +219,10 @@ def hops_AvailableComponentsComponent():
     comps = []
     descr = []
     for c in hops._components:
-        comps.append(str(c))
-        descr.append(hops._components[c].description)
+        uri = str(c)
+        if not uri.startswith("/test."):
+            comps.append(uri)
+            descr.append(hops._components[c].description)
     return comps, descr
 
 
@@ -1444,13 +1446,37 @@ def tfsn_ForwardPassComponent(data_input,
     return hsutil.np_float_array_to_hops_tree(prediction, di_paths)
 
 
-# PARAMETER TEST COMPONENTS ///////////////////////////////////////////////////
+# TEST AND VERIFICATION COMPONENTS ////////////////////////////////////////////
+
+@hops.component(
+    "/test.DataTree",
+    name="tDataTree",
+    nickname="tDataTree",
+    description="Test DataTree input/output.",
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsNumber("InTree", "I", "Input Tree.", hs.HopsParamAccess.TREE), # NOQA501
+    ],
+    outputs=[
+        hs.HopsNumber("OutTree", "O", "Output Tree.", hs.HopsParamAccess.TREE), # NOQA501
+    ])
+def test_DataTreeComponent(tree):
+
+    if not tree:
+        tree = {}
+        tree["0;0"] = [0.0]
+        tree["0;1"] = [0, 1]
+        tree["0;2"] = ["a", "b", "c"]
+        tree["0;3"] = [0.0, "abc", True]
+    return tree
 
 
 @hops.component(
-    "/paramtest.Circle",
-    name="ptCircle",
-    nickname="ptCircle",
+    "/test.Circle",
+    name="tCircle",
+    nickname="tCircle",
     description="Test Circle Param.",
     category=None,
     subcategory=None,
@@ -1461,18 +1487,18 @@ def tfsn_ForwardPassComponent(data_input,
     outputs=[
         hs.HopsCircle("OutCircle", "O", "Output Circle.", hs.HopsParamAccess.ITEM), # NOQA501
     ])
-def paramtest_CircleComponent(in_cicle):
+def test_CircleComponent(circle):
 
-    if not in_cicle:
-        return Rhino.Geometry.Circle(Rhino.Geometry.Plane.WorldXY,
-                                     1.0)
-    return in_cicle
+    if not circle:
+        circle = Rhino.Geometry.Circle(Rhino.Geometry.Plane.WorldXY,
+                                       1.0)
+    return circle
 
 
 @hops.component(
-    "/paramtest.Plane",
-    name="ptPlane",
-    nickname="ptPlane",
+    "/test.Plane",
+    name="tPlane",
+    nickname="tPlane",
     description="Test Plane Param.",
     category=None,
     subcategory=None,
@@ -1483,11 +1509,11 @@ def paramtest_CircleComponent(in_cicle):
     outputs=[
         hs.HopsPlane("OutPlane", "O", "Output Plane.", hs.HopsParamAccess.ITEM), # NOQA501
     ])
-def paramtest_PlaneComponent(in_plane):
+def test_PlaneComponent(plane):
 
-    if not in_plane:
-        return Rhino.Geometry.Plane.WorldXY
-    return in_plane
+    if not plane:
+        plane = Rhino.Geometry.Plane.WorldXY
+    return plane
 
 
 # RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------
@@ -1496,7 +1522,7 @@ if __name__ == "__main__":
     print("-----------------------------------------------------")
     print("[INFO] Available Hops Components on this Server:")
     [print("{0} -> {1}".format(c, hops._components[c].description))
-     for c in hops._components]
+     for c in hops._components if not str(c).startswith("/test.")]
     print("-----------------------------------------------------")
     if type(hops) == hs.HopsFlask:
         if _NETWORK_ACCESS:
