@@ -7,7 +7,7 @@ import sys
 
 # ADDITIONAL MODULE IMPORTS ---------------------------------------------------
 
-from invoke import task
+from invoke import task, exceptions
 
 
 # LOCAL MODULE IMPORTS --------------------------------------------------------
@@ -28,7 +28,7 @@ class Log(object):
 
     def write(self, message):
         self.flush()
-        self.out.write("%s" % message)
+        self.out.write("%s\n" % message)
         self.out.flush()
 
     def info(self, message):
@@ -43,20 +43,44 @@ log = Log()
 
 # TASK DEFINITIONS ------------------------------------------------------------
 
+@task(default=True)
+def help(c):
+    """
+    Lists all available tasks and info on their usage.
+    """
+    c.run("invoke --list")
+    log.info("Use \"invoke -h <taskname>\" to get detailed help for a task.")
+
+
 @task()
 def lint(c):
     """
     Check the coding style using flake8 python linter.
     """
-    log.info("Running flake8 python linter on source folder...")
-    c.run("flake8 src")
+    with chdir(malt.REPODIR):
+        log.info("Running flake8 python linter on source folder...")
+        c.run("flake8 --statistics src")
 
 
 @task()
-def test(c):
+def check(c):
+    """
+    Perform various checks such as linting, etc.
+    """
+    with chdir(malt.REPODIR):
+        lint(c)
+
+
+@task(help={
+    "checks": ("Set to True to run all checks before running tests. "
+               "Defaults to False")})
+def test(c, checks=False):
     """
     Run all tests.
     """
+    if checks:
+        check(c)
+
     log.info("Running all tests...")
     with chdir(malt.TESTDIR):
         c.run("coverage run -m pytest")
@@ -74,26 +98,37 @@ def gource(c):
         vizpath = os.path.join(repodir, "viz")
         if not os.path.exists(vizpath):
             os.makedirs(vizpath)
-        # overview
-        log.info("Creating gource overview visualization...")
-        c.run(("gource {0} -1920x1080 -f --multi-sampling -a 1 -s 1 "
-               "--hide bloom,mouse,progress --camera-mode overview -r 60 -o "
-               "viz/overview.ppm").format(repodir))
-        log.info("Converting using FFMPEG...")
-        c.run("ffmpeg -y -r 60 -f image2pipe -vcodec ppm -i "
-              "viz/overview.ppm -vcodec libx264 -preset medium "
-              "-pix_fmt yuv420p -crf 1 -threads 0 -bf 0 viz/overview.mp4")
-        os.remove("viz/overview.ppm")
-        # track
-        log.info("Creating gource track visualization...")
-        c.run(("gource {0} -1920x1080 -f --multi-sampling -a 1 -s 1 --hide "
-               "bloom,mouse,progress --camera-mode track -r 60 -o "
-               "viz/track.ppm").format(repodir))
-        log.info("Converting using FFMPEG...")
-        c.run("ffmpeg -y -r 60 -f image2pipe -vcodec ppm -i "
-              "viz/track.ppm -vcodec libx264 -preset medium "
-              "-pix_fmt yuv420p -crf 1 -threads 0 -bf 0 viz/track.mp4")
-        os.remove("viz/track.ppm")
+
+        # Gource visualization
+        try:
+            # overview
+            log.info("Creating gource overview visualization...")
+            c.run(("gource {0} -1920x1080 -f --multi-sampling -a 1 -s 1 "
+                   "--hide bloom,mouse,progress --camera-mode overview -r 60 "
+                   "-o viz/overview.ppm").format(repodir))
+            # track
+            log.info("Creating gource track visualization...")
+            c.run(("gource s{0} -1920x1080 -f --multi-sampling -a 1 -s 1 "
+                   "--hide bloom,mouse,progress --camera-mode track -r 60 -o "
+                   "viz/track.ppm").format(repodir))
+        except exceptions.UnexpectedExit:
+            log.warn("Gource is not installed or not in the current PATH! "
+                     "See https://gource.io/ for info on installation.")
+
+        # FFmpeg conversion
+        try:
+            log.info("Converting using FFMPEG...")
+            c.run("ffmpeg -y -r 60 -f image2pipe -vcodec ppm -i "
+                  "viz/overview.ppm -vcodec libx264 -preset medium "
+                  "-pix_fmt yuv420p -crf 1 -threads 0 -bf 0 viz/overview.mp4")
+            os.remove("viz/overview.ppm")
+            c.run("ffmpeg -y -r 60 -f image2pipe -vcodec ppm -i "
+                  "viz/track.ppm -vcodec libx264 -preset medium "
+                  "-pix_fmt yuv420p -crf 1 -threads 0 -bf 0 viz/track.mp4")
+            os.remove("viz/track.ppm")
+        except exceptions.UnexpectedExit:
+            log.warn("FFmpeg is not installed or not in the current PATH! "
+                     "See https://ffmpeg.org/ for info on installation.")
 
 
 # CONTEXT ---------------------------------------------------------------------
