@@ -10,6 +10,9 @@ hopscomponents
 # CACHED PYTHON FILES
 __pycache__/
 
+# COVERAGE FILES
+.coverage
+
 # GUROBI TESTS
 /src/malt/ghgurobi/dev_files/
 /viz/

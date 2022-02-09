@@ -105,6 +105,9 @@ def test_solve_assignment_3d():
 
     # solve the sample data cost matrix
     asm, cst = malt.ghgurobi.solve_assignment_3d(cost, verbose=True)
+
+    assert cst[0] == min(cost[0, asm[0][0]])
+    assert cst[1] == min(cost[1, asm[1][0]])
     assert asm[0][0] == 1
     assert asm[0][1] == 68
     assert asm[1][0] == 3

@@ -279,13 +279,15 @@ def gurobi_SolveAssignment2DPointsComponent(design,
     inputs=[
         hs.HopsNumber("Design", "D", "The datapoints that define the design as DataTree of Numbers, where each Branch represents one Point.", hs.HopsParamAccess.TREE), # NOQA501
         hs.HopsNumber("Inventory", "I", "The datapoints that define the inventory from which to choose the assignment as DataTree of Numbers, where each Branch represents one Point.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsBoolean("SimplifyCase", "S", "Simplify the 3d problem case (or at least try to) by pre-computing the minimum cost and solving the resulting 2d cost matrix.", hs.HopsParamAccess.ITEM), # NOQA501
     ],
     outputs=[
         hs.HopsInteger("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.TREE), # NOQA501
         hs.HopsNumber("Cost", "C", "The cost values for the optimal solution.", hs.HopsParamAccess.TREE), # NOQA501
     ])
 def gurobi_SolveAssignment3DPointsComponent(design,
-                                            inventory):
+                                            inventory,
+                                            simplify=False):
 
     # verify tree integrity
     if (not hsutil.hops_tree_verify(design) or
@@ -313,23 +315,57 @@ def gurobi_SolveAssignment3DPointsComponent(design,
         raise ValueError("Number of Design datapoints needs to be smaller "
                          "than or equal to number of Inventory datapoints!")
 
-    # create empty 3d cost martix as np array
-    cost = np.zeros((np_design.shape[0],
-                     inventory_shape[0],
-                     inventory_shape[1]))
+    # simplifies the problem to a 2d assignment problem by pre-computing the
+    # minimum cost and then solving a 2d assignment problem
+    if simplify:
+        # create empty 2d cost matrix
+        cost = np.zeros((np_design.shape[0], inventory_shape[0]))
+        mapping = np.zeros((np_design.shape[0], inventory_shape[0]),
+                           dtype=int)
 
-    # loop over all design objects
-    for i, d_obj in enumerate(np_design):
-        # loop over all objects in the inventory per design object
-        for j in range(np_inventory_2d.shape[0]):
-            # loop over orientations for every object in the inventory
-            for k in range(np_inventory_2d.shape[1]):
+        # loop over all design objects
+        for i, d_obj in enumerate(np_design):
+            # loop over all objects in the inventory per design object
+            for j in range(np_inventory_2d.shape[0]):
+                # find minimum orientation and index of it
                 pt1 = d_obj
-                pt2 = np_inventory_2d[j, k]
-                cost[i, j, k] = np.linalg.norm(pt2 - pt1, ord=2)
+                allcosts = [np.linalg.norm(np_inventory_2d[j, k] - pt1, ord=2)
+                            for k in range(np_inventory_2d.shape[1])]
+                mincost = min(allcosts)
+                minidx = allcosts.index(mincost)
+                # build cost matrix and store index in a mapping
+                cost[i, j] = mincost
+                mapping[i, j] = minidx
 
-    # solve the assignment problem using the gurobi interface
-    assignment, assignment_cost = ghgurobi.solve_assignment_3d(cost)
+        # solve the assignment problem using the gurobi interface
+        assignment, assignment_cost = ghgurobi.solve_assignment_2d(cost)
+
+        assignment_3d = []
+        for i, v in enumerate(assignment):
+            assignment_3d.append((v, mapping[i, v]))
+        assignment_3d = np.array(assignment_3d)
+
+        # return data as hops tree
+        return (hsutil.np_int_array_to_hops_tree(assignment_3d, design_p),
+                hsutil.np_float_array_to_hops_tree(assignment_cost, design_p))
+    else:
+        # create empty 3d cost martix as np array
+        cost = np.zeros((np_design.shape[0],
+                         inventory_shape[0],
+                         inventory_shape[1]))
+
+        # loop over all design objects
+        for i, d_obj in enumerate(np_design):
+            # loop over all objects in the inventory per design object
+            for j in range(np_inventory_2d.shape[0]):
+                # loop over orientations for every object in the inventory
+                for k in range(np_inventory_2d.shape[1]):
+                    pt1 = d_obj
+                    pt2 = np_inventory_2d[j, k]
+                    cost[i, j, k] = np.linalg.norm(pt2 - pt1, ord=2)
+
+        # solve the assignment problem using the gurobi interface
+        assignment, assignment_cost = ghgurobi.solve_assignment_3d(cost)
 
     # return data as hops tree
     return (hsutil.np_int_array_to_hops_tree(assignment, design_p),
