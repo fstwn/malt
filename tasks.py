@@ -59,7 +59,9 @@ def test(c):
     """
     log.info("Running all tests...")
     with chdir(malt.TESTDIR):
-        c.run("pytest")
+        c.run("coverage run -m pytest")
+        log.info("Analyzing coverage....")
+        c.run("coverage report -m")
 
 
 @task()
