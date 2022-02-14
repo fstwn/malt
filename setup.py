@@ -29,7 +29,8 @@ def read(*names, **kwargs):
 
 
 long_description = read("README.md")
-requirements = [r for r in read("requirements.txt").split("\n") if r]
+requirements = [r for r in read("requirements.txt").split("\n") if r and not
+                r.startswith("#")]
 
 keywords_list = ["architecture", "engineering", "fabrication", "computation",
                  "geometry", "design", "Hops", "Grasshopper"]
