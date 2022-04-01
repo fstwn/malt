@@ -2,6 +2,7 @@
 
 from itertools import product
 from re import split as regexsplit
+import os
 from typing import List
 
 
@@ -11,6 +12,13 @@ import numpy as np
 
 
 # FUNCTION DEFINITIONS --------------------------------------------------------
+
+# GENERAL UTILITIES ///////////////////////////////////////////////////////////
+
+def sanitize_path(fp: str = ""):
+    """Sanitizes a filepath an returns the result."""
+    return os.path.abspath(os.path.realpath(os.path.normpath(fp)))
+
 
 # NUMPY & RHINO ///////////////////////////////////////////////////////////////
 

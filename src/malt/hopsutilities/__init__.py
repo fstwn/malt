@@ -1,4 +1,5 @@
-from .hopsutilities import (rhino_points_to_np_array, # NOQA401
+from .hopsutilities import (sanitize_path, # NOQA401
+                            rhino_points_to_np_array,
                             rhino_mesh_to_np_arrays,
                             hops_path_to_tuple,
                             hops_paths_to_tuples,
