@@ -2,7 +2,7 @@
 
 import argparse
 import clr
-from itertools import product
+from itertools import combinations, product
 import logging
 
 
@@ -46,7 +46,7 @@ import tensorflow as tf # NOQA402
 logging.getLogger("tensorflow").setLevel(logging.WARNING)
 
 # Set to True to run in debug mode.
-_DEBUG = cl_args.debug
+_DEBUG = True  # cl_args.debug
 
 # Set to True to allow access via local network (only works with Flask app!)
 # WARNING: THIS MIGHT BE A SECURITY RISK BECAUSE IT POTENTIALLY ALLOWS PEOPLE
@@ -172,7 +172,7 @@ import open3d as o3d # NOQA402
 import potpourri3d as pp3d # NOQA402
 from sklearn.manifold import TSNE # NOQA402
 from sklearn.decomposition import PCA # NOQA402
-
+import ifcopenshell # NOQA402
 
 # LOCAL MODULE IMPORTS --------------------------------------------------------
 
@@ -372,6 +372,55 @@ def gurobi_SolveAssignment3DPointsComponent(design,
     # return data as hops tree
     return (hsutil.np_int_array_to_hops_tree(assignment, design_p),
             hsutil.np_float_array_to_hops_tree(assignment_cost, design_p))
+
+
+@hops.component(
+    "/gurobi.SolveCuttingStockProblem",
+    name="SolveCuttingStockProblem",
+    nickname="SolveCSP",
+    description="Solve a cutting stock problem.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsNumber("StockLength", "SL", "Stock Length", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("StockCrossSectionLong", "SCL", "Stock Cross Section Long Side", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("StockCrossSectionShort", "SCS", "Stock Cross Section Short Side", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("DemandLength", "DL", "Demand Length", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("DemandCrossSectionLong", "DCL", "Demand Cross Section Long Side", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("DemandCrossSectionShort", "DCS", "Demand Cross Section Short Side", hs.HopsParamAccess.LIST), # NOQA501
+    ],
+    outputs=[
+        hs.HopsInteger("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("NewComponents", "N", "Components produced new.", hs.HopsParamAccess.TREE), # NOQA501
+    ])
+def gurobi_SolveCSPComponent(stock_len,
+                             stock_cs_x,
+                             stock_cs_y,
+                             demand_len,
+                             demand_cs_x,
+                             demand_cs_y):
+
+    # BUILD NP ARRAYS ---------------------------------------------------------
+
+    m = np.column_stack((np.array([round(x, 6) for x in demand_len]),
+                         np.array([round(x, 6) for x in demand_cs_x]),
+                         np.array([round(x, 6) for x in demand_cs_y])))
+
+    R = np.column_stack((np.array([round(x, 6) for x in stock_len]),
+                         np.array([round(x, 6) for x in stock_cs_x]),
+                         np.array([round(x, 6) for x in stock_cs_y])))
+
+    # COMPOSE N ON BASIS OF M -------------------------------------------------
+
+    cs_set = list(set([x[1] for x in m] + [x[2] for x in m]))
+    combs = list(combinations(cs_set, 2))
+    combs = [sorted(list(x), reverse=True) for x in combs]
+    N = np.array([(float("inf"), x[0], x[1]) for x in combs])
+
+    optimisation_result = ghgurobi.solve_csp(m, R, N)
+    print(R.shape[0])
+    return [int(x[1]) for x in optimisation_result], hsutil.np_float_array_to_hops_tree(N)
 
 
 # ITERATIVE CLOSEST POINT /////////////////////////////////////////////////////
@@ -1444,6 +1493,31 @@ def tfsn_ForwardPassComponent(data_input,
 
     # return the prediction as a hops tree
     return hsutil.np_float_array_to_hops_tree(prediction, di_paths)
+
+
+# IFC OPEN SHELL INTERFACE ////////////////////////////////////////////////////
+
+@hops.component(
+    "/ifc.TestComponent",
+    name="IFCTestComponent",
+    nickname="IFCTest",
+    description="IFC Open Shell Test",
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsString("FilePath", "F", "FilePath of .ifc file to read.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsNumber("Prediction", "P", "The result/prediction for the test input data.", hs.HopsParamAccess.ITEM), # NOQA501
+    ])
+def ifc_TestComponent(fp: str):
+
+    model = ifcopenshell.open(hsutil.sanitize_path(fp))
+    project = model.by_type("IfcProject")
+    print(project)
+
+    return 1
 
 
 # TEST AND VERIFICATION COMPONENTS ////////////////////////////////////////////
