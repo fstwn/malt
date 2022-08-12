@@ -76,89 +76,6 @@ setup(
 
 # DEFINE FUNC FOR REPLACING  CODE IN PARAMS.PY ---- !!! DANGER ZONE !!! -------
 
-def _fix_from_result_func(params_file):
-    """Replace some source code in params.py to support datatree output."""
-    # define original function source code to look for
-    original_func_src = ("""
-    def from_result(self, value):
-        \"\"\"Serialize parameter with given value for output\"\"\"
-        if not isinstance(value, tuple) and not isinstance(value, list):
-            value = (value,)
-
-        output_list = [
-            {
-                "type": self.result_type,
-                "data": RHINO_TOJSON(v)
-            } for v in value
-        ]
-
-        output = {
-            "ParamName": self.name,
-            "InnerTree": {
-                "0": output_list
-            },
-        }
-        return output""")
-    # this is the fixed replacement source code
-    replacement_func_src = ("""
-    def from_result(self, value):
-        \"\"\"Serialize parameter with given value for output\"\"\"
-        if self.access == HopsParamAccess.TREE and isinstance(value, dict):
-            tree = {}
-            for key in value.keys():
-                branch_data = [
-                    {
-                        "type": self.result_type,
-                        "data": RHINO_TOJSON(v)
-                    } for v in value[key]
-                ]
-                tree[key] = branch_data
-            output = {
-                "ParamName": self.name,
-                "InnerTree": tree,
-            }
-            return output
-
-        if not isinstance(value, tuple) and not isinstance(value, list):
-            value = (value,)
-
-        output_list = [
-            {
-                "type": self.result_type,
-                "data": RHINO_TOJSON(v)
-            } for v in value
-        ]
-
-        output = {
-            "ParamName": self.name,
-            "InnerTree": {
-                "0": output_list
-            },
-        }
-        return output""")
-    # open file and read source code
-    params_source = None
-    with open(params_file, mode="r") as f:
-        params_source = f.read()
-    # if the original source code is in the file, replace it with the
-    # augmented version for outputting trees
-    if replacement_func_src in params_source:
-        print("[INFO] MALT post installation steps done!")
-        print("[INFO] Source code in params.py already replaced before!")
-    elif (original_func_src in params_source and
-          replacement_func_src not in params_source):
-        params_source = params_source.replace(original_func_src,
-                                              replacement_func_src)
-        with open(params_file, mode="w") as f:
-            f.write(params_source)
-        print("[INFO] MALT post installation steps done!")
-        print("[INFO] Source code in params.py was successfully replaced!")
-    else:
-        raise RuntimeError(
-            "[ERROR] MALT post installation steps not completed! \n"
-            "[ERROR] Source not found in params.py file!")
-
-
 def _add_circle_param(params_file):
     """Replace some source code and add support for Circles as params"""
     # define original function source code to look for
@@ -321,15 +238,14 @@ def run_post_install_steps():
     params_file = normpath("\\".join(ghh_path.split("\\")[:-1] +
                                      ["params.py"]))
     print("[INFO] params.py file: " + str(params_file))
-    if (isfile(params_file) and ghhops_server.__version__ == "1.4.1"):
+    if (isfile(params_file) and ghhops_server.__version__ == "1.5.2"):
         # run subroutine post install steps
-        _fix_from_result_func(params_file)
         _add_circle_param(params_file)
         _add_plane_param(params_file)
     else:
-        if ghhops_server.__version__ != "1.4.1":
+        if ghhops_server.__version__ != "1.5.2":
             raise RuntimeError(
-                "[ERROR] ghhops_server version conflict! Has to be 1.4.1! \n"
+                "[ERROR] ghhops_server version conflict! Has to be 1.5.2! \n"
                 "[ERROR] MALT post Installation Steps could not be "
                 "completed!")
         raise RuntimeError("[ERROR] ghhops_server/params.py could not be "
