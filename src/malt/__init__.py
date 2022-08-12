@@ -15,9 +15,9 @@ import malt.hopsutilities as hopsutilities # NOQA402
 import malt.icp as icp # NOQA402
 import malt.imgprocessing as imgprocessing # NOQA402
 import malt.intri as intri # NOQA402
-import malt.shapesph as shapesph # NOQA402
-import malt.sshd as sshd # NOQA402
-import malt.tf_shapenet as tf_shapenet # NOQA402
+# import malt.shapesph as shapesph # NOQA402
+# import malt.sshd as sshd # NOQA402
+# import malt.tf_shapenet as tf_shapenet # NOQA402
 
 
 # DEFINITIONS -----------------------------------------------------------------
