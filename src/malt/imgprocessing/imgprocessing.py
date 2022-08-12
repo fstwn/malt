@@ -10,7 +10,7 @@ import cv2
 # FUNCTION DEFINITIONS --------------------------------------------------------
 
 def detect_contours(filepath: str, thresh_binary: int, thresh_area: float,
-                    invert: bool=False):
+                    invert: bool = False):
     if invert:
         threshold_type = cv2.THRESH_BINARY_INV
     else:
