@@ -9,15 +9,22 @@ import cv2
 
 # FUNCTION DEFINITIONS --------------------------------------------------------
 
-def detect_contours(filepath: str, thresh_binary: int, thresh_area: float):
-    # read image from filepath
+def detect_contours(filepath: str, thresh_binary: int, thresh_area: float,
+                    invert: bool=False):
+    if invert:
+        threshold_type = cv2.THRESH_BINARY_INV
+    else:
+        threshold_type = cv2.THRESH_BINARY
+
+    # read image from filepath and flip it to avoid mirrored contours
     image = cv2.imread(os.path.normpath(filepath))
+    image = cv2.flip(image, 0)
 
     # convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # create a binary thresholded image
-    _, binary = cv2.threshold(gray, thresh_binary, 255, cv2.THRESH_BINARY_INV)
+    _, binary = cv2.threshold(gray, thresh_binary, 255, threshold_type)
 
     # find the contours from the thresholded image
     contours, hierarchy = cv2.findContours(binary,
