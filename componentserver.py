@@ -40,11 +40,6 @@ cl_args = arg_parser.parse_args()
 # referenced libraries from triggering a wall of debug messages.
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
-# Make tensorflow logger less verbose to prevent imports in
-# referenced libraries from triggering a wall of debug messages.
-# import tensorflow as tf # NOQA402
-# logging.getLogger("tensorflow").setLevel(logging.WARNING)
-
 # Set to True to run in debug mode.
 _DEBUG = True  # cl_args.debug
 
@@ -182,7 +177,6 @@ from malt import imgprocessing # NOQA402
 from malt import intri # NOQA402
 # from malt import shapesph # NOQA402
 # from malt import sshd # NOQA402
-# from malt import tf_shapenet # NOQA402
 
 
 # REGSISTER FLASK AND/OR RHINOINSIDE HOPS APP ---------------------------------
@@ -1387,178 +1381,70 @@ def sklearn_PCAComponent(data,
 
 # SPHERICAL HARMONICS SHAPE DESCRIPTOR ////////////////////////////////////////
 
-# @hops.component(
-#     "/sshd.MeshSphericalHarmonicsDescriptor",
-#     name="MeshSphericaHarmonicsDescriptor",
-#     nickname="MeshSHD",
-#     description="Description of mesh using a complex function on the sphere.", # NOQA501
-#     category=None,
-#     subcategory=None,
-#     icon="resources/icons/220204_malt_icon.png",
-#     inputs=[
-#         hs.HopsMesh("Mesh", "M", "The triangle mesh to compute the shape descriptor for.", hs.HopsParamAccess.ITEM), # NOQA501
-#         hs.HopsInteger("Dimensions", "D", "Number of dimensions/coefficients for the computation. Defaults to 13.", hs.HopsParamAccess.ITEM), # NOQA501
-#     ],
-#     outputs=[
-#         hs.HopsNumber("FeatureVector", "F", "The feature vector for the shape descriptor.", hs.HopsParamAccess.LIST), # NOQA501
-#     ])
-# def sshd_MeshSphericalHarmonicsDescriptorComponent(mesh, dims=13):
-#     # check if mesh is all triangles
-#     if mesh.Faces.QuadCount > 0:
-#         raise ValueError("Mesh has to be triangular!")
+@hops.component(
+    "/sshd.MeshSphericalHarmonicsDescriptor",
+    name="MeshSphericaHarmonicsDescriptor",
+    nickname="MeshSHD",
+    description="Description of mesh using a complex function on the sphere.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsMesh("Mesh", "M", "The triangle mesh to compute the shape descriptor for.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Dimensions", "D", "Number of dimensions/coefficients for the computation. Defaults to 13.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsNumber("FeatureVector", "F", "The feature vector for the shape descriptor.", hs.HopsParamAccess.LIST), # NOQA501
+    ])
+def sshd_MeshSphericalHarmonicsDescriptorComponent(mesh, dims=13):
+    # check if mesh is all triangles
+    if mesh.Faces.QuadCount > 0:
+        raise ValueError("Mesh has to be triangular!")
 
-#     # get np arrays of vertices and faces
-#     V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
+    # get np arrays of vertices and faces
+    V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
 
-#     # compute shape descriptor
-#     sdescr = sshd.descriptorCS(V, F, coef_num_sqrt=dims)
+    # compute shape descriptor
+    sdescr = sshd.descriptorCS(V, F, coef_num_sqrt=dims)
 
-#     # convert descriptor values to floats
-#     sdescr = [float(x) for x in sdescr]
+    # convert descriptor values to floats
+    sdescr = [float(x) for x in sdescr]
 
-#     # return results
-#     return sdescr
-
-
-# @hops.component(
-#     "/shapesph.MeshSphericalHarmonicsDescriptorRI",
-#     name="MeshSphericaHarmonicsDescriptorRI",
-#     nickname="MeshSHD",
-#     description="Description of mesh using rotation invariant spherical harmonics descriptor", # NOQA501
-#     category=None,
-#     subcategory=None,
-#     icon="resources/icons/220204_malt_icon.png",
-#     inputs=[
-#         hs.HopsMesh("Mesh", "M", "The triangle mesh to compute the shape descriptor for.", hs.HopsParamAccess.ITEM), # NOQA501
-#     ],
-#     outputs=[
-#         hs.HopsNumber("FeatureVector", "F", "The feature vector for the shape descriptor.", hs.HopsParamAccess.LIST), # NOQA501
-#     ])
-# def shapesph_MeshSphericalHarmonicsDescriptorRIComponent(mesh):
-#     # check if mesh is all triangles
-#     if mesh.Faces.QuadCount > 0:
-#         raise ValueError("Mesh has to be triangular!")
-
-#     # get plyfile elements of vertices and faces
-#     V, F = hsutil.rhino_mesh_to_ply_elements(mesh)
-
-#     # compute shape descriptor
-#     sdescr = shapesph.compute_descriptor(V, F)
-
-#     # convert descriptor values to floats
-#     sdescr = [float(x) for x in sdescr]
-
-#     # return results
-#     return sdescr
+    # return results
+    return sdescr
 
 
-# TENSORFLOW SHAPENET INTERFACE ///////////////////////////////////////////////
+@hops.component(
+    "/shapesph.MeshSphericalHarmonicsDescriptorRI",
+    name="MeshSphericaHarmonicsDescriptorRI",
+    nickname="MeshSHD",
+    description="Description of mesh using rotation invariant spherical harmonics descriptor", # NOQA501
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsMesh("Mesh", "M", "The triangle mesh to compute the shape descriptor for.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsNumber("FeatureVector", "F", "The feature vector for the shape descriptor.", hs.HopsParamAccess.LIST), # NOQA501
+    ])
+def shapesph_MeshSphericalHarmonicsDescriptorRIComponent(mesh):
+    # check if mesh is all triangles
+    if mesh.Faces.QuadCount > 0:
+        raise ValueError("Mesh has to be triangular!")
 
-# @hops.component(
-#     "/tfsn.InitialTrain",
-#     name="ShapeNetInitialTrain",
-#     nickname="SNInitTrain",
-#     description="Initial training of shapenet neural network using tensorflow.", # NOQA501
-#     category=None,
-#     subcategory=None,
-#     icon="resources/icons/220204_malt_icon.png",
-#     inputs=[
-#         hs.HopsNumber("TrainInput", "I", "Training Input Data.", hs.HopsParamAccess.TREE), # NOQA501
-#         hs.HopsNumber("TrainResult", "R", "Training Result Data.", hs.HopsParamAccess.TREE), # NOQA501
-#         hs.HopsNumber("TestInput", "T", "Test Input Data.", hs.HopsParamAccess.TREE), # NOQA501
-#         hs.HopsNumber("TestResult", "TR", "Test Result Data.", hs.HopsParamAccess.TREE), # NOQA501
-#         hs.HopsString("ModelName", "N", "The name of the model to be trained.", hs.HopsParamAccess.ITEM, ), # NOQA501
-#         hs.HopsBoolean("Overwrite", "O", "Overwrite the model if it already exists?", hs.HopsParamAccess.ITEM, ), # NOQA501
-#         hs.HopsInteger("Epochs", "E", "The number of epochs for the initial training.", hs.HopsParamAccess.ITEM), # NOQA501
-#     ],
-#     outputs=[
-#         hs.HopsNumber("Prediction", "P", "The result/prediction for the test input data.", hs.HopsParamAccess.TREE), # NOQA501
-#     ])
-# def tfsn_InitialTrainComponent(train_input,
-#                                train_result,
-#                                data_input,
-#                                data_result,
-#                                model_name,
-#                                overwrite=False,
-#                                epochs=100):
+    # get plyfile elements of vertices and faces
+    V, F = hsutil.rhino_mesh_to_ply_elements(mesh)
 
-#     # loop over tree and extract data points
-#     ti_paths, train_input = hsutil.hops_tree_to_np_array(train_input)
-#     tr_paths, train_result = hsutil.hops_tree_to_np_array(train_result)
-#     di_paths, data_input = hsutil.hops_tree_to_np_array(data_input)
-#     dr_paths, data_result = hsutil.hops_tree_to_np_array(data_result)
+    # compute shape descriptor
+    sdescr = shapesph.compute_descriptor(V, F)
 
-#     # train the model and make a first prediction
-#     prediction = tf_shapenet.initial_train(model_name,
-#                                            train_input,
-#                                            train_result,
-#                                            data_input,
-#                                            data_result,
-#                                            epochs,
-#                                            overwrite)
+    # convert descriptor values to floats
+    sdescr = [float(x) for x in sdescr]
 
-#     # return the prediction as a hops tree
-#     return hsutil.np_float_array_to_hops_tree(prediction, dr_paths)
+    # return results
+    return sdescr
 
-
-# @hops.component(
-#     "/tfsn.LoadAndTrain",
-#     name="ShapeNetLoadAndTrain",
-#     nickname="SNLoadTrain",
-#     description="Training of shapenet neural network using tensorflow.",
-#     category=None,
-#     subcategory=None,
-#     icon="resources/icons/220204_malt_icon.png",
-#     inputs=[
-#         hs.HopsNumber("TrainInput", "I", "Training Input Data.", hs.HopsParamAccess.TREE), # NOQA501
-#         hs.HopsNumber("TrainResult", "R", "Training Result Data.", hs.HopsParamAccess.TREE), # NOQA501
-#         hs.HopsString("ModelName", "N", "The name of the model to be trained.", hs.HopsParamAccess.ITEM, ), # NOQA501
-#         hs.HopsInteger("Epochs", "E", "The number of epochs for the initial training.", hs.HopsParamAccess.ITEM), # NOQA501
-#     ],
-#     outputs=[
-#         # hs.HopsNumber("Prediction", "P", "The result/prediction for the test input data.", hs.HopsParamAccess.TREE), # NOQA501
-#     ])
-# def tfsn_LoadAndTrainComponent(train_input,
-#                                train_result,
-#                                model_name,
-#                                epochs=100):
-
-#     # loop over tree and extract data points
-#     ti_paths, train_input = hsutil.hops_tree_to_np_array(train_input)
-#     tr_paths, train_result = hsutil.hops_tree_to_np_array(train_result)
-
-#     tf_shapenet.load_and_train(model_name,
-#                                train_input,
-#                                train_result,
-#                                epochs)
-
-
-# @hops.component(
-#     "/tfsn.ForwardPass",
-#     name="ShapeNetForwardPass",
-#     nickname="SNFwPass",
-#     description="Forward pass of shapenet neural network using tensorflow.",
-#     category=None,
-#     subcategory=None,
-#     icon="resources/icons/220204_malt_icon.png",
-#     inputs=[
-#         hs.HopsNumber("Input", "I", "Forward pass input Data.", hs.HopsParamAccess.TREE), # NOQA501
-#         hs.HopsString("ModelName", "N", "The name of the model to be trained.", hs.HopsParamAccess.ITEM, ), # NOQA501
-#     ],
-#     outputs=[
-#         hs.HopsNumber("Prediction", "P", "The result/prediction for the test input data.", hs.HopsParamAccess.TREE), # NOQA501
-#     ])
-# def tfsn_ForwardPassComponent(data_input,
-#                               model_name):
-
-#     # loop over tree and extract data points
-#     di_paths, data_input = hsutil.hops_tree_to_np_array(data_input)
-
-#     # create prediction using neural network
-#     prediction = tf_shapenet.forward_pass(data_input, model_name)
-
-#     # return the prediction as a hops tree
-#     return hsutil.np_float_array_to_hops_tree(prediction, di_paths)
 
 # TEST AND VERIFICATION COMPONENTS ////////////////////////////////////////////
 
