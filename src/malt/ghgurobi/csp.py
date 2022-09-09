@@ -60,7 +60,7 @@ def solve_csp(m: np.array,
                 # difference as cost (??)
                 cM[i, j] = abs(R[j][0] - sobj[0])
             else:
-                # otherwise use a very high number
+                # otherwise use arbitrary high number
                 cM[i, j] = 9999999
 
     # print info and create profiler
