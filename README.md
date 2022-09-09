@@ -67,18 +67,7 @@ mode, in case you want to extend and/or modify it. If you simply want to use
 the provided functions and components, you can also simply call
 `pip install .`*
 
-## 4. Installing COMPAS and its extensions for use in Rhino
-
-Finally, we install `compas_rhino` and the other compas extensions by running:
-```
-python -m compas_rhino.install -v 7.0 -p compas compas_rhino compas_ghpython compas_fab compas_cgal malt
-```
-
-*NOTE: we are also registering the `malt` package with compas. We do
-this so that we can call the functions not just by using Hops but also by using
-[COMPAS Remote Procedure Calls](https://compas.dev/compas/latest/tutorial/rpc.html).*
-
-## 5. Running the Hops Server in the Virtual Environment
+## 4. Running the Hops Server in the Virtual Environment
 
 Make sure your current working directory is the directory where `componentserver.py` 
 is located. Otherwise browse to this directory using `cd` (as we did in step 3).
@@ -97,7 +86,7 @@ Note that you can also run the componentserver using different command line opti
 - `python componentserver.py -f` will run the server without using Flask.
 - `python componentserver.py -n` will run the server in network access mode. **WARNING: THIS IS POTENTIALLY *VERY* DANGEROUS!**
 
-## 6. Using one of the provided Hops Components in Grasshopper
+## 5. Using one of the provided Hops Components in Grasshopper
 
 Once the server is running, you can query it at different endpoints. When you
 start the server, all available endpoints are printed to the console:
@@ -135,22 +124,22 @@ on the mesh using the `/igl.MeshIsoCurves` endpoint.
 
 ![Geodesic Heat Isocurves](/resources/readme/readme_06.png)
 
-## 7. Development
+## 6. Development
 
-### 7.1 Components
+### 6.1 Components
 
 If you want to contribute to malt development, the easiest way is to develop
 own components and add them to `componentserver.py`. For now, all components
 have to be defined in this file, since Hops does not support it in any other
 way yet.
 
-### 7.2 Submodules
+### 6.2 Submodules
 
 If you want to contribute by adding submodules, please add your modules in the
 `/malt` directory. Make sure that you have installed the malt package in
 development mode using `pip install -e .`.
 
-### 7.3 Tests
+### 6.3 Tests
 
 Malt uses `pytest` for testing. It is included in the `ddu_ias_research.yml`
 conda environment file and does not need to be installed separately.
@@ -162,7 +151,7 @@ To run all available test, call
 invoke test
 ```
 
-### 7.4 Linting
+### 6.4 Linting
 
 Please use the `flake8` linter when contributing code to malt. It is included
 in the `ddu_ias_research.yml` conda environment file and does not need to be
@@ -176,7 +165,7 @@ invoke lint
 ## Licensing & References
 
 - Original code is licensed under the MIT License.
-- The `malt.ipc` and `malt.tf_shapenet` modules are based on code by Yijiang Huang. This code is licensed under the MIT License found under `licenses/compas_rpc_example`.
+- The `malt.ipc` module is based on code by Yijiang Huang. This code is licensed under the MIT License found under `licenses/compas_rpc_example`.
 - The `malt.intri` module is based on the [intrinsic-triangulations-tutorial](https://github.com/nmwsharp/intrinsic-triangulations-tutorial) code by Nicholas Sharp and Mark Gillespie & Keenan Crane. Unfortunately, no license is provided by its authors for this public open-source code. The code is based on the paper *"Navigating Intrinsic Triangulations" by Nicholas Sharp, Yousuf Soliman & Keenan Crane, ACM Transactions on Graphics, 2019*.
 - The redistributed executables of [ShapeSPH](https://github.com/mkazhdan/ShapeSPH) are licensed under the MIT License found under `licenses/ShapeSPH`.
 - The [FFTW](http://www.fftw.org/) .dlls that are redistributed with the ShapeSPH executables are licensed under the GNU General Public License founde under `licenses/FFTW`.
