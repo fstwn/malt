@@ -2,7 +2,6 @@
 
 import argparse
 import clr
-from itertools import combinations, product
 import logging
 
 
@@ -400,6 +399,15 @@ def gurobi_SolveCSPComponent(stock_len,
                              demand_cs_x,
                              demand_cs_y):
 
+    # SANITIZE INPUT DATA -----------------------------------------------------
+
+    if not len(stock_len) == len(stock_cs_x) == len(stock_cs_y):
+        raise ValueError("Stock Length and Cross Section Size lists must "
+                         "correspond in length!")
+    if not len(demand_len) == len(demand_cs_x) == len(demand_cs_y):
+        raise ValueError("Demand Length and Cross Section Size lists must "
+                         "correspond in length!")
+
     # BUILD NP ARRAYS ---------------------------------------------------------
 
     m = np.column_stack((np.array([round(x, 6) for x in demand_len]),
@@ -412,13 +420,15 @@ def gurobi_SolveCSPComponent(stock_len,
 
     # COMPOSE N ON BASIS OF M -------------------------------------------------
 
-    cs_set = list(set([x[1] for x in m] + [x[2] for x in m]))
-    combs = list(combinations(cs_set, 2))
-    combs = [sorted(list(x), reverse=True) for x in combs]
-    N = np.array([(float("inf"), x[0], x[1]) for x in combs])
+    cs_set = sorted(list(set([(x[1], x[2]) for x in m])), reverse=True)
+    N = np.array([(float("inf"), x[0], x[1]) for x in cs_set])
+
+    # RUN DISCRETE STOCK CONSTRAINED CUTTING STOCK OPTIMIZATION ---------------
 
     optimisation_result = ghgurobi.solve_csp(m, R, N)
-    print(R.shape[0])
+
+    # RETURN THE OPTIMIZATION RESULTS -----------------------------------------
+
     return ([int(x[1]) for x in optimisation_result],
             hsutil.np_float_array_to_hops_tree(N))
 
@@ -1017,10 +1027,10 @@ def opencv_DetectContoursComponent(filepath,
                                    athresh=0.0,
                                    invert=False):
     # run contour detection using opencv
-    image, contours = imgprocessing.detect_contours(filepath,
-                                                    bthresh,
-                                                    athresh,
-                                                    invert)
+    image, contours = imgprocessing.detect_contours_from_file(filepath,
+                                                              bthresh,
+                                                              athresh,
+                                                              invert)
     # construct polylines from contour output
     plcs = []
     for cnt in contours:
@@ -1038,6 +1048,58 @@ def opencv_DetectContoursComponent(filepath,
 
     # return output
     return plcs
+
+
+@hops.component(
+    "/opencv.CaptureContours",
+    name="CaptureContours",
+    nickname="CapCon",
+    description="Capture an image from a connected camera and detect contours using OpenCV.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsBoolean("Run", "R", "Run the capturing and contour detection routine.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("BinaryThreshold", "B", "The threshold for binary (black & white) conversion of the image. Defaults to 127.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsNumber("AreaThreshold", "T", "The area threshold for filtering the returned contours in pixels. Deactivated if set to 0. Defaults to 0.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsBoolean("Invert", "I", "If True, threshold image will be inverted. Use the invert function to detect black objects on white background.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsCurve("Contours", "C", "The detected contours as Polylines.", hs.HopsParamAccess.LIST), # NOQA501
+    ])
+def opencv_CaptureContoursComponent(run,
+                                    bthresh=127,
+                                    athresh=0.0,
+                                    invert=False):
+
+    if run:
+        # capture an image for contour detection
+        image = imgprocessing.capture_image()
+
+        # run contour detection using opencv
+        image, contours = imgprocessing.detect_contours_from_image(image,
+                                                                   bthresh,
+                                                                   athresh,
+                                                                   invert)
+        # construct polylines from contour output
+        plcs = []
+        for cnt in contours:
+            # create .NET list because Polyline constructor won't correctly
+            # handle python lists (it took a while to find that out....)
+            if len(cnt) >= 2:
+                ptlist = System.Collections.Generic.List[Rhino.Geometry.Point3d]()
+                [ptlist.Add(Rhino.Geometry.Point3d(float(pt[0][0]),
+                                                   float(pt[0][1]),
+                                                   0.0)) for pt in cnt]
+                ptlist.Add(Rhino.Geometry.Point3d(float(cnt[0][0][0]),
+                                                  float(cnt[0][0][1]),
+                                                  0.0))
+                plcs.append(Rhino.Geometry.PolylineCurve(ptlist))
+
+        # return output
+        return plcs
+
+    return []
 
 
 # POTPOURRI3D /////////////////////////////////////////////////////////////////
