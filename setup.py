@@ -238,16 +238,16 @@ def run_post_install_steps():
     params_file = normpath("\\".join(ghh_path.split("\\")[:-1] +
                                      ["params.py"]))
     print("[INFO] params.py file: " + str(params_file))
-    if (isfile(params_file) and ghhops_server.__version__ == "1.5.2"):
-        # run subroutine post install steps
-        _add_circle_param(params_file)
-        _add_plane_param(params_file)
+    if isfile(params_file):
+        if (ghhops_server.__version__ >= "1.4.1" and
+                ghhops_server.__version__ < "1.5.3"):
+            # run subroutine post install steps
+            _add_circle_param(params_file)
+            _add_plane_param(params_file)
+        else:
+            # don't run post steps
+            pass
     else:
-        if ghhops_server.__version__ != "1.5.2":
-            raise RuntimeError(
-                "[ERROR] ghhops_server version conflict! Has to be 1.5.2! \n"
-                "[ERROR] MALT post Installation Steps could not be "
-                "completed!")
         raise RuntimeError("[ERROR] ghhops_server/params.py could not be "
                            "found!")
 

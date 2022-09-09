@@ -1,8 +1,4 @@
 # flake8: NOQA
-# compas
-# compas-cgal
-# compas-fab
-# compas-view2
 # flake8
 # Flask
 # h5py

@@ -150,10 +150,13 @@ def solve_csp(m: np.array,
     # collect the results of the optimisation
     t_result = [(k[0], k[1]) for k in t.keys() if t[k].x > 0]
 
-    # y_result = [y[k].x for k in y.keys()]
+    y_result = [y[k].x for k in y.keys()]
 
     # Print some info
     if verbose:
+
+        print(y_result)
+
         [print("Demand {0}: Stock {1}".format(result[0], result[1]))
          for result in t_result]
 
