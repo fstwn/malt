@@ -38,20 +38,33 @@ def solve_csp(m: np.array,
     # position i
     # cM should be a computed cost matrix
 
+    # -------------------------------------------------------------------------
+
+    # initialize S as the size of R (stock) and N (new production)
     S = len(R) + len(N)
+    # create assignment matrix T as an empty matrix
     T = np.zeros((len(m), S))
 
-    # compute cM as covariance matrix of length (???)
+    print("[GHGUROBI] Building Cost Matrix cM...")
+
+    # TODO: find better cost quantification!
+    # cM -> should be the cost matrix,
+    # but not necessarily difference in length!
     cM = np.zeros((len(m), S))
+    # loop over demand
     for i, sobj in enumerate(m):
         for j in range(S):
+            # cross-check with stock + new production
             if j < len(R):
+                # if item is inside stock domain, use absolute length
+                # difference as cost (??)
                 cM[i, j] = abs(R[j][0] - sobj[0])
             else:
+                # otherwise use a very high number 
                 cM[i, j] = 9999999
 
     # print info and create profiler
-    print("[GHGUROBI] Building CSP Gurobi Model...")
+    print("[GHGUROBI] Building Gurobi Model for Cutting Stock Problem...")
     timer = hsutil.Profiler()
     timer.start()
 
@@ -60,9 +73,8 @@ def solve_csp(m: np.array,
 
     # add binary decision variable if member i is either cut from stock element
     # {j ElementOf R} or produced new with cross-section {j ElementOf N}
-
     # NOTE: i / shape[0] is the row index (demand),
-    # j / shape[1] is the column index (stock)!
+    #       j / shape[1] is the column index (stock)!
     t = model.addVars(T.shape[0],
                       T.shape[1],
                       vtype=gp.GRB.BINARY,
@@ -71,50 +83,54 @@ def solve_csp(m: np.array,
     # add binary decision variable if one or more members are cut out from
     # stock element {j ElementOf R} (1) or if no member is cut out from stock
     # element {j ElementOf R} (0), i.e. element j remains unused.
-    y = model.addVars(T.shape[1],
+    y = model.addVars(len(R),
                       vtype=gp.GRB.BINARY,
                       name="y")
 
     # for each member i, either one stock element j is reused or one new
     # element j is produced, as defined by the following constraint:
     # sum_{j = 1}^{s} t_{ij} = 1 for all i
-    model.addConstrs((gp.quicksum(t[i, j]
-                      for j in range(S)) == 1
-                     for i in range(T.shape[0])),
+    model.addConstrs((gp.quicksum(t[i, j] for j in range(S)) == 1
+                      for i in range(T.shape[0])),
                      name="reuse_or_new")
 
     # the use of stock element {j ElementOf R} for one or more members is
     # constrained by the available length
-    # NOTE: m[i][0] = demand length, R[j][0] = stock length
-    model.addConstrs((gp.quicksum(t[i, j] * m[i][0]
-                      for i in range(T.shape[0])) <= y[j] * R[j][0]
+    # NOTE:
+    # m[i][0] = demand length (l´i)
+    # R[j][0] = stock length (lj)
+    model.addConstrs((gp.quicksum(t[i, j] * m[i][0] for i in range(len(m))) <= y[j] * R[j][0] # NOQA501
                      for j in range(R.shape[0])),
                      name="available_length")
 
-    # the use of stock element {j ElementOf R} for one or more members is
-    # constrained by the available cross section, first long then short side
-    # NOTE: m[i][1] = long cs demand, R[j][1] = long cs stock
-    model.addConstrs((gp.quicksum(t[i, j] * m[i][1]
-                      for i in range(T.shape[0])) == y[j] * R[j][1]
-                     for j in range(R.shape[0])),
-                     name="cs_long")
-    # NOTE: m[i][2] = short cs demand, R[j][2] = short cs stock
-    model.addConstrs((gp.quicksum(t[i, j] * m[i][2]
-                      for i in range(T.shape[0])) == y[j] * R[j][2]
-                     for j in range(R.shape[0])),
-                     name="cs_short")
+    # concatenate R and N to get all elements available from stock and new
+    # production
+    RN = np.concatenate((R, N), axis=0)
+    # the assignment of members to elements is constrained by matching
+    # cross sections
+    # NOTE: m[i][1] = long cs demand
+    #       RN[j][1] = long cs stock + production
+    #       m[i][2] = short cs demand
+    #       RN[j][2] = short cs stock + production
+    for i in range(len(m)):
+        for j in range(S):
+            model.addConstr(t[i, j] * m[i][1] == t[i, j] * RN[j][1])
+            model.addConstr(t[i, j] * m[i][2] == t[i, j] * RN[j][2])
 
     # the objective value is the sum of two cost indices
     # cS_j is the cost to source and process stock element {j ElementOf R}
 
     # cM_i,j is the cost to manufacture or install element j (reuse or new)
     # at position i
-
+    # TODO: add correct cost values / computation
+    cj = 10
     model.setObjective(
-        gp.quicksum((10 * y[j]) for j in range(T.shape[1])) +
+        gp.quicksum((cj * y[j]) for j in range(len(R))) +
+
         gp.quicksum(cM[i, j] * t[i, j]
                     for i in range(T.shape[0])
                     for j in range(T.shape[1])),
+
         gp.GRB.MINIMIZE)
 
     # don't print all of the info...
@@ -136,8 +152,7 @@ def solve_csp(m: np.array,
 
     # y_result = [y[k].x for k in y.keys()]
 
-    # collect results regarding stock or new components
-
+    # Print some info
     if verbose:
         [print("Demand {0}: Stock {1}".format(result[0], result[1]))
          for result in t_result]
