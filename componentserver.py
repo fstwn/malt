@@ -2,6 +2,7 @@
 
 import argparse
 import clr
+from itertools import product
 import logging
 
 
@@ -1087,14 +1088,14 @@ def opencv_CaptureContoursComponent(run,
             # create .NET list because Polyline constructor won't correctly
             # handle python lists (it took a while to find that out....)
             if len(cnt) >= 2:
-                ptlist = System.Collections.Generic.List[Rhino.Geometry.Point3d]()
-                [ptlist.Add(Rhino.Geometry.Point3d(float(pt[0][0]),
-                                                   float(pt[0][1]),
-                                                   0.0)) for pt in cnt]
-                ptlist.Add(Rhino.Geometry.Point3d(float(cnt[0][0][0]),
-                                                  float(cnt[0][0][1]),
-                                                  0.0))
-                plcs.append(Rhino.Geometry.PolylineCurve(ptlist))
+                ptL = System.Collections.Generic.List[Rhino.Geometry.Point3d]()
+                [ptL.Add(Rhino.Geometry.Point3d(float(pt[0][0]),
+                                                float(pt[0][1]),
+                                                0.0)) for pt in cnt]
+                ptL.Add(Rhino.Geometry.Point3d(float(cnt[0][0][0]),
+                                               float(cnt[0][0][1]),
+                                               0.0))
+                plcs.append(Rhino.Geometry.PolylineCurve(ptL))
 
         # return output
         return plcs
