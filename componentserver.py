@@ -175,8 +175,8 @@ from malt import hopsutilities as hsutil # NOQA402
 from malt import icp # NOQA402
 from malt import imgprocessing # NOQA402
 from malt import intri # NOQA402
-# from malt import shapesph # NOQA402
-# from malt import sshd # NOQA402
+from malt import shapesph # NOQA402
+from malt import sshd # NOQA402
 
 
 # REGSISTER FLASK AND/OR RHINOINSIDE HOPS APP ---------------------------------
