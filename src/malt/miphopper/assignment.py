@@ -21,12 +21,12 @@ def solve_assignment_2d(cost: np.array, verbose: bool = False):
     """
 
     # print info and create profiler
-    print("[GHGUROBI] Building Gurobi Model...")
+    print("[MIPHOPPER] Building Gurobi Model...")
     timer = hsutil.Profiler()
     timer.start()
 
     # create the gurobi model
-    model = gp.Model("2D Assignment")
+    model = gp.Model("2D Assignment Problem")
 
     # add binary decision variables for num of rows and num of cols of cost
     # matrix
@@ -60,14 +60,14 @@ def solve_assignment_2d(cost: np.array, verbose: bool = False):
         model.setParam("OutputFlag", False)
 
     # stop the profiler and print time elapsed for building model
-    print("[GHGUROBI] Building model took {0} ms".format(timer.rawstop()))
+    print("[MIPHOPPER] Building model took {0} ms".format(timer.rawstop()))
 
     # optimize the model and time it with the simple profiler
     timer.start()
     model.optimize()
 
     # stop profiler and print time elaspsed for solving
-    print("[GHGUROBI] Solving model took {0} ms".format(timer.rawstop()))
+    print("[MIPHOPPER] Solving model took {0} ms".format(timer.rawstop()))
 
     # collect the results of the assignment
     asm_result, asm_cost = zip(*[(sk[1], cost[sk[0], sk[1]])
@@ -88,12 +88,12 @@ def solve_assignment_3d(cost: np.array, verbose: bool = False):
     """
 
     # print info and create profiler
-    print("[GHGUROBI] Building Gurobi Model...")
+    print("[MIPHOPPER] Building Gurobi Model...")
     timer = hsutil.Profiler()
     timer.start()
 
     # create the gurobi model
-    model = gp.Model("3D Assignment")
+    model = gp.Model("3D Assignment Problem")
 
     # add binary decision variables
     select = model.addVars(cost.shape[0],
@@ -129,14 +129,14 @@ def solve_assignment_3d(cost: np.array, verbose: bool = False):
         model.setParam("OutputFlag", False)
 
     # stop the profiler and print time elapsed for building model
-    print("[GHGUROBI] Building model took {0} ms".format(timer.rawstop()))
+    print("[MIPHOPPER] Building model took {0} ms".format(timer.rawstop()))
 
     # optimize the model and time it with the simple profiler
     timer.start()
     model.optimize()
 
     # stop profiler and print time elaspsed for solving
-    print("[GHGUROBI] Solving model took {0} ms".format(timer.rawstop()))
+    print("[MIPHOPPER] Solving model took {0} ms".format(timer.rawstop()))
 
     # collect the results of the assignment
     asm_result, asm_cost = zip(*[((sk[1], sk[2]), cost[sk[0], sk[1], sk[2]])

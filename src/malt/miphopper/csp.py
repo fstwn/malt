@@ -17,9 +17,6 @@ def solve_csp(m: np.array,
     """
     Solves a cutting stock problem using Gurobi.
     """
-
-    # !!! STOCK HAS TO BE DENOTED BY J INDEX !!!
-
     # m = demand of members to be built, defined by cross-section and length
     # R = stock of reclaimed elements for reuse, predefined cross-section and
     #     length
@@ -45,7 +42,7 @@ def solve_csp(m: np.array,
     # create assignment matrix T as an empty matrix
     T = np.zeros((len(m), S))
 
-    print("[GHGUROBI] Building Cost Matrix cM...")
+    print("[MIPHOPPER] Building Cost Matrix cM...")
 
     # TODO: find better cost quantification!
     # cM -> should be the cost matrix,
@@ -64,7 +61,7 @@ def solve_csp(m: np.array,
                 cM[i, j] = 9999999
 
     # print info and create profiler
-    print("[GHGUROBI] Building Gurobi Model for Cutting Stock Problem...")
+    print("[MIPHOPPER] Building Gurobi Model for Cutting Stock Problem...")
     timer = hsutil.Profiler()
     timer.start()
 
@@ -119,7 +116,6 @@ def solve_csp(m: np.array,
 
     # the objective value is the sum of two cost indices
     # cS_j is the cost to source and process stock element {j ElementOf R}
-
     # cM_i,j is the cost to manufacture or install element j (reuse or new)
     # at position i
     # TODO: add correct cost values / computation
@@ -138,18 +134,17 @@ def solve_csp(m: np.array,
         model.setParam("OutputFlag", False)
 
     # stop the profiler and print time elapsed for building model
-    print("[GHGUROBI] Building model took {0} ms".format(timer.rawstop()))
+    print("[MIPHOPPER] Building model took {0} ms".format(timer.rawstop()))
 
     # optimize the model and time it with the simple profiler
     timer.start()
     model.optimize()
 
     # stop profiler and print time elaspsed for solving
-    print("[GHGUROBI] Solving model took {0} ms".format(timer.rawstop()))
+    print("[MIPHOPPER] Solving model took {0} ms".format(timer.rawstop()))
 
     # collect the results of the optimisation
     t_result = [(k[0], k[1]) for k in t.keys() if t[k].x > 0]
-
     y_result = [y[k].x for k in y.keys()]
 
     # Print some info

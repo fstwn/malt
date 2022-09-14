@@ -170,11 +170,11 @@ from sklearn.decomposition import PCA # NOQA402
 
 # LOCAL MODULE IMPORTS --------------------------------------------------------
 
-from malt import ghgurobi # NOQA402
 from malt import hopsutilities as hsutil # NOQA402
 from malt import icp # NOQA402
 from malt import imgprocessing # NOQA402
 from malt import intri # NOQA402
+from malt import miphopper # NOQA402
 from malt import shapesph # NOQA402
 from malt import sshd # NOQA402
 
@@ -256,7 +256,7 @@ def gurobi_SolveAssignment2DPointsComponent(design,
             cost[i, j] = np.linalg.norm(pt2 - pt1, ord=2)
 
     # solve the assignment problem using the gurobi interface
-    assignment, assignment_cost = ghgurobi.solve_assignment_2d(cost)
+    assignment, assignment_cost = miphopper.solve_assignment_2d(cost)
 
     # return data as hops tree
     return (hsutil.np_int_array_to_hops_tree(assignment, design_p),
@@ -333,7 +333,7 @@ def gurobi_SolveAssignment3DPointsComponent(design,
                 mapping[i, j] = minidx
 
         # solve the assignment problem using the gurobi interface
-        assignment, assignment_cost = ghgurobi.solve_assignment_2d(cost)
+        assignment, assignment_cost = miphopper.solve_assignment_2d(cost)
 
         assignment_3d = []
         for i, v in enumerate(assignment):
@@ -360,7 +360,7 @@ def gurobi_SolveAssignment3DPointsComponent(design,
                     cost[i, j, k] = np.linalg.norm(pt2 - pt1, ord=2)
 
         # solve the assignment problem using the gurobi interface
-        assignment, assignment_cost = ghgurobi.solve_assignment_3d(cost)
+        assignment, assignment_cost = miphopper.solve_assignment_3d(cost)
 
     # return data as hops tree
     return (hsutil.np_int_array_to_hops_tree(assignment, design_p),
@@ -418,9 +418,9 @@ def gurobi_SolveCSPComponent(stock_len,
     cs_set = sorted(list(set([(x[1], x[2]) for x in m])), reverse=True)
     N = np.array([(float("inf"), x[0], x[1]) for x in cs_set])
 
-    # RUN DISCRETE STOCK CONSTRAINED CUTTING STOCK OPTIMIZATION ---------------
+    # RUN CUTTING STOCK OPTIMIZATION ------------------------------------------
 
-    optimisation_result = ghgurobi.solve_csp(m, R, N)
+    optimisation_result = miphopper.solve_csp(m, R, N)
 
     # RETURN THE OPTIMIZATION RESULTS -----------------------------------------
 
