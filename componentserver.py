@@ -1046,6 +1046,37 @@ def opencv_DetectContoursComponent(filepath,
 
 
 @hops.component(
+    "/opencv.CalibrateCamera",
+    name="CalibrateCamera",
+    nickname="CalCam",
+    description="Calibrate a connected Webcam for contour detection using OpenCV.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsBoolean("Run", "R", "Run the capturing and contour detection routine.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Device", "D", "The identifier of the capture device to use. Defaults to 0.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Width", "W", "The width of the working area.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Height", "H", "The height of the working area.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsNumber("Transform", "T", "The transformation matrix.", hs.HopsParamAccess.TREE), # NOQA501
+    ])
+def opencv_CalibrateCameraComponent(run,
+                                    device=0,
+                                    width=3780,
+                                    height=1890):
+
+    if run:
+        # run camera calibration
+        xform = imgprocessing.calibrate_camera(device, width, height)
+        rhinoxform = hsutil.np_float_array_to_hops_tree(xform)
+        return rhinoxform
+
+    return
+
+
+@hops.component(
     "/opencv.CaptureContours",
     name="CaptureContours",
     nickname="CapCon",
@@ -1057,25 +1088,41 @@ def opencv_DetectContoursComponent(filepath,
         hs.HopsBoolean("Run", "R", "Run the capturing and contour detection routine.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("BinaryThreshold", "B", "The threshold for binary (black & white) conversion of the image. Defaults to 127.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsNumber("AreaThreshold", "T", "The area threshold for filtering the returned contours in pixels. Deactivated if set to 0. Defaults to 0.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Device", "D", "The identifier of the capture device to use. Defaults to 0.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Width", "W", "The width of the working area.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Height", "H", "The height of the working area.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsBoolean("Invert", "I", "If True, threshold image will be inverted. Use the invert function to detect black objects on white background.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsNumber("Transform", "X", "The transformation parameters from camera calibration.", hs.HopsParamAccess.TREE), # NOQA501
     ],
     outputs=[
+        hs.HopsCurve("Boundary", "B", "The detected image boundary.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsCurve("Contours", "C", "The detected contours as Polylines.", hs.HopsParamAccess.LIST), # NOQA501
     ])
 def opencv_CaptureContoursComponent(run,
                                     bthresh=127,
                                     athresh=0.0,
-                                    invert=False):
+                                    device=0,
+                                    width=3780,
+                                    height=1890,
+                                    invert=False,
+                                    xformtree=None):
 
     if run:
         # capture an image for contour detection
-        image = imgprocessing.capture_image()
+        image = imgprocessing.capture_image(device)
+
+        # retrieve transformation matrix from calibrate camera tree input
+        xform = hsutil.hops_tree_to_np_array(xformtree)[1]
+
+        # create warped image
+        warped_img = imgprocessing.warp_image(image, xform, width, height)
 
         # run contour detection using opencv
-        image, contours = imgprocessing.detect_contours_from_image(image,
-                                                                   bthresh,
-                                                                   athresh,
-                                                                   invert)
+        warped_img, contours = imgprocessing.detect_contours_from_image(
+                                        warped_img,
+                                        bthresh,
+                                        athresh,
+                                        invert)
         # construct polylines from contour output
         plcs = []
         for cnt in contours:
@@ -1091,10 +1138,20 @@ def opencv_CaptureContoursComponent(run,
                                                0.0))
                 plcs.append(Rhino.Geometry.PolylineCurve(ptL))
 
-        # return output
-        return plcs
+        # draw boundary of image for additional output
+        h_dst, w_dst, c_dst = warped_img.shape
+        bPts = System.Collections.Generic.List[Rhino.Geometry.Point3d]()
+        bPts.Add(Rhino.Geometry.Point3d(0.0, 0.0, 0.0))
+        bPts.Add(Rhino.Geometry.Point3d(float(w_dst), 0.0, 0.0))
+        bPts.Add(Rhino.Geometry.Point3d(float(w_dst), float(h_dst), 0.0))
+        bPts.Add(Rhino.Geometry.Point3d(0.0, float(h_dst), 0.0))
+        bPts.Add(Rhino.Geometry.Point3d(0.0, 0.0, 0.0))
+        boundary = Rhino.Geometry.PolylineCurve(bPts)
 
-    return []
+        # return output
+        return (boundary, plcs)
+
+    return (None, [])
 
 
 # POTPOURRI3D /////////////////////////////////////////////////////////////////

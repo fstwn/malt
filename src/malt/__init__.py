@@ -10,11 +10,11 @@ from .__version__ import (__author__, __author_email__, __copyright__,
 
 # PACKAGE MODULE IMPORTS ------------------------------------------------------
 
-import malt.ghgurobi as ghgurobi # NOQA402
 import malt.hopsutilities as hopsutilities # NOQA402
 import malt.icp as icp # NOQA402
 import malt.imgprocessing as imgprocessing # NOQA402
 import malt.intri as intri # NOQA402
+import malt.miphopper as miphopper # NOQA402
 import malt.shapesph as shapesph # NOQA402
 import malt.sshd as sshd # NOQA402
 
