@@ -18,7 +18,7 @@ import malt
 def test_solve_assignment_2d():
     fn = "assignment_2d_sample_data.txt"
     cost_matrix = np.loadtxt(os.path.normpath(os.path.join(malt.DATADIR, fn)))
-    asm, cst = malt.ghgurobi.solve_assignment_2d(cost_matrix, verbose=True)
+    asm, cst = malt.miphopper.solve_assignment_2d(cost_matrix, verbose=True)
     assert asm[0] == 34
     assert asm[1] == 43
     assert asm[2] == 60
@@ -104,7 +104,7 @@ def test_solve_assignment_3d():
                 cost[i, j, k] = cost_value
 
     # solve the sample data cost matrix
-    asm, cst = malt.ghgurobi.solve_assignment_3d(cost, verbose=True)
+    asm, cst = malt.miphopper.solve_assignment_3d(cost, verbose=True)
 
     assert cst[0] == min(cost[0, asm[0][0]])
     assert cst[1] == min(cost[1, asm[1][0]])

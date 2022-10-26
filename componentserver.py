@@ -1046,9 +1046,9 @@ def opencv_DetectContoursComponent(filepath,
 
 
 @hops.component(
-    "/opencv.CalibrateCamera",
-    name="CalibrateCamera",
-    nickname="CalCam",
+    "/opencv.CalibrateCameraCapture",
+    name="CalibrateCameraCapture",
+    nickname="CalCamCap",
     description="Calibrate a connected Webcam for contour detection using OpenCV.", # NOQA501
     category=None,
     subcategory=None,
@@ -1062,7 +1062,7 @@ def opencv_DetectContoursComponent(filepath,
     outputs=[
         hs.HopsNumber("Transform", "T", "The transformation matrix.", hs.HopsParamAccess.TREE), # NOQA501
     ])
-def opencv_CalibrateCameraComponent(run,
+def opencv_CalibrateCameraCaptureComponent(run,
                                     device=0,
                                     width=3780,
                                     height=1890):
@@ -1074,6 +1074,60 @@ def opencv_CalibrateCameraComponent(run,
         return rhinoxform
 
     return
+
+
+@hops.component(
+    "/opencv.CalibrateChessboard",
+    name="CalibrateChessboard",
+    nickname="CalCam",
+    description="Calibrate a connected Webcam for contour detection using OpenCV.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsBoolean("Run", "R", "Run the capturing and contour detection routine.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsNumber("Transform", "T", "The transformation matrix.", hs.HopsParamAccess.TREE), # NOQA501
+    ])
+def opencv_CalibrateChessboardComponent(run):
+
+    if run:
+        images = glob.glob("src/malt/imgprocessing/chessboardcalib/*.jpg")
+        ret, mtx, dist, rvecs, tvecs = calibrate_camera_chessboard(images)
+
+    return
+
+
+@hops.component(
+    "/opencv.CalibrateCameraFile",
+    name="CalibrateCameraFile",
+    nickname="CalCam",
+    description="Calibrate a ccamera based on an image for contour detection using OpenCV.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsBoolean("Run", "R", "Run the calibration routine.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsString("FilePath", "F", "The filepath of the image.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Width", "W", "The width of the working area.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Height", "H", "The height of the working area.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsNumber("Transform", "T", "The transformation matrix.", hs.HopsParamAccess.TREE), # NOQA501
+    ])
+def opencv_CalibrateCameraFileComponent(run,
+                                        filepath="",
+                                        width=3780,
+                                        height=1890):
+    rhinoxform = None
+
+    if run:
+        # run camera calibration
+        xform = imgprocessing.calibrate_camera_file(filepath, width, height)
+        rhinoxform = hsutil.np_float_array_to_hops_tree(xform)
+
+    return rhinoxform
 
 
 @hops.component(
@@ -1123,6 +1177,85 @@ def opencv_CaptureContoursComponent(run,
                                         bthresh,
                                         athresh,
                                         invert)
+        # construct polylines from contour output
+        plcs = []
+        for cnt in contours:
+            # create .NET list because Polyline constructor won't correctly
+            # handle python lists (it took a while to find that out....)
+            if len(cnt) >= 2:
+                ptL = System.Collections.Generic.List[Rhino.Geometry.Point3d]()
+                [ptL.Add(Rhino.Geometry.Point3d(float(pt[0][0]),
+                                                float(pt[0][1]),
+                                                0.0)) for pt in cnt]
+                ptL.Add(Rhino.Geometry.Point3d(float(cnt[0][0][0]),
+                                               float(cnt[0][0][1]),
+                                               0.0))
+                plcs.append(Rhino.Geometry.PolylineCurve(ptL))
+
+        # draw boundary of image for additional output
+        h_dst, w_dst, c_dst = warped_img.shape
+        bPts = System.Collections.Generic.List[Rhino.Geometry.Point3d]()
+        bPts.Add(Rhino.Geometry.Point3d(0.0, 0.0, 0.0))
+        bPts.Add(Rhino.Geometry.Point3d(float(w_dst), 0.0, 0.0))
+        bPts.Add(Rhino.Geometry.Point3d(float(w_dst), float(h_dst), 0.0))
+        bPts.Add(Rhino.Geometry.Point3d(0.0, float(h_dst), 0.0))
+        bPts.Add(Rhino.Geometry.Point3d(0.0, 0.0, 0.0))
+        boundary = Rhino.Geometry.PolylineCurve(bPts)
+
+        # return output
+        return (boundary, plcs)
+
+    return (None, [])
+
+
+@hops.component(
+    "/opencv.CaptureContoursFromFile",
+    name="CaptureContoursFromFile",
+    nickname="CapCon",
+    description="Capture an image from a connected camera and detect contours using OpenCV.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsBoolean("Run", "R", "Run the capturing and contour detection routine.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsString("FilePath", "F", "The filepath of the image.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("BinaryThreshold", "B", "The threshold for binary (black & white) conversion of the image. Defaults to 127.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsNumber("AreaThreshold", "T", "The area threshold for filtering the returned contours in pixels. Deactivated if set to 0. Defaults to 0.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Width", "W", "The width of the working area.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Height", "H", "The height of the working area.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsBoolean("Invert", "I", "If True, threshold image will be inverted. Use the invert function to detect black objects on white background.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsNumber("Transform", "X", "The transformation parameters from camera calibration.", hs.HopsParamAccess.TREE), # NOQA501
+    ],
+    outputs=[
+        hs.HopsCurve("Boundary", "B", "The detected image boundary.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsCurve("Contours", "C", "The detected contours as Polylines.", hs.HopsParamAccess.LIST), # NOQA501
+    ])
+def opencv_CaptureContoursFromFileComponent(run,
+                                            filepath,
+                                            bthresh=127,
+                                            athresh=0.0,
+                                            width=3780,
+                                            height=1890,
+                                            invert=False,
+                                            xformtree=None):
+
+    if run:
+        # read image from filepath
+        image = imgprocessing.read_image(filepath)
+
+        # retrieve transformation matrix from calibrate camera tree input
+        xform = hsutil.hops_tree_to_np_array(xformtree)[1]
+
+        # create warped image
+        warped_img = imgprocessing.warp_image(image, xform, width, height)
+
+        # run contour detection using opencv
+        warped_img, contours = imgprocessing.detect_contours_from_image(
+                                        warped_img,
+                                        bthresh,
+                                        athresh,
+                                        invert)
+
         # construct polylines from contour output
         plcs = []
         for cnt in contours:

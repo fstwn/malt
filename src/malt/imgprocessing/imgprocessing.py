@@ -12,6 +12,7 @@ import cv2
 # FUNCTION DEFINITIONS --------------------------------------------------------
 
 def capture_image(device: int = 0):
+    """Capture an image using a connected camera and return the frame."""
     # set video device to external USB camera
     cap = cv2.VideoCapture(device, cv2.CAP_DSHOW)
 
@@ -22,7 +23,7 @@ def capture_image(device: int = 0):
 
     # check if the webcam is opened correctly
     if not cap.isOpened():
-        raise IOError("Cannot open webcam!")
+        raise IOError("[OPENCV] Cannot open camera!")
 
     # if all is fine, read one image from the camera and return it
     ret, frame = cap.read()
@@ -34,7 +35,12 @@ def capture_image(device: int = 0):
     return frame
 
 
-def calibrate_camera(device: int = 0,
+def read_image(filepath: str):
+    """Wrapper for cv2.imread"""
+    return cv2.imread(os.path.normpath(filepath))
+
+
+def calibrate_camera_capture(device: int = 0,
                      dwidth: int = 3780,
                      dheight: int = 1890,
                      showresult: bool = False):
@@ -101,9 +107,81 @@ def calibrate_camera(device: int = 0,
     return xform
 
 
-def calibrate_camera_chessboard(images,
+def calibrate_camera_file(filepath,
+                          dwidth: int = 3780,
+                          dheight: int = 1890,
+                          showresult: bool = False):
+
+    # read image from filepath
+    image = read_image(filepath)
+    image_copy = image.copy()
+
+    # define window name
+    wname = "Pick four Points for Calibration, then press Enter."
+
+    # define click event function
+    def click_event(event, x, y, flags, params):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            cv2.circle(image_copy, (x, y), 4, (0, 0, 255), -1)
+            points.append([x, y])
+            if len(points) <= 4:
+                cv2.imshow(wname, image_copy)
+
+    # define point sorting clockwise for picked points
+    def sort_pts(points):
+        sorted_pts = np.zeros((4, 2), dtype="float32")
+        s = np.sum(points, axis=1)
+        sorted_pts[0] = points[np.argmin(s)]
+        sorted_pts[2] = points[np.argmax(s)]
+
+        diff = np.diff(points, axis=1)
+        sorted_pts[1] = points[np.argmin(diff)]
+        sorted_pts[3] = points[np.argmax(diff)]
+
+        return sorted_pts
+
+    while True:
+        # display image and let user pick points
+        points = []
+
+        cv2.imshow(wname, image_copy)
+        cv2.setWindowProperty(wname, cv2.WND_PROP_TOPMOST, 1)
+        cv2.setMouseCallback(wname, click_event)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        # sort the points clockwise
+        sorted_pts = sort_pts(points)
+
+        # define destination image based on table size
+        dst_image = 255 * np.zeros(shape=[int(dheight), int(dwidth), 3],
+                                dtype=np.uint8)
+
+        # extract source and destination points
+        h_dst, w_dst, c_dst = dst_image.shape
+        src_pts = np.float32(sorted_pts)
+        dst_pts = np.float32([[0, 0], [w_dst, 0], [w_dst, h_dst], [0, h_dst]])
+
+        # compute transformation matrix
+        xform = cv2.getPerspectiveTransform(src_pts, dst_pts)
+
+        # show the warped image to the user
+        if showresult:
+            warped_img = cv2.warpPerspective(image, xform, (w_dst, h_dst))
+            cv2.imshow("Warped Image", warped_img)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+        break
+
+    cv2.destroyAllWindows()
+
+    return xform
+
+
+def calibrate_chessboard(images,
                                 width: int = 7,
                                 height: int = 9,
+                                squaresize: float = 2.0,
                                 displaysize: int = 1000):
 
     # termination criteria
@@ -113,6 +191,8 @@ def calibrate_camera_chessboard(images,
     # like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
     objp = np.zeros((width * height, 3), np.float32)
     objp[:, :2] = np.mgrid[0:height, 0:width].T.reshape(-1, 2)
+    # multiplicate points with square size in cm
+    objp = objp * squaresize
 
     # Arrays to store object points and image points from all the images.
     # objpoints: 3d point in real world space
@@ -216,7 +296,7 @@ def detect_contours_from_image(image: np.ndarray,
     # CHAIN_APPROX_TC89_KCOS
     contours, hierarchy = cv2.findContours(binary,
                                            cv2.RETR_TREE,
-                                           cv2.CHAIN_APPROX_SIMPLE)
+                                           cv2.CHAIN_APPROX_NONE)
 
     # sort contours by area and filter against threshold
     if thresh_area > 0:
@@ -227,7 +307,7 @@ def detect_contours_from_image(image: np.ndarray,
     return image, contours
 
 
-def undistort_image(image, mtx, dist, rvecs, tvecs, remap: bool = True):
+def undistort_image(image, mtx, dist, remap: bool = True):
     # get height and width of input image
     h, w = image.shape[:2]
     # compute new camera matrix based on calibrated matrix and distortion
@@ -245,7 +325,7 @@ def undistort_image(image, mtx, dist, rvecs, tvecs, remap: bool = True):
                                                  (w, h),
                                                  5)
         undistorted_image = cv2.remap(image, mapx, mapy, cv2.INTER_LINEAR)
-    
+
     # undistort using undistort function
     else:
         undistorted_image = cv2.undistort(image, mtx, dist, None, newcameramtx)
@@ -261,6 +341,29 @@ def undistort_image(image, mtx, dist, rvecs, tvecs, remap: bool = True):
 def warp_image(image, xform, width, height):
     """Wrapper for cv2.warpPerspective"""
     return cv2.warpPerspective(image, xform, (width, height))
+
+
+def save_coefficients(mtx, dist, path):
+    """Save the camera matrix and the distortion coefficients to given path/file."""
+    cv_file = cv2.FileStorage(path, cv2.FILE_STORAGE_WRITE)
+    cv_file.write('K', mtx)
+    cv_file.write('D', dist)
+    # note you *release* you don't close() a FileStorage object
+    cv_file.release()
+
+
+def load_coefficients(path):
+    """Loads camera matrix and distortion coefficients."""
+    # FILE_STORAGE_READ
+    cv_file = cv2.FileStorage(path, cv2.FILE_STORAGE_READ)
+
+    # note we also have to specify the type to retrieve other wise we only get a
+    # FileNode object back instead of a matrix
+    camera_matrix = cv_file.getNode('K').mat()
+    dist_matrix = cv_file.getNode('D').mat()
+
+    cv_file.release()
+    return (camera_matrix, dist_matrix)
 
 
 # TEST MODULE -----------------------------------------------------------------
@@ -295,6 +398,8 @@ def test_detect_contours_from_image():
     cv2.destroyAllWindows()
 
 
+# MAIN ROUTINE ----------------------------------------------------------------
+
 if __name__ == "__main__":
     # test contour detection
     # test_detect_contours()
@@ -302,13 +407,46 @@ if __name__ == "__main__":
     # test_detect_contours_from_image()
 
     # calibrate_camera(1)
+    coeff_file = "src/malt/imgprocessing/coefficients.yml"
 
-    # find test images
-    images = glob.glob("src/malt/imgprocessing/calibrationfiles/*.jpg")
-    ret, mtx, dist, rvecs, tvecs = calibrate_camera_chessboard(images)
+    # find calibration images
+    images = glob.glob("src/malt/imgprocessing/chessboardcalib/*.jpg")
+
+    # flag for recomputing the camera coefficients
+    recompute = False
+
+    if not os.path.isfile(coeff_file) or recompute is True:
+        # calibrate
+        ret, mtx, dist, rvecs, tvecs = calibrate_chessboard(images)
+
+        # print results
+        print("Camera matrix : \n")
+        print(mtx)
+        print("dist : \n")
+        print(dist)
+        print("rvecs : \n")
+        print(rvecs)
+        print("tvecs : \n")
+        print(tvecs)
+
+        # save the coefficients
+        save_coefficients(mtx, dist, coeff_file)
+    else:
+        # load coefficients from file
+        mtx, dist = load_coefficients(coeff_file)
+
     # get one image for applying and verifying these factors
     img = cv2.imread(images[0])
-    uimg = undistort_image(img, mtx, dist, rvecs, tvecs)
+    uimg = undistort_image(img, mtx, dist)
     cv2.imshow("Result", uimg)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+    # apply the camera matrix to all target images
+    print("[OPENCV] Applying calibration to all scan images...")
+
+    scan_imgs = glob.glob("src/malt/imgprocessing/scanimages/*.jpg")
+
+    for scan in scan_imgs:
+        undistorted_scan = undistort_image(cv2.imread(scan), mtx, dist)
+        cv2.imwrite(os.path.join("src/malt/imgprocessing/calibratedscans/", os.path.split(scan)[1]), undistorted_scan)
