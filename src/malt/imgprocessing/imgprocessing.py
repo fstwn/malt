@@ -1,5 +1,6 @@
 # PYTHON STANDARD LIBRARY IMPORTS ---------------------------------------------
 
+import glob
 import os
 
 # ADDITIONAL MODULE IMPORTS ---------------------------------------------------
@@ -100,6 +101,85 @@ def calibrate_camera(device: int = 0,
     return xform
 
 
+def calibrate_camera_chessboard(images,
+                                width: int = 7,
+                                height: int = 9,
+                                displaysize: int = 1000):
+
+    # termination criteria
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+
+    # prepare object points for the chessboard, depending on width and height
+    # like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
+    objp = np.zeros((width * height, 3), np.float32)
+    objp[:, :2] = np.mgrid[0:height, 0:width].T.reshape(-1, 2)
+
+    # Arrays to store object points and image points from all the images.
+    # objpoints: 3d point in real world space
+    objpoints = []
+    # imgpoints: 2d points in image plane.
+    imgpoints = []
+
+    if not images:
+        print("No Images found!")
+        return
+
+    # set max long side for image display
+    displaysize = 1000
+
+    # loop through test images and determine imgpoints
+    print("[OPENCV] Determining object points for camera calibration...")
+    for fname in images:
+        # read image and convert to grayscale
+        img = cv2.imread(fname)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        # compute display size for image
+        ih, iw = img.shape[:2]
+        if ih > iw and ih > displaysize:
+            rsf = displaysize / ih
+        elif iw >= ih and iw > displaysize:
+            rsf = displaysize / iw
+        else:
+            rsf = 1.0
+
+        # find the chess board corners
+        ret, corners = cv2.findChessboardCorners(gray, (height, width), None)
+
+        # if found, add object points, image points (after refining them)
+        if ret is True:
+            objpoints.append(objp)
+            corners2 = cv2.cornerSubPix(gray,
+                                        corners,
+                                        (11, 11),
+                                        (-1, -1),
+                                        criteria)
+            imgpoints.append(corners2)
+
+            # draw and display the corners
+            cv2.drawChessboardCorners(img, (height, width), corners2, ret)
+            windowname = "Found object points in image"
+            cv2.namedWindow(windowname, flags=cv2.WINDOW_NORMAL)
+            cv2.resizeWindow(windowname, int(iw * rsf), int(ih * rsf))
+            cv2.imshow(windowname, img)
+            cv2.waitKey(500)
+        else:
+            print("[OPENCV] Chessboard corners could not be found for "
+                  "image {0}".format(fname))
+
+    # close all windows
+    cv2.destroyAllWindows()
+
+    # calibrate camera by computing camera matrix, distortion coefficients,
+    # rotation and translation vectors
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints,
+                                                       imgpoints,
+                                                       gray.shape[::-1],
+                                                       None, None)
+
+    return ret, mtx, dist, rvecs, tvecs
+
+
 def detect_contours_from_file(filepath: str,
                               thresh_binary: int,
                               thresh_area: float,
@@ -147,6 +227,37 @@ def detect_contours_from_image(image: np.ndarray,
     return image, contours
 
 
+def undistort_image(image, mtx, dist, rvecs, tvecs, remap: bool = True):
+    # get height and width of input image
+    h, w = image.shape[:2]
+    # compute new camera matrix based on calibrated matrix and distortion
+    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx,
+                                                      dist,
+                                                      (w, h),
+                                                      1,
+                                                      (w, h))
+    # undistort using remap function
+    if remap:
+        mapx, mapy = cv2.initUndistortRectifyMap(mtx,
+                                                 dist,
+                                                 None,
+                                                 newcameramtx,
+                                                 (w, h),
+                                                 5)
+        undistorted_image = cv2.remap(image, mapx, mapy, cv2.INTER_LINEAR)
+    
+    # undistort using undistort function
+    else:
+        undistorted_image = cv2.undistort(image, mtx, dist, None, newcameramtx)
+
+    # crop the image
+    x, y, w, h = roi
+    undistorted_image = undistorted_image[y:y+h, x:x+w]
+
+    # return resulting undistorted image
+    return undistorted_image
+
+
 def warp_image(image, xform, width, height):
     """Wrapper for cv2.warpPerspective"""
     return cv2.warpPerspective(image, xform, (width, height))
@@ -190,4 +301,14 @@ if __name__ == "__main__":
     # capture_image()
     # test_detect_contours_from_image()
 
-    calibrate_camera(1)
+    # calibrate_camera(1)
+
+    # find test images
+    images = glob.glob("src/malt/imgprocessing/calibrationfiles/*.jpg")
+    ret, mtx, dist, rvecs, tvecs = calibrate_camera_chessboard(images)
+    # get one image for applying and verifying these factors
+    img = cv2.imread(images[0])
+    uimg = undistort_image(img, mtx, dist, rvecs, tvecs)
+    cv2.imshow("Result", uimg)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
