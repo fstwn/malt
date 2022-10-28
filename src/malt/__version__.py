@@ -4,7 +4,7 @@ __description__ = ("Malt is a collection of Hops components for Rhino "
                    "brew some geometrically delicious pythonic beers. Malt is "
                    "based on the ddu_ias_research conda environment.")
 __url__ = "https://git.ias.informatik.tu-darmstadt.de/ddu-ias/malt"
-__version__ = "0.0.3.15"
+__version__ = "0.0.3.16"
 __author__ = "Max Eschenbach"
 __author_email__ = "eschenbach@dg.tu-darmstadt.de"
 __license__ = "MIT License"
