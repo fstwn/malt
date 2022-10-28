@@ -17,8 +17,13 @@ __pycache__/
 /src/malt/ghgurobi/dev_files/
 /viz/
 
-# MISC
+# IMAGE FOLDERS
+/src/malt/imgprocessing/imgs_calibration/*.jpg
+/src/malt/imgprocessing/imgs_chessboard/*.jpg
+/src/malt/imgprocessing/imgs_raw/*.jpg
+/src/malt/imgprocessing/imgs_undistorted/*.jpg
 
+# MISC
 _archive
 malt_decentralized.py
 urban_production_env.yml
