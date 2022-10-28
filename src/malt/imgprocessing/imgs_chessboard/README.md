@@ -1,0 +1,1 @@
+## Place images for chessboard calibration here.

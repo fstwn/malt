@@ -21,20 +21,16 @@ import malt.sshd as sshd # NOQA402
 
 # DEFINITIONS -----------------------------------------------------------------
 
-def sanitize(path):
-    return os.path.normpath(os.path.abspath(path))
-
-
 ROOTDIR = os.path.dirname(__file__)
 """str: Path to the root folder of the malt package."""
 
-REPODIR = sanitize(os.path.join(ROOTDIR, "../.."))
+REPODIR = hopsutilities.sanitize_path((os.path.join(ROOTDIR, "../..")))
 """str: Path to the root folder of the malt repository."""
 
-DATADIR = sanitize(os.path.join(ROOTDIR, "../../data"))
+DATADIR = hopsutilities.sanitize_path(os.path.join(ROOTDIR, "../../data"))
 """str: Path to the data folder of the malt repository."""
 
-TESTDIR = sanitize(os.path.join(ROOTDIR, "../../tests"))
+TESTDIR = hopsutilities.sanitize_path(os.path.join(ROOTDIR, "../../tests"))
 """str: Path to the tests folder of the malt repository."""
 
 
