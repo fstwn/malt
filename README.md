@@ -27,7 +27,21 @@ If you want to use the provided Hops Components, you need the following:
 
 First off, clone or download this repository and unzip it (if needed) into a
 working directory of your choice. For the purpose of this guide, I will use
-`C:\source\repos\malt`.
+`C:\source\repos` as my directory for all repositories.
+
+If you want to clone using the Command line, `cd` into your repo directory, i.e.:
+```
+cd "C:\source\repos"
+```
+
+You can then clone the repository into your current working directory:
+```
+git clone https://github.com/fstwn/malt.git
+```
+
+You should now end up with a new folder `malt` inside your working directory,
+containing all the files of the repository, so that the full path is
+`C:\source\repos\malt`
 
 ## 2. Set up the Virtual Environment using conda environment file
 
