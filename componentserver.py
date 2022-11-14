@@ -1086,6 +1086,7 @@ def opencv_CalibrateCameraFileComponent(run,
         hs.HopsInteger("Height", "H", "The height of the working area.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("ChainApproximation", "C", "The chain approximation to use during contour detection. Defaults to 0.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsBoolean("Invert", "I", "If True, threshold image will be inverted. Use the invert function to detect black objects on white background.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsBoolean("ExtOnly", "E", "If True, only external contours will be returned.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsNumber("Transform", "X", "The transformation parameters from camera calibration.", hs.HopsParamAccess.TREE), # NOQA501
     ],
     outputs=[
@@ -1100,6 +1101,7 @@ def opencv_DetectContoursCaptureComponent(run,
                                           height=1890,
                                           chain=0,
                                           invert=False,
+                                          external=True,
                                           xformtree=None):
 
     if run:
@@ -1117,12 +1119,14 @@ def opencv_DetectContoursCaptureComponent(run,
                                         warped_img,
                                         bthresh,
                                         athresh,
-                                        invert)
-        
+                                        chain,
+                                        invert,
+                                        external)
+
         # compute scaling factor for results
         h_dst, w_dst, c_dst = warped_img.shape
         scalingfactor = width / w_dst
-        
+
         # construct polylines from contour output
         plcs = []
         for cnt in contours:
@@ -1130,23 +1134,29 @@ def opencv_DetectContoursCaptureComponent(run,
             # handle python lists (it took a while to find that out....)
             if len(cnt) >= 2:
                 ptL = System.Collections.Generic.List[Rhino.Geometry.Point3d]()
+                # add contour points to .NET list
                 [ptL.Add(Rhino.Geometry.Point3d(float(pt[0][0]),
                                                 float(pt[0][1]),
                                                 0.0)) for pt in cnt]
+                # add first point again to close polyline
                 ptL.Add(Rhino.Geometry.Point3d(float(cnt[0][0][0]),
                                                float(cnt[0][0][1]),
                                                0.0))
+                # create polylinecurve from .NET list and scale with factor
                 plc = Rhino.Geometry.PolylineCurve(ptL)
                 plc.Scale(scalingfactor)
+                # append to output list
                 plcs.append(plc)
 
-        # draw boundary of image for additional output
+        # create boundary of image as polyline curve for reference
         bPts = System.Collections.Generic.List[Rhino.Geometry.Point3d]()
+        # add boundary points to .NET list
         bPts.Add(Rhino.Geometry.Point3d(0.0, 0.0, 0.0))
         bPts.Add(Rhino.Geometry.Point3d(float(w_dst), 0.0, 0.0))
         bPts.Add(Rhino.Geometry.Point3d(float(w_dst), float(h_dst), 0.0))
         bPts.Add(Rhino.Geometry.Point3d(0.0, float(h_dst), 0.0))
         bPts.Add(Rhino.Geometry.Point3d(0.0, 0.0, 0.0))
+        # create polylinecurve from .NET list and scale with factor
         boundary = Rhino.Geometry.PolylineCurve(bPts)
         boundary.Scale(scalingfactor)
 
@@ -1173,6 +1183,7 @@ def opencv_DetectContoursCaptureComponent(run,
         hs.HopsInteger("Height", "H", "The height of the working area.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("ChainApproximation", "C", "The chain approximation to use during contour detection. Defaults to 0.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsBoolean("Invert", "I", "If True, threshold image will be inverted. Use the invert function to detect black objects on white background.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsBoolean("ExtOnly", "E", "If True, only external contours will be returned.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsNumber("Transform", "X", "The transformation parameters from camera calibration.", hs.HopsParamAccess.TREE), # NOQA501
     ],
     outputs=[
@@ -1187,6 +1198,7 @@ def opencv_DetectContoursFileComponent(run,
                                        height=1000,
                                        chain=0,
                                        invert=False,
+                                       external=True,
                                        xformtree=None):
 
     if run:
@@ -1204,7 +1216,9 @@ def opencv_DetectContoursFileComponent(run,
                                         warped_img,
                                         bthresh,
                                         athresh,
-                                        invert)
+                                        chain,
+                                        invert,
+                                        external)
 
         # compute scaling factor for results
         h_dst, w_dst, c_dst = warped_img.shape
@@ -1217,24 +1231,29 @@ def opencv_DetectContoursFileComponent(run,
             # handle python lists (it took a while to find that out....)
             if len(cnt) >= 2:
                 ptL = System.Collections.Generic.List[Rhino.Geometry.Point3d]()
+                # add contour points to .NET list
                 [ptL.Add(Rhino.Geometry.Point3d(float(pt[0][0]),
                                                 float(pt[0][1]),
                                                 0.0)) for pt in cnt]
+                # add first point again to close polyline
                 ptL.Add(Rhino.Geometry.Point3d(float(cnt[0][0][0]),
                                                float(cnt[0][0][1]),
                                                0.0))
+                # create polylinecurve from .NET list and scale with factor
                 plc = Rhino.Geometry.PolylineCurve(ptL)
                 plc.Scale(scalingfactor)
+                # append to output list
                 plcs.append(plc)
 
-        # draw boundary of image for additional output
-
+        # create boundary of image as polyline curve for reference
         bPts = System.Collections.Generic.List[Rhino.Geometry.Point3d]()
+        # add boundary points to .NET list
         bPts.Add(Rhino.Geometry.Point3d(0.0, 0.0, 0.0))
         bPts.Add(Rhino.Geometry.Point3d(float(w_dst), 0.0, 0.0))
         bPts.Add(Rhino.Geometry.Point3d(float(w_dst), float(h_dst), 0.0))
         bPts.Add(Rhino.Geometry.Point3d(0.0, float(h_dst), 0.0))
         bPts.Add(Rhino.Geometry.Point3d(0.0, 0.0, 0.0))
+        # create polylinecurve from .NET list and scale with factor
         boundary = Rhino.Geometry.PolylineCurve(bPts)
         boundary.Scale(scalingfactor)
 

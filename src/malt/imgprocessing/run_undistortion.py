@@ -26,7 +26,7 @@ if __name__ == "__main__":
     undistorted_dir = sanitize_path(os.path.join(HERE, "imgs_undistorted"))
 
     # load coefficients from previously saved file
-    print("[OPENCV] Loading camra coefficients from file...")
+    print("[OPENCV] Loading camera coefficients from file...")
     mtx, dist = imgprocessing.load_coefficients(sanitize_path(os.path.join(
                                                     HERE, "coefficients.yml")))
 
@@ -46,3 +46,6 @@ if __name__ == "__main__":
         # write undistorted image to new file
         cv2.imwrite(sanitize_path(os.path.join(undistorted_dir,
                                   os.path.split(img)[1])), undistorted_img)
+
+    print("[OPENCV] Successfully undistorted {0} images!".format(
+                                                            len(scan_imgs)))

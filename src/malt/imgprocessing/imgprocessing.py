@@ -272,7 +272,8 @@ def detect_contours_from_file(filepath: str,
                               thresh_binary: int,
                               thresh_area: float,
                               approx: int = 0,
-                              invert: bool = False):
+                              invert: bool = False,
+                              extonly: bool = False):
     # read image from filepath
     image = cv2.imread(os.path.normpath(filepath))
 
@@ -280,14 +281,16 @@ def detect_contours_from_file(filepath: str,
                                       thresh_binary,
                                       thresh_area,
                                       approx,
-                                      invert)
+                                      invert,
+                                      extonly)
 
 
 def detect_contours_from_image(image: np.ndarray,
                                thresh_binary: int,
                                thresh_area: float,
                                approx: int = 0,
-                               invert: bool = False):
+                               invert: bool = False,
+                               extonly: bool = False):
     if invert:
         threshold_type = cv2.THRESH_BINARY_INV
     else:
@@ -324,11 +327,20 @@ def detect_contours_from_image(image: np.ndarray,
 
     # sort contours by area and filter against threshold
     # only return outermost contours, no inner contours based on hierarchy
-    if thresh_area > 0:
+    print(extonly)
+    if abs(thresh_area) > 0:
         areas = [cv2.contourArea(cnt) for cnt in contours]
-        contours = [contours[i] for i in range(len(contours))
-                    if areas[i] > thresh_area and
-                    hierarchy[0][i][3] == -1]
+        if extonly:
+            contours = [contours[i] for i in range(len(contours))
+                        if areas[i] > abs(thresh_area) and
+                        hierarchy[0][i][3] == -1]
+        else:
+            contours = [contours[i] for i in range(len(contours))
+                        if areas[i] > abs(thresh_area)]
+    else:
+        if extonly:
+            contours = [contours[i] for i in range(len(contours))
+                        if hierarchy[0][i][3] == -1]
 
     return image, contours
 
@@ -404,6 +416,23 @@ def load_coefficients(path):
     dist_matrix = cv_file.getNode("D").mat()
     cv_file.release()
     return (camera_matrix, dist_matrix)
+
+
+def save_calibration(xform, path):
+    """
+    Save the camera calibration transformation matrix to given path/file.
+    """
+    cv_file = cv2.FileStorage(path, cv2.FILE_STORAGE_WRITE)
+    cv_file.write("XFORM", xform)
+    cv_file.release()
+
+
+def load_calibration(path):
+    """Loads camera calibration transformation matrix."""
+    cv_file = cv2.FileStorage(path, cv2.FILE_STORAGE_READ)
+    xform = cv_file.getNode("XFORM").mat()
+    cv_file.release()
+    return xform
 
 
 def reset_windows():
