@@ -18,6 +18,11 @@ __pycache__/
 /viz/
 
 # IMAGE FOLDERS
+/src/malt/imgprocessing/imgs_calibration/*/
+/src/malt/imgprocessing/imgs_chessboard/*/
+/src/malt/imgprocessing/imgs_raw/*/
+/src/malt/imgprocessing/imgs_undistorted/*/
+
 /src/malt/imgprocessing/imgs_calibration/*.jpg
 /src/malt/imgprocessing/imgs_chessboard/*.jpg
 /src/malt/imgprocessing/imgs_raw/*.jpg
