@@ -131,6 +131,32 @@ def gource(c):
                      "See https://ffmpeg.org/ for info on installation.")
 
 
+@task()
+def calibration(c):
+    """
+    Run calibration routine for imgprocessing module
+    """
+
+    imgdir = os.path.join(malt.ROOTDIR, "imgprocessing")
+
+    with chdir(imgdir):
+        log.info("Running camera calibration routine...")
+        malt.imgprocessing.compute_camera_coefficients()
+
+
+@task()
+def undistortion(c):
+    """
+    Run undistortion routine for imgprocessing module
+    """
+
+    imgdir = os.path.join(malt.ROOTDIR, "imgprocessing")
+
+    with chdir(imgdir):
+        log.info("Running undistortion routine...")
+        malt.imgprocessing.undistort_image_files()
+
+
 # CONTEXT ---------------------------------------------------------------------
 
 @contextlib.contextmanager

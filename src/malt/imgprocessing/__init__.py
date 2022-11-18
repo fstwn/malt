@@ -10,5 +10,6 @@ from .imgprocessing import (capture_image, # NOQA401
                             reset_windows,
                             save_coefficients,
                             undistort_image,
+                            undistort_image_files,
                             warp_image
                             )

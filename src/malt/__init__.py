@@ -24,7 +24,7 @@ import malt.sshd as sshd # NOQA402
 ROOTDIR = os.path.dirname(__file__)
 """str: Path to the root folder of the malt package."""
 
-REPODIR = hopsutilities.sanitize_path((os.path.join(ROOTDIR, "../..")))
+REPODIR = hopsutilities.sanitize_path(os.path.join(ROOTDIR, "../.."))
 """str: Path to the root folder of the malt repository."""
 
 DATADIR = hopsutilities.sanitize_path(os.path.join(ROOTDIR, "../../data"))

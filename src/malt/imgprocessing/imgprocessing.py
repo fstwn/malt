@@ -13,6 +13,18 @@ import cv2
 from malt.hopsutilities import sanitize_path
 
 
+# ENVIRONMENT VARIABLES -------------------------------------------------------
+
+# directory of this particular file
+_HERE = os.path.dirname(sanitize_path(__file__))
+
+# default directory of raw images before undistortion
+_UD_INDIR = sanitize_path(os.path.join(_HERE, "imgs_raw"))
+
+# default directory to save resulting, undistorted images
+_UD_OUTDIR = sanitize_path(os.path.join(_HERE, "imgs_undistorted"))
+
+
 # FUNCTION DEFINITIONS --------------------------------------------------------
 
 def capture_image(device: int = 0):
@@ -228,18 +240,15 @@ def calibrate_chessboard(images,
 def compute_camera_coefficients(fp: str = ""):
     """Computes the camera coefficients and saves them to a file."""
 
-    # get location of this file
-    HERE = os.path.dirname(sanitize_path(__file__))
-
     # sanitize input filepath
     if fp:
         if not os.path.isfile(fp):
             fp = sanitize_path(os.path.join(fp, "coefficients.yml"))
     else:
-        fp = sanitize_path(os.path.join(HERE, "coefficients.yml"))
+        fp = sanitize_path(os.path.join(_HERE, "coefficients.yml"))
 
     # define data directories
-    chessboard_dir = sanitize_path(os.path.join(HERE, "imgs_chessboard"))
+    chessboard_dir = sanitize_path(os.path.join(_HERE, "imgs_chessboard"))
 
     # find calibration images
     chessboard_imgs = glob.glob(os.path.join(chessboard_dir, "*.jpg"))
@@ -248,20 +257,20 @@ def compute_camera_coefficients(fp: str = ""):
     ret, mtx, dist, rvecs, tvecs = calibrate_chessboard(chessboard_imgs)
 
     # print results
-    print("[OPENCV] Camera matrix : \n")
-    print(mtx)
-    print("[OPENCV] Distortion : \n")
-    print(dist)
-    print("[OPENCV] Rotation : \n")
-    print(rvecs)
-    print("[OPENCV] Translation : \n")
-    print(tvecs)
+    print("[OPENCV] Camera matrix :")
+    print(mtx, "\n")
+    print("[OPENCV] Distortion :")
+    print(dist, "\n")
+    print("[OPENCV] Rotation :")
+    print(rvecs, "\n")
+    print("[OPENCV] Translation :")
+    print(tvecs, "\n")
 
     # save the coefficients
     save_coefficients(mtx, dist, fp)
 
     # print info
-    print("[OPENCV] Camera coefficients successfully saved to file: \n")
+    print("[OPENCV] Camera coefficients successfully saved to file:")
     print("[OPENCV] " + fp)
 
     # return the coefficients
@@ -379,6 +388,35 @@ def undistort_image(image, mtx, dist, remap: bool = True):
 
     # return resulting undistorted image
     return undistorted_image
+
+
+def undistort_image_files(indir: str = _UD_INDIR, outdir: str = _UD_OUTDIR):
+
+    # load coefficients from previously saved file
+    print("[OPENCV] Loading camera coefficients from file...")
+    mtx, dist = load_coefficients(sanitize_path(os.path.join(
+                                                _HERE, "coefficients.yml")))
+
+    # apply the camera matrix to all target images
+    print("[OPENCV] Applying undistortion to all raw images...")
+
+    # get all scan images to apply undistortion to...
+    scan_imgs = glob.glob(os.path.join(indir, "*.jpg"))
+
+    for i, img in enumerate(scan_imgs):
+        print("[OPENCV] Undistorting image {0} of {1}".format(i + 1,
+                                                              len(scan_imgs)))
+        # apply undistortion
+        undistorted_img = undistort_image(cv2.imread(img),
+                                          mtx,
+                                          dist)
+
+        # write undistorted image to new file
+        cv2.imwrite(sanitize_path(os.path.join(outdir,
+                                  os.path.split(img)[1])), undistorted_img)
+
+    print("[OPENCV] Successfully undistorted {0} images!".format(
+                                                            len(scan_imgs)))
 
 
 def warp_image(image, xform, width, height):
