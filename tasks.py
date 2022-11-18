@@ -132,9 +132,9 @@ def gource(c):
 
 
 @task()
-def calibration(c):
+def imgcalibration(c):
     """
-    Run calibration routine for imgprocessing module
+    Run image camera calibration routine from imgprocessing module
     """
 
     imgdir = os.path.join(malt.ROOTDIR, "imgprocessing")
@@ -145,9 +145,9 @@ def calibration(c):
 
 
 @task()
-def undistortion(c):
+def imgundistortion(c):
     """
-    Run undistortion routine for imgprocessing module
+    Run image undistortion routine from imgprocessing module
     """
 
     imgdir = os.path.join(malt.ROOTDIR, "imgprocessing")
