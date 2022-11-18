@@ -208,6 +208,7 @@ invoke lint
 - The redistributed executables of [ShapeSPH](https://github.com/mkazhdan/ShapeSPH) are licensed under the MIT License found under `licenses/ShapeSPH`.
 - The [FFTW](http://www.fftw.org/) .dlls that are redistributed with the ShapeSPH executables are licensed under the GNU General Public License founde under `licenses/FFTW`.
 - The `malt.sshd` module is based on [ShapeDescriptor](https://github.com/ReNicole/ShapeDescriptor) by GitHub user [ReNicole](https://github.com/ReNicole). Unfortunately, no license is provided by its author for this public open-source code. The code is based on the paper *"Description of 3D-shape using a complex function on the sphere" by D.V. Vranic, D. Saupe, 2002*.
+- Tha `malt.imgprocessing` module makes heavy use of the [OpenCV](https://opencv.org/) library, more specifically its [pre-built packages for python](https://anaconda.org/conda-forge/opencv) via conda-forge.
 
 ## To-Do & Extension Ideas
 
