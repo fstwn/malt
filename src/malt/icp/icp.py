@@ -113,8 +113,9 @@ def least_squares_transform(point_cloud_A, point_cloud_B):
 
 def icp(point_cloud_A, point_cloud_B,
         init_guess=None, max_iterations=20, tolerance=1e-3, nn_alg='knn'):
-    """The Iterative Closest Point algorithm: finds best-fit transform that maps
-        point_cloud_A(data) on to point_cloud_B(model)
+    """
+    The Iterative Closest Point algorithm: finds best-fit transform that
+    maps point_cloud_A(data) on to point_cloud_B(model)
     Parameters
     ----------
     point_cloud_A: Nx3 numpy array or a list of 3-element lists
