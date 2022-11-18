@@ -77,8 +77,8 @@ pip install -e .
 ```
 
 *NOTE: This will install the `malt` package and its submodules in development
-mode, in case you want to extend and/or modify it. If you simply want to use
-the provided functions and components, you can also simply call
+mode (recommended!), in case you want to extend and/or modify it. If you simply
+want to use the provided functions and components, you can also simply call
 `pip install .`*
 
 ## 4. Running the Hops Server in the Virtual Environment
@@ -138,22 +138,46 @@ on the mesh using the `/igl.MeshIsoCurves` endpoint.
 
 ![Geodesic Heat Isocurves](/resources/readme/readme_06.png)
 
-## 6. Development
+## 6. Updating
 
-### 6.1 Components
+To update your local repository, open a Powershell or Terminal and `cd` into
+the directory of the repository, for me that's
+```
+cd "C:\source\repos\malt"
+```
+
+Then you can update the repository using git:
+```
+git pull
+```
+
+If you have installed `malt` in development mode (see section 3) you`re already
+done! If not, you have to install the updated module again. First activate
+the conda virtual environment...
+```
+conda activate ddu_ias_research
+```
+...and then update the `malt` package by running
+```
+pip install .
+```
+
+## 7. Development
+
+### 7.1 Components
 
 If you want to contribute to malt development, the easiest way is to develop
 own components and add them to `componentserver.py`. For now, all components
 have to be defined in this file, since Hops does not support it in any other
 way yet.
 
-### 6.2 Submodules
+### 7.2 Submodules
 
 If you want to contribute by adding submodules, please add your modules in the
 `/malt` directory. Make sure that you have installed the malt package in
 development mode using `pip install -e .`.
 
-### 6.3 Tests
+### 7.3 Tests
 
 Malt uses `pytest` for testing. It is included in the `ddu_ias_research.yml`
 conda environment file and does not need to be installed separately.
@@ -165,7 +189,7 @@ To run all available test, call
 invoke test
 ```
 
-### 6.4 Linting
+### 7.4 Linting
 
 Please use the `flake8` linter when contributing code to malt. It is included
 in the `ddu_ias_research.yml` conda environment file and does not need to be
