@@ -234,7 +234,7 @@ def hops_AvailableComponentsComponent():
         hs.HopsNumber("Inventory", "I", "The datapoints that define the inventory from which to choose the assignment as DataTree of Numbers, where each Branch represents one Point.", hs.HopsParamAccess.TREE), # NOQA501
     ],
     outputs=[
-        hs.HopsInteger("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsNumber("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.TREE), # NOQA501
         hs.HopsNumber("Cost", "C", "The cost values for the optimal solution.", hs.HopsParamAccess.TREE), # NOQA501
     ])
 def gurobi_SolveAssignment2DPointsComponent(design,
@@ -277,7 +277,7 @@ def gurobi_SolveAssignment2DPointsComponent(design,
         hs.HopsBoolean("SimplifyCase", "S", "Simplify the 3d problem case (or at least try to) by pre-computing the minimum cost and solving the resulting 2d cost matrix.", hs.HopsParamAccess.ITEM), # NOQA501
     ],
     outputs=[
-        hs.HopsInteger("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsNumber("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.TREE), # NOQA501
         hs.HopsNumber("Cost", "C", "The cost values for the optimal solution.", hs.HopsParamAccess.TREE), # NOQA501
     ])
 def gurobi_SolveAssignment3DPointsComponent(design,
@@ -384,7 +384,7 @@ def gurobi_SolveAssignment3DPointsComponent(design,
         hs.HopsNumber("DemandCrossSectionShort", "DCS", "Demand Cross Section Short Side", hs.HopsParamAccess.LIST), # NOQA501
     ],
     outputs=[
-        hs.HopsInteger("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.LIST), # NOQA501
         hs.HopsNumber("NewComponents", "N", "Components produced new.", hs.HopsParamAccess.TREE), # NOQA501
     ])
 def gurobi_SolveCSPComponent(stock_len,
@@ -424,7 +424,7 @@ def gurobi_SolveCSPComponent(stock_len,
 
     # RETURN THE OPTIMIZATION RESULTS -----------------------------------------
 
-    return ([int(x[1]) for x in optimisation_result],
+    return ([float(int(x[1])) for x in optimisation_result],
             hsutil.np_float_array_to_hops_tree(N))
 
 
@@ -446,10 +446,10 @@ def gurobi_SolveCSPComponent(stock_len,
         hs.HopsInteger("NNAlgorithm", "A", "Algorithm used for nearest neighbor computation, can be 0 (KNN) or 1 (Hungarian). Defaults to KNN.", hs.HopsParamAccess.ITEM), # NOQA501
     ],
     outputs=[
-        hs.HopsPoint("RegisteredPoints", "R", "Regsitered ScenePoints", hs.HopsParamAccess.LIST), # NOQA501
-        hs.HopsNumber("Transform", "X", "Transformation Matrix", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsPoint("RegisteredPoints", "R", "Registered ScenePoints", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("Transform", "X", "Transformation Matrix", hs.HopsParamAccess.LIST), # NOQA501
         hs.HopsNumber("Error", "E", "Mean Error of ICP operation", hs.HopsParamAccess.ITEM), # NOQA501
-        hs.HopsInteger("Iterations", "I", "Iterations before termination.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsNumber("Iterations", "I", "Iterations before termination.", hs.HopsParamAccess.ITEM), # NOQA501
     ])
 def icp_RegisterPointCloudsComponent(scene_pts,
                                      model_pts,
@@ -490,10 +490,10 @@ def icp_RegisterPointCloudsComponent(scene_pts,
     for i, j in product(range(4), range(4)):
         xformlist.append(float(res[0][i][j]))
     err = float(res[1])
-    iters = res[2]
+    iters = float(res[2])
 
     # return the results
-    return transformed_pts, xformlist, err, iters
+    return (transformed_pts, xformlist, err, iters)
 
 
 # LIBIGL //////////////////////////////////////////////////////////////////////
@@ -512,8 +512,7 @@ def icp_RegisterPointCloudsComponent(scene_pts,
         hs.HopsInteger("Count", "C", "Number of Isocurves", hs.HopsParamAccess.ITEM), # NOQA501
     ],
     outputs=[
-        hs.HopsPoint("VertexPositions", "V", "Vertex positions of the isocurves", hs.HopsParamAccess.LIST), # NOQA501
-        hs.HopsInteger("EdgePositions", "E", "Edge positions of the isocurves", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsLine("Isolines", "I", "The resulting isolines.", hs.HopsParamAccess.LIST), # NOQA501
     ])
 def igl_MeshIsocurvesComponent(mesh, values, count):
     # check if mesh is all triangles
@@ -532,10 +531,13 @@ def igl_MeshIsocurvesComponent(mesh, values, count):
     isoV, isoE = igl.isolines(V, F, values, count)
 
     isoV = hsutil.np_array_to_rhino_points(isoV, Rhino)
-    evalues = []
-    [evalues.extend([int(edge[0]), int(edge[1])]) for edge in isoE]
 
-    return isoV, evalues
+    isoLines = []
+    for edge in isoE:
+        isoLines.append(Rhino.Geometry.Line(isoV[int(edge[0])],
+                                            isoV[int(edge[1])]))
+
+    return isoLines
 
 
 # INTRINSIC TRIANGULATIONS ////////////////////////////////////////////////////
@@ -571,7 +573,7 @@ def intri_IntrinsicTriangulationComponent(mesh):
     intri_mesh.Faces.Clear()
 
     # set the intrinsic traignulation as faces
-    [intri_mesh.Faces.AddFace(face[0], face[1], face[2]) for face in F]
+    [intri_mesh.Faces.AddFace(int(f[0]), int(f[1]), int(f[2])) for f in F]
 
     # compute normals and compact
     intri_mesh.UnifyNormals()
@@ -672,16 +674,10 @@ def open3d_AlphaShapeComponent(points, alpha=1.0):
                                                                     alpha)
 
     # create rhino mesh from o3d output and add vertices and faces
-    rhino_mesh = Rhino.Geometry.Mesh()
-    [rhino_mesh.Vertices.Add(v[0], v[1], v[2])
-     for v in np.asarray(a_shape.vertices)]
-    [rhino_mesh.Faces.AddFace(f[0], f[1], f[2])
-     for f in np.asarray(a_shape.triangles)]
-
-    # compute normals and compact
-    rhino_mesh.UnifyNormals()
-    rhino_mesh.Normals.ComputeNormals()
-    rhino_mesh.Compact()
+    rhino_mesh = hsutil.np_arrays_to_rhino_triangle_mesh(
+                                            np.asarray(a_shape.vertices),
+                                            np.asarray(a_shape.triangles),
+                                            Rhino=Rhino)
 
     # return the rhino mesh
     return rhino_mesh
@@ -717,16 +713,10 @@ def open3d_ConvexHullComponent(points):
     convex_hull = pointcloud.compute_convex_hull()
 
     # create rhino mesh from o3d output and add vertices and faces
-    rhino_mesh = Rhino.Geometry.Mesh()
-    [rhino_mesh.Vertices.Add(v[0], v[1], v[2])
-     for v in np.asarray(convex_hull[0].vertices)]
-    [rhino_mesh.Faces.AddFace(f[0], f[1], f[2])
-     for f in np.asarray(convex_hull[0].triangles)]
-
-    # compute normals and compact
-    rhino_mesh.UnifyNormals()
-    rhino_mesh.Normals.ComputeNormals()
-    rhino_mesh.Compact()
+    rhino_mesh = hsutil.np_arrays_to_rhino_triangle_mesh(
+                                        np.asarray(convex_hull[0].vertices),
+                                        np.asarray(convex_hull[0].triangles),
+                                        Rhino=Rhino)
 
     # return the rhino mesh
     return rhino_mesh
@@ -783,16 +773,10 @@ def open3d_BallPivotingMeshComponent(points,
     bpa_mesh.remove_non_manifold_edges()
 
     # create rhino mesh from o3d output and vertices and faces
-    rhino_mesh = Rhino.Geometry.Mesh()
-    [rhino_mesh.Vertices.Add(v[0], v[1], v[2])
-     for v in np.asarray(bpa_mesh.vertices)]
-    [rhino_mesh.Faces.AddFace(f[0], f[1], f[2])
-     for f in np.asarray(bpa_mesh.triangles)]
-
-    # unify and compute normals and compact
-    rhino_mesh.UnifyNormals()
-    rhino_mesh.Normals.ComputeNormals()
-    rhino_mesh.Compact()
+    rhino_mesh = hsutil.np_arrays_to_rhino_triangle_mesh(
+                                        np.asarray(bpa_mesh.vertices),
+                                        np.asarray(bpa_mesh.triangles),
+                                        Rhino=Rhino)
 
     # return the rhino mesh
     return rhino_mesh
@@ -854,17 +838,11 @@ def open3d_BallPivotingMeshNormalsComponent(points,
     bpa_mesh.remove_duplicated_vertices()
     bpa_mesh.remove_non_manifold_edges()
 
-    # create rhino mesh from o3d output and vertices and faces
-    rhino_mesh = Rhino.Geometry.Mesh()
-    [rhino_mesh.Vertices.Add(v[0], v[1], v[2])
-     for v in np.asarray(bpa_mesh.vertices)]
-    [rhino_mesh.Faces.AddFace(f[0], f[1], f[2])
-     for f in np.asarray(bpa_mesh.triangles)]
-
-    # unify and compute normals and compact
-    rhino_mesh.UnifyNormals()
-    rhino_mesh.Normals.ComputeNormals()
-    rhino_mesh.Compact()
+    # create rhino mesh from results
+    rhino_mesh = hsutil.np_arrays_to_rhino_triangle_mesh(
+                                            np.asarray(bpa_mesh.vertices),
+                                            np.asarray(bpa_mesh.triangles),
+                                            Rhino=Rhino)
 
     # return the rhino mesh
     return rhino_mesh
@@ -917,15 +895,10 @@ def open3d_PoissonMeshComponent(points,
     p_mesh_crop = poisson_mesh.crop(bbox)
 
     # create rhino mesh from o3d output and add vertices and faces
-    rhino_mesh = Rhino.Geometry.Mesh()
-    [rhino_mesh.Vertices.Add(v[0], v[1], v[2])
-     for v in np.asarray(p_mesh_crop.vertices)]
-    [rhino_mesh.Faces.AddFace(f[0], f[1], f[2])
-     for f in np.asarray(p_mesh_crop.triangles)]
-
-    # compute normals and compact
-    rhino_mesh.Normals.ComputeNormals()
-    rhino_mesh.Compact()
+    rhino_mesh = hsutil.np_arrays_to_rhino_triangle_mesh(
+                                            np.asarray(p_mesh_crop.vertices),
+                                            np.asarray(p_mesh_crop.triangles),
+                                            Rhino=Rhino)
 
     # return the rhino mesh
     return rhino_mesh
@@ -984,15 +957,10 @@ def open3d_PoissonMeshNormalsComponent(points,
     p_mesh_crop = poisson_mesh.crop(bbox)
 
     # create rhino mesh from o3d output and vertices and faces
-    rhino_mesh = Rhino.Geometry.Mesh()
-    [rhino_mesh.Vertices.Add(v[0], v[1], v[2])
-     for v in np.asarray(p_mesh_crop.vertices)]
-    [rhino_mesh.Faces.AddFace(f[0], f[1], f[2])
-     for f in np.asarray(p_mesh_crop.triangles)]
-
-    # compute normals and compact
-    rhino_mesh.Normals.ComputeNormals()
-    rhino_mesh.Compact()
+    rhino_mesh = hsutil.np_arrays_to_rhino_triangle_mesh(
+                                            np.asarray(p_mesh_crop.vertices),
+                                            np.asarray(p_mesh_crop.triangles),
+                                            Rhino=Rhino)
 
     # return the rhino mesh
     return rhino_mesh

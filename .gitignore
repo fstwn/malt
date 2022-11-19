@@ -28,6 +28,9 @@ __pycache__/
 /src/malt/imgprocessing/imgs_raw/*.jpg
 /src/malt/imgprocessing/imgs_undistorted/*.jpg
 
+# ifc submodule
+/src/malt/ifc/
+
 # MISC
 _archive
 malt_decentralized.py

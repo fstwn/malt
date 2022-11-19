@@ -94,6 +94,32 @@ def np_array_to_rhino_vectors(vec_np_array: np.array, Rhino=None):
                 for v in vec_np_array]
 
 
+def np_arrays_to_rhino_triangle_mesh(v_np_array: np.array,
+                                     f_np_array: np.array,
+                                     Rhino=None):
+    """
+    Converts a numpy arrays for vertices and faces to a rhino mesh.
+
+    Remarks
+    -------
+    Caller needs to pass an imported Rhino to run this function. This is to
+    avoid rhinoinside.load multiple times.
+    """
+    # create rhino mesh from o3d output and add vertices and faces
+    rhino_mesh = Rhino.Geometry.Mesh()
+    [rhino_mesh.Vertices.Add(float(v[0]), float(v[1]), float(v[2]))
+     for v in v_np_array]
+    [rhino_mesh.Faces.AddFace(int(f[0]), int(f[1]), int(f[2]))
+     for f in f_np_array]
+
+    # compute normals and compact
+    rhino_mesh.UnifyNormals()
+    rhino_mesh.Normals.ComputeNormals()
+    rhino_mesh.Compact()
+
+    return rhino_mesh
+
+
 # NUMPY & HOPS DATA ///////////////////////////////////////////////////////////
 
 def hops_path_to_tuple(path: str):

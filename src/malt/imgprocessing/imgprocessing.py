@@ -336,7 +336,6 @@ def detect_contours_from_image(image: np.ndarray,
 
     # sort contours by area and filter against threshold
     # only return outermost contours, no inner contours based on hierarchy
-    print(extonly)
     if abs(thresh_area) > 0:
         areas = [cv2.contourArea(cnt) for cnt in contours]
         if extonly:
