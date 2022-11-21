@@ -69,6 +69,7 @@ def check(c):
     """
     with chdir(malt.REPODIR):
         lint(c)
+        log.info("All checks passed.")
 
 
 @task(help={
