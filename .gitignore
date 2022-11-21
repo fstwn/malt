@@ -30,6 +30,7 @@ __pycache__/
 
 # ifc submodule
 /src/malt/ifc/
+/src/malt/polyfit/
 
 # MISC
 _archive
