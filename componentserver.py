@@ -165,6 +165,7 @@ import igl # NOQA402
 import numpy as np # NOQA402
 import open3d as o3d # NOQA402
 import potpourri3d as pp3d # NOQA402
+import scipy # NOQA402
 from sklearn.manifold import TSNE # NOQA402
 from sklearn.decomposition import PCA # NOQA402
 
@@ -1578,6 +1579,35 @@ def shapesph_MeshSphericalHarmonicsDescriptorRIComponent(mesh):
 
     # return results
     return sdescr
+
+
+# OTHERS //////////////////////////////////////////////////////////////////////
+
+@hops.component(
+    "/utils.HausdorffDistance",
+    name="HausdorffDistance",
+    nickname="HDist",
+    description="Hausdorff distance between two polylines.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsPoint("CurvePointsA", "A", "The points of the first polyline.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsPoint("CurvePointsB", "B", "The points of the second polyline.", hs.HopsParamAccess.LIST), # NOQA501
+    ],
+    outputs=[
+        hs.HopsNumber("DirectedHausdorffDistance", "D", "The directed hausdorff distance between the two polylines from A to B.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsNumber("SymmetricHausdorffDistance", "S", "The symmetric (maximum) hausdorff distance between the two polylines A and B.", hs.HopsParamAccess.ITEM), # NOQA501
+    ])
+def utils_HausdorffDistanceComponent(curveA, curveB):
+
+    u = hsutil.rhino_points_to_np_array(curveA)
+    v = hsutil.rhino_points_to_np_array(curveB)
+
+    dA, iuA, ivA = scipy.spatial.distance.directed_hausdorff(u, v)
+    dB, iuB, ivB = scipy.spatial.distance.directed_hausdorff(v, u)
+
+    return dA, max(dA, dB)
 
 
 # TEST AND VERIFICATION COMPONENTS ////////////////////////////////////////////
