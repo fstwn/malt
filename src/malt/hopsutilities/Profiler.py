@@ -18,11 +18,12 @@ class Profiler(object):
         """
         Start the timer and save the star time.
         """
+        self.stop_time = None
         self.start_time = time.time()
 
     def stop(self):
         """
-        Stop the timer, print an return elapsed time.
+        Stop the timer, print and return elapsed time.
         """
         elapsed = time.time() - self.start_time
         self.stop_time = elapsed
