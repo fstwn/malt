@@ -42,7 +42,7 @@ cl_args = arg_parser.parse_args()
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
 # Set to True to run in debug mode.
-_DEBUG = True  # cl_args.debug
+_DEBUG = cl_args.debug
 
 # Set to True to allow access via local network (only works with Flask app!)
 # WARNING: THIS MIGHT BE A SECURITY RISK BECAUSE IT POTENTIALLY ALLOWS PEOPLE
