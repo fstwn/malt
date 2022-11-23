@@ -52,8 +52,8 @@ def capture_image(device: int = 0):
 
 
 def calibrate_camera_image(image,
-                           dwidth: int = 1000,
-                           dheight: int = 1000,
+                           dwidth: int = 1131,
+                           dheight: int = 1131,
                            showresult: bool = False):
 
     # create image copy
@@ -145,8 +145,8 @@ def calibrate_camera_image(image,
 
 
 def calibrate_camera_file(filepath,
-                          dwidth: int = 3780,
-                          dheight: int = 1890,
+                          dwidth: int = 1131,
+                          dheight: int = 1131,
                           showresult: bool = False):
 
     # read image from filepath
@@ -242,7 +242,7 @@ def compute_camera_coefficients(fp: str = ""):
 
     # sanitize input filepath
     if fp:
-        if not os.path.isfile(fp):
+        if not os.path.isfile(fp) and os.path.isdir(fp):
             fp = sanitize_path(os.path.join(fp, "coefficients.yml"))
     else:
         fp = sanitize_path(os.path.join(_HERE, "coefficients.yml"))
@@ -257,13 +257,13 @@ def compute_camera_coefficients(fp: str = ""):
     ret, mtx, dist, rvecs, tvecs = calibrate_chessboard(chessboard_imgs)
 
     # print results
-    print("[OPENCV] Camera matrix :")
+    print("[OPENCV] Camera matrix:")
     print(mtx, "\n")
-    print("[OPENCV] Distortion :")
+    print("[OPENCV] Distortion:")
     print(dist, "\n")
-    print("[OPENCV] Rotation :")
+    print("[OPENCV] Rotation:")
     print(rvecs, "\n")
-    print("[OPENCV] Translation :")
+    print("[OPENCV] Translation:")
     print(tvecs, "\n")
 
     # save the coefficients
@@ -275,6 +275,50 @@ def compute_camera_coefficients(fp: str = ""):
 
     # return the coefficients
     return (mtx, dist)
+
+
+def compute_perspective_xform(imgf: str = "",
+                              xfp: str = "",
+                              dwidth: int = 1131,
+                              dheight: int = 1131,
+                              showresult: bool = False):
+    """
+    Computes the transformation matrix for perspective transform and saves
+    the results to a file.
+    """
+
+    # sanitize input filepath
+    if xfp:
+        if not os.path.isfile(xfp) and os.path.isdir(xfp):
+            xfp = sanitize_path(os.path.join(xfp, "xform.yml"))
+    else:
+        xfp = sanitize_path(os.path.join(_HERE, "xform.yml"))
+
+    if not imgf or not os.path.isfile(imgf):
+        # define data directories
+        udir = sanitize_path(os.path.join(_HERE, "imgs_undistorted"))
+        # find undistorted images
+        imgf = glob.glob(os.path.join(udir, "*.jpg"))[0]
+
+    # compute xform matrix
+    xform = calibrate_camera_file(imgf,
+                                  dwidth,
+                                  dheight,
+                                  showresult)
+
+    # print results
+    print("[OPENCV] Perspective transformation matrix:")
+    print(xform)
+
+    # save xform to file
+    save_perspective_xform(xform, xfp)
+
+    # print info
+    print("[OPENCV] Perspective transformation matrix successfully "
+          "saved to file:")
+    print("[OPENCV] " + xfp)
+
+    return xform
 
 
 def detect_contours_from_file(filepath: str,
@@ -455,7 +499,7 @@ def load_coefficients(path):
     return (camera_matrix, dist_matrix)
 
 
-def save_calibration(xform, path):
+def save_perspective_xform(xform, path):
     """
     Save the camera calibration transformation matrix to given path/file.
     """
@@ -464,7 +508,7 @@ def save_calibration(xform, path):
     cv_file.release()
 
 
-def load_calibration(path):
+def load_perspective_xform(path):
     """Loads camera calibration transformation matrix."""
     cv_file = cv2.FileStorage(path, cv2.FILE_STORAGE_READ)
     xform = cv_file.getNode("XFORM").mat()

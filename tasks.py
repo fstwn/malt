@@ -138,9 +138,7 @@ def imgcalibration(c):
     Run image camera calibration routine from imgprocessing module
     """
 
-    imgdir = os.path.join(malt.ROOTDIR, "imgprocessing")
-
-    with chdir(imgdir):
+    with chdir(malt.IMGDIR):
         log.info("Running camera calibration routine...")
         malt.imgprocessing.compute_camera_coefficients()
 
@@ -148,14 +146,26 @@ def imgcalibration(c):
 @task()
 def imgundistortion(c):
     """
-    Run image undistortion routine from imgprocessing module
+    Run image undistortion routine from imgprocessing module.
     """
 
-    imgdir = os.path.join(malt.ROOTDIR, "imgprocessing")
-
-    with chdir(imgdir):
+    with chdir(malt.IMGDIR):
         log.info("Running undistortion routine...")
         malt.imgprocessing.undistort_image_files()
+
+
+@task(help={
+    "w": ("Width of the working area."),
+    "h": ("Height of the working area.")})
+def imgperspective(c, w=1131, h=1131):
+    """
+    Run image perspective calibration and save transformation matrix to file.
+    """
+
+    with chdir(malt.IMGDIR):
+        log.info("Running camera perspective calibration routine...")
+        log.info("Width: {0} // Height: {1}".format(w, h))
+        malt.imgprocessing.compute_perspective_xform(dwidth=w, dheight=h)
 
 
 # CONTEXT ---------------------------------------------------------------------

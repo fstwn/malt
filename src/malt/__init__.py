@@ -33,6 +33,8 @@ DATADIR = hopsutilities.sanitize_path(os.path.join(ROOTDIR, "../../data"))
 TESTDIR = hopsutilities.sanitize_path(os.path.join(ROOTDIR, "../../tests"))
 """str: Path to the tests folder of the malt repository."""
 
+IMGDIR = hopsutilities.sanitize_path(os.path.join(ROOTDIR, "imgprocessing"))
+"""str: Path to the imgprocessing folder of the malt repository."""
 
 __all__ = [
     "__author__", "__author_email__", "__copyright__", "__description__",

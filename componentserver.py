@@ -4,6 +4,7 @@ import argparse
 import clr
 from itertools import product
 import logging
+import os
 
 
 # COMMAND LINE ARGUMENT PARSING -----------------------------------------------
@@ -171,6 +172,7 @@ from sklearn.decomposition import PCA # NOQA402
 
 # LOCAL MODULE IMPORTS --------------------------------------------------------
 
+import malt # NOQA402
 from malt import hopsutilities as hsutil # NOQA402
 from malt import icp # NOQA402
 from malt import imgprocessing # NOQA402
@@ -1036,6 +1038,43 @@ def opencv_CalibrateCameraFileComponent(run,
     rhinoxform = hsutil.np_float_array_to_hops_tree(xform)
 
     return rhinoxform
+
+
+@hops.component(
+    "/opencv.LoadCameraXForm",
+    name="LoadCameraXForm",
+    nickname="LoadCamXF",
+    description="Load a camera perspective transformation from a file.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsString("Filepath", "F", "The filepath of the transformation.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsString("Log", "L", "The logging output of this component.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("Transform", "T", "The transformation matrix.", hs.HopsParamAccess.TREE), # NOQA501
+    ])
+def opencv_LoadCameraXForm(filepath: str = ""):
+
+    log = []
+    rhinoxform = {}
+
+    if not filepath or not os.path.isfile(filepath):
+        filepath = hsutil.sanitize_path(os.path.join(malt.IMGDIR, "xform.yml"))
+        log.append("No filepath supplied, will load default file...")
+
+    try:
+        log.append("Loading transformation matrix from file:")
+        log.append(filepath)
+        xform = imgprocessing.load_perspective_xform(filepath)
+        rhinoxform = hsutil.np_float_array_to_hops_tree(xform)
+    except SystemError:
+        raise ValueError(("Could not read perspective transformation "
+                          "from {0}. Make sure the file is obtained by "
+                          "calling compute_perspective_xform()!"))
+
+    return log, rhinoxform
 
 
 @hops.component(

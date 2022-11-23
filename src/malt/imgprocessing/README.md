@@ -2,6 +2,11 @@
 
 ## Getting started with image processing and contour detection
 
+This guide explains how to get started with image processing, especially
+contour detection using `malt`. Please read the guide *carefully* and until
+the end. The last section provides some useful tips for working with Hops and
+the componentserver.
+
 ### 1. Image directories
 
 For convenience reasons, this directory contains a number of "magic"
@@ -42,6 +47,7 @@ invoke imgcalibration
 ```
 
 ...and you should end up with something like this:
+
 ![Chessboard Calibration](../../../resources/readme/invoke_imgcalibration.png)
 
 *Additional Info: The camera matrix and coefficients will be saved in the
@@ -52,13 +58,72 @@ invoke imgcalibration
 The next step is to compute the undistorted images, using the camera matrix
 and coefficients obtained during the previous step. **Make sure all your source
 images are stored in the `imgs_raw` directory! Also, the `imgs_undistorted`
-direcory should be empty to avoid overwriting previous results or something.**
+directory should be empty to avoid overwriting previous results or something.**
 
-Performing the undistortion is fairly stright forward (nerds would say it's
-easy as π), you can just run
+Performing the undistortion is fairly straight forward (nerds would say it's
+easy as π). You can just run
 ```
 invoke imgundistortion
 ```
 
 ...and you should end up with something like this:
+
 ![Image Undistortion](../../../resources/readme/invoke_imgundistortion.png)
+
+### 4. Computing the transformation matrix for camera perspective
+
+The next step is to compute the transformation matrix of the camera
+perspective. This is done to ensure that the physical working area always maps
+to a defined rectangle in digital space. For this step, it is required that
+you know the measurements of the physical working area in millimeters (!).
+
+Once you know the *width* and *height* of the physical working area, you can
+just run
+```
+invoke imgperspective -w 1131 -h 1131
+```
+
+*NOTE: Here, the width and height are both set to 1131 mm, like in our last
+experiment.*
+
+A window should open:
+- **Click the corners of the working area and then press Enter.**
+- The order in which you click the corners is irrelevant.
+- Clicked points will be marked with a red dot.
+- You can zoom the image.
+- **You can not edit. If you have misclicked, you have to run the whole routine
+again!**
+
+It should look something like this:
+
+![Image Perspective Calibration](../../../resources/readme/invoke_imgperspective.png)
+
+*Additional Info: The perspective transformation matrix will be saved in the
+`xform.yml` file. Usually you shouldn't need to worry about that.*
+
+### 5. Running the actual contour detection (finally...)
+
+Once you have completed all previous steps, you are ready to run the actual
+contour detection in Grasshopper. First you need to start the componentserver
+by running
+```
+python componentserver.py
+```
+
+Once the server is running, you can open `22XXXX_MALT_ContourDetection.gh`
+from the `gh_dev` directory. It should then look something like this:
+
+![Contour Detection in Grasshopper](../../../resources/readme/contour_detection_gh.png)
+
+### 7. Hops and componentserver troubleshooting
+
+- If something weird happens in the console while running the server, you can 
+always abort and kill the running script by pressing `Strg + C` on your
+keyboard. If still nothing happens, do that a couple of times.
+- If a Hops component in Grasshopper is not refreshing but the componentserver
+is running correctly, try double-clicking the Hops component. A window for
+setting the Path will open. Don't change anything here and just click Ok. The
+component should now initialize again.
+- To manually refresh a Hops component in Grasshopper, select the component,
+then press `Strg + Space` to bring up the circular menu and click "Enable".
+The component should then send the current request to the server again.
