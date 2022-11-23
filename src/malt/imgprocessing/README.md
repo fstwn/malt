@@ -91,8 +91,8 @@ A window should open:
 - The order in which you click the corners is irrelevant.
 - Clicked points will be marked with a red dot.
 - You can zoom the image.
-- **You can not edit. If you have misclicked, you have to run the whole routine
-again!**
+- **You can not edit. If you have misclicked, you have to run the
+imgperspective routine again!**
 
 It should look something like this:
 
