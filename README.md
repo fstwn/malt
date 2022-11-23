@@ -1,10 +1,11 @@
-# Malt and DDU/IAS Research Virtual Environment
+# Malt
 
 ## About Malt
 
 Malt is a collection of Hops components for Rhino Grasshopper.
 
 - The Hops components run using a local [ghhops-server](https://github.com/mcneel/compute.rhino3d/tree/master/src/ghhops-server-py).
+- The components are written in Python 3.8 and defined in `componentserver.py`.
 - Rhino functionality is provided using [Rhino.Inside.Cpython](https://github.com/mcneel/rhino.inside-cpython).
 
 ## About the DDU/IAS Research Virtual Environment
@@ -15,11 +16,20 @@ interaction and collaboration in research.
 
 ## Prerequisites
 
-If you want to use the provided Hops Components, you need the following:
+If you want to use the provided Hops Components by running the componentserver locally on your machine, you need the following:
 - Windows (unfortunately Hops and Rhino.Inside.Cpython won't work under OSX for now)
 - [Anaconda / Miniconda](https://www.anaconda.com/products/individual)
 - Rhino 7.4 or newer
 - [Hops](https://developer.rhino3d.com/guides/grasshopper/hops-component/) ([Install using Rhino package manager by using the `_PackageManager` command](rhino://package/search?name=hops))
+
+Currently, Malt is being tested to work using the following stack:
+- Rhino 7 SR24 (7.24.22308.15001)
+- Hops 0.15.3
+- ghhops-server 1.5.3
+- rhinoinside 0.6.0
+
+While different Rhino and/or Hops versions *might* work, there is no guarantee
+at the moment as malt is in a very early stage.
 
 # Installation
 
@@ -76,10 +86,10 @@ malt repository (where `setup.py` is located!), run the following command:
 pip install -e .
 ```
 
-*NOTE: This will install the `malt` package and its submodules in development
-mode (recommended!), in case you want to extend and/or modify it. If you simply
-want to use the provided functions and components, you can also simply call
-`pip install .`*
+*NOTE: This will install the `malt` package and its submodules in **development
+mode (recommended!)**, in case you want to extend and/or modify it. If you 
+simply want to use the provided functions and components, you can also simply 
+call `pip install .`*
 
 ## 4. Running the Hops Server in the Virtual Environment
 
@@ -160,6 +170,10 @@ conda activate ddu_ias_research
 ...and then update the `malt` package by running
 ```
 pip install .
+```
+...or update with installing in development mode this time by running
+```
+pip install -e .
 ```
 
 ## 7. Development

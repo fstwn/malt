@@ -1,1 +1,1 @@
-## Place images to undistort using camera matrix here.
+## Place all images to undistort using camera matrix as .jpg files here!
