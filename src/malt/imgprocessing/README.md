@@ -17,3 +17,29 @@ the camera) as `.jpg`files!
 write the undistorted images to. Do *NOT* place images here manually. The
 undistorted output images will end up here automagically. After undistortion,
 these are the files to perform contour detection on!
+
+### 2. Computing the camera matrix and coefficients
+
+The first preparation step for contour detection is computing the camera matrix
+and coefficients using chessboard calibration. **Make sure all your images for
+chessboard calibration are stored in the `imgs_chessboard` directory!**
+
+For completeness reasons, start by `cd` into *YOUR* `malt` repository
+directory. For me that's running
+```
+cd C:\source\repos\malt
+```
+
+If you don't have done so already, activate the conda environment
+```
+conda activate ddu_ias_research
+```
+
+Now you're ready! For performing the chessboard calibration you just need to
+run
+```
+invoke imgcalibration
+```
+
+...and you should end up with something like this:
+![Chessboard Calibration](../../../resources/readme/invoke_imgcalibration.png)
