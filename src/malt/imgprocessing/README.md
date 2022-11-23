@@ -43,3 +43,22 @@ invoke imgcalibration
 
 ...and you should end up with something like this:
 ![Chessboard Calibration](../../../resources/readme/invoke_imgcalibration.png)
+
+*Additional Info: The camera matrix and coefficients will be saved in the
+`coefficients.yml` file. Usually you shouldn't need to worry about that.*
+
+### 3. Computing the undistorted images
+
+The next step is to compute the undistorted images, using the camera matrix
+and coefficients obtained during the previous step. **Make sure all your source
+images are stored in the `imgs_raw` directory! Also, the `imgs_undistorted`
+direcory should be empty to avoid overwriting previous results or something.**
+
+Performing the undistortion is fairly stright forward (nerds would say it's
+easy as π), you can just run
+```
+invoke imgundistortion
+```
+
+...and you should end up with something like this:
+![Image Undistortion](../../../resources/readme/invoke_imgundistortion.png)
