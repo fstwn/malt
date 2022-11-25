@@ -132,40 +132,64 @@ def gource(c):
                      "See https://ffmpeg.org/ for info on installation.")
 
 
-@task()
-def imgcalibration(c):
+@task(help={
+    "indir": "Directory with the chessboard images for calibration.",
+    "coeffs": "File where the camera coefficients should be stored."})
+def imgcalibration(c,
+                   indir=malt.imgprocessing._CHESSBOARD_DIR,
+                   coeffs=malt.imgprocessing._COEFF_FILE):
     """
     Run image camera calibration routine from imgprocessing module
     """
 
     with chdir(malt.IMGDIR):
         log.info("Running camera calibration routine...")
-        malt.imgprocessing.compute_camera_coefficients()
+        malt.imgprocessing.compute_camera_coefficients(
+                                    chessboard_dir=indir,
+                                    coeff_file=coeffs)
 
 
-@task()
-def imgundistortion(c):
+@task(help={
+    "indir": "Directory with the input raw images before undistortion.",
+    "outdir": "Directory where the undistorted images should be saved.",
+    "coeffs": "File where the camera coefficients are stored."})
+def imgundistortion(c,
+                    indir=malt.imgprocessing._UD_INDIR,
+                    outdir=malt.imgprocessing._UD_OUTDIR,
+                    coeffs=malt.imgprocessing._COEFF_FILE):
     """
     Run image undistortion routine from imgprocessing module.
     """
 
     with chdir(malt.IMGDIR):
         log.info("Running undistortion routine...")
-        malt.imgprocessing.undistort_image_files()
+        malt.imgprocessing.undistort_image_files(indir=indir,
+                                                 outdir=outdir,
+                                                 coeff_file=coeffs)
 
 
 @task(help={
-    "w": ("Width of the working area."),
-    "h": ("Height of the working area.")})
-def imgperspective(c, w=1131, h=1131):
+    "width": "Width of the working area.",
+    "height": "Height of the working area.",
+    "img": ("Undistorted sample image to use for computing the perspective "
+            "transformation."),
+    "xform": "File where the perspective transformation should be saved."})
+def imgperspective(c,
+                   width=1131,
+                   height=1131,
+                   img=malt.imgprocessing._XFORM_IMG,
+                   xform=malt.imgprocessing._XFORM_FILE):
     """
     Run image perspective calibration and save transformation matrix to file.
     """
 
     with chdir(malt.IMGDIR):
         log.info("Running camera perspective calibration routine...")
-        log.info("Width: {0} // Height: {1}".format(w, h))
-        malt.imgprocessing.compute_perspective_xform(dwidth=w, dheight=h)
+        log.info("Width: {0} // Height: {1}".format(width, height))
+        malt.imgprocessing.compute_perspective_xform(imgf=img,
+                                                     xfp=xform,
+                                                     dwidth=width,
+                                                     dheight=height)
 
 
 # CONTEXT ---------------------------------------------------------------------

@@ -1,4 +1,10 @@
-from .imgprocessing import (capture_image, # NOQA401
+from .imgprocessing import (_CHESSBOARD_DIR, # NOQA401
+                            _COEFF_FILE,
+                            _UD_INDIR,
+                            _UD_OUTDIR,
+                            _XFORM_FILE,
+                            _XFORM_IMG,
+                            capture_image,
                             calibrate_camera_image,
                             calibrate_camera_file,
                             calibrate_chessboard,

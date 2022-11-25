@@ -9,6 +9,8 @@ the componentserver.
 
 ### 1. Image directories
 
+#### 1.1 Default directories
+
 For convenience reasons, this directory contains a number of "magic"
 directories to read and write image files during contour detection.
 
@@ -22,6 +24,13 @@ the camera) as `.jpg`files!
 write the undistorted images to. Do *NOT* place images here manually. The
 undistorted output images will end up here automagically. After undistortion,
 these are the files to perform contour detection on!
+
+#### 1.2 Modifying the default directories
+
+The default directories and files to be used are defined in
+[imgprocessing.py](imgprocessing.py#L19) and can be changed there. It is also
+possible to use [symlinks](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/mklink)
+(directory junction) in place of the default directories.
 
 ### 2. Computing the camera matrix and coefficients
 
@@ -46,6 +55,12 @@ run
 invoke imgcalibration
 ```
 
+*Alternatively, you can also pass your own input directory and/or coefficient
+file like this:*
+```
+invoke imgcalibration --indir C:\my\chessboard\directory --coeffs C:\my\coeff\file.yml
+```
+
 ...and you should end up with something like this:
 
 ![Chessboard Calibration](../../../resources/readme/invoke_imgcalibration.png)
@@ -66,6 +81,12 @@ easy as π). You can just run
 invoke imgundistortion
 ```
 
+*Alternatively, you can also pass your own input and output directory and/or
+coefficient file like this:*
+```
+invoke imgundistortion --indir C:\my\input\directory --outdir C:\my\output\directory --coeffs C:\my\coeff\file.yml
+```
+
 ...and you should end up with something like this:
 
 ![Image Undistortion](../../../resources/readme/invoke_imgundistortion.png)
@@ -76,11 +97,19 @@ The next step is to compute the transformation matrix of the camera
 perspective. This is done to ensure that the physical working area always maps
 to a defined rectangle in digital space. For this step, it is required that
 you know the measurements of the physical working area in millimeters (!).
+By default, the first undistorted image from the default (!) directory for
+saving the undistorted images is taken as a sample for this step.
 
 Once you know the *width* and *height* of the physical working area, you can
 just run
 ```
-invoke imgperspective -w 1131 -h 1131
+invoke imgperspective --width 1131 --height 1131
+```
+
+*Alternatively, you can also pass your own image sample file and/or file
+for storing the perspective transformation matrix like this:*
+```
+invoke imgperspective --width 1131 --height 1131 --img C:\my\undistorted\image.jpg --xform C:\my\xform\file.yml
 ```
 
 *NOTE: Here, the width and height are both set to 1131 mm, like in our last

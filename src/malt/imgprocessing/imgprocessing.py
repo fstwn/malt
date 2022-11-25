@@ -18,11 +18,23 @@ from malt.hopsutilities import sanitize_path
 # directory of this particular file
 _HERE = os.path.dirname(sanitize_path(__file__))
 
+# default chessboard image directory
+_CHESSBOARD_DIR = sanitize_path(os.path.join(_HERE, "imgs_chessboard"))
+
 # default directory of raw images before undistortion
 _UD_INDIR = sanitize_path(os.path.join(_HERE, "imgs_raw"))
 
 # default directory to save resulting, undistorted images
 _UD_OUTDIR = sanitize_path(os.path.join(_HERE, "imgs_undistorted"))
+
+# default coefficients file
+_COEFF_FILE = sanitize_path(os.path.join(_HERE, "coefficients.yml"))
+
+# default xform file
+_XFORM_FILE = sanitize_path(os.path.join(_HERE, "xform.yml"))
+
+# default image for perspective transform
+_XFORM_IMG = glob.glob(os.path.join(_UD_OUTDIR, "*.jpg"))[0]
 
 
 # FUNCTION DEFINITIONS --------------------------------------------------------
@@ -237,18 +249,25 @@ def calibrate_chessboard(images,
     return ret, mtx, dist, rvecs, tvecs
 
 
-def compute_camera_coefficients(fp: str = ""):
+def compute_camera_coefficients(chessboard_dir: str = _CHESSBOARD_DIR,
+                                coeff_file: str = _COEFF_FILE):
     """Computes the camera coefficients and saves them to a file."""
 
     # sanitize input filepath
-    if fp:
-        if not os.path.isfile(fp) and os.path.isdir(fp):
-            fp = sanitize_path(os.path.join(fp, "coefficients.yml"))
+    if not coeff_file:
+        raise ValueError(("Supplied coeff_file {0} is not a valid file "
+                          "for storing the coefficients!").format(coeff_file))
     else:
-        fp = sanitize_path(os.path.join(_HERE, "coefficients.yml"))
+        print("[OPENCV] Using {0} for storage of coefficients.".format(
+                                                                coeff_file))
 
     # define data directories
-    chessboard_dir = sanitize_path(os.path.join(_HERE, "imgs_chessboard"))
+    if not os.path.isdir(chessboard_dir):
+        raise ValueError(("Supplied chessboard_dir {0} is not a valid "
+                          "directory!").format(chessboard_dir))
+    else:
+        print("[OPENCV] Using {0} as directory for chessboard images.".format(
+                                                            chessboard_dir))
 
     # find calibration images
     chessboard_imgs = glob.glob(os.path.join(chessboard_dir, "*.jpg"))
@@ -267,18 +286,18 @@ def compute_camera_coefficients(fp: str = ""):
     print(tvecs, "\n")
 
     # save the coefficients
-    save_coefficients(mtx, dist, fp)
+    save_coefficients(mtx, dist, coeff_file)
 
     # print info
     print("[OPENCV] Camera coefficients successfully saved to file:")
-    print("[OPENCV] " + fp)
+    print("[OPENCV] " + coeff_file)
 
     # return the coefficients
     return (mtx, dist)
 
 
-def compute_perspective_xform(imgf: str = "",
-                              xfp: str = "",
+def compute_perspective_xform(imgf: str = _XFORM_IMG,
+                              xfp: str = _XFORM_FILE,
                               dwidth: int = 1131,
                               dheight: int = 1131,
                               showresult: bool = False):
@@ -287,18 +306,20 @@ def compute_perspective_xform(imgf: str = "",
     the results to a file.
     """
 
-    # sanitize input filepath
-    if xfp:
-        if not os.path.isfile(xfp) and os.path.isdir(xfp):
-            xfp = sanitize_path(os.path.join(xfp, "xform.yml"))
+    # sanitize input filepaths
+    if not xfp:
+        raise ValueError(("Supplied xfp {0} is not a valid file for storing "
+                          "the perspective transformation!").format(xfp))
     else:
-        xfp = sanitize_path(os.path.join(_HERE, "xform.yml"))
+        print(("[OPENCV] Using {0} for storage of perspective "
+               "transform.".format(xfp)))
 
     if not imgf or not os.path.isfile(imgf):
-        # define data directories
-        udir = sanitize_path(os.path.join(_HERE, "imgs_undistorted"))
-        # find undistorted images
-        imgf = glob.glob(os.path.join(udir, "*.jpg"))[0]
+        raise ValueError(("Supplied image {0} is not a valid image "
+                          "file!").format(imgf))
+    else:
+        print(("[OPENCV] Using {0} as image for computing "
+               "perspective transform.").format(imgf))
 
     # compute xform matrix
     xform = calibrate_camera_file(imgf,
@@ -433,12 +454,35 @@ def undistort_image(image, mtx, dist, remap: bool = True):
     return undistorted_image
 
 
-def undistort_image_files(indir: str = _UD_INDIR, outdir: str = _UD_OUTDIR):
+def undistort_image_files(indir: str = _UD_INDIR,
+                          outdir: str = _UD_OUTDIR,
+                          coeff_file: str = _COEFF_FILE):
+
+    # sanitize input filepaths
+    if not os.path.isfile(coeff_file):
+        raise ValueError(("Supplied coeff_file {0} is not a valid file "
+                          "for storing the coefficients!").format(coeff_file))
+    else:
+        print("[OPENCV] Using {0} for storage of coefficients.".format(
+                                                                coeff_file))
+
+    if not os.path.isdir(indir):
+        raise ValueError(("Supplied indir {0} is not a valid "
+                          "directory!").format(indir))
+    else:
+        print("[OPENCV] Using {0} as input directory.".format(
+                                                            indir))
+
+    if not os.path.isdir(outdir):
+        raise ValueError(("Supplied outdir {0} is not a valid "
+                          "directory!").format(outdir))
+    else:
+        print("[OPENCV] Using {0} as output directory.".format(
+                                                            outdir))
 
     # load coefficients from previously saved file
     print("[OPENCV] Loading camera coefficients from file...")
-    mtx, dist = load_coefficients(sanitize_path(os.path.join(
-                                                _HERE, "coefficients.yml")))
+    mtx, dist = load_coefficients(sanitize_path(coeff_file))
 
     # apply the camera matrix to all target images
     print("[OPENCV] Applying undistortion to all raw images...")
