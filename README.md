@@ -37,7 +37,9 @@ at the moment as malt is in a very early stage.
 
 First off, clone or download this repository and unzip it (if needed) into a
 working directory of your choice. For the purpose of this guide, I will use
-`C:\source\repos` as my directory for all repositories.
+`C:\source\repos` as my directory for all repositories. **If you have no idea
+how to work with git or have never worked with a git repository before, please
+have a look [here](docs/howto_git.md) first!**
 
 If you want to clone using the Command line, `cd` into your repo directory, i.e.:
 ```
@@ -57,9 +59,10 @@ containing all the files of the repository, so that the full path is
 
 ***NOTE: If you have not installed 
 [Anaconda / Miniconda](https://www.anaconda.com/products/individual) yet, NOW
-is the time to do it.***
+is the time to do it. If you have no idea how to get started with Anaconda,
+please have a look [here](docs/howto_anaconda.md)***
 
-Using a Windows Terminal or Powershell, `cd` into the directory where **you** have 
+Using a Windows Powershell, `cd` into the directory where **you** have 
 cloned/unpacked the `malt` repository. For me that's running:
 ```
 cd "C:\source\repos\malt"

@@ -463,7 +463,7 @@ def undistort_image_files(indir: str = _UD_INDIR,
         raise ValueError(("Supplied coeff_file {0} is not a valid file "
                           "for storing the coefficients!").format(coeff_file))
     else:
-        print("[OPENCV] Using {0} for storage of coefficients.".format(
+        print("[OPENCV] Using {0} for loading of coefficients.".format(
                                                                 coeff_file))
 
     if not os.path.isdir(indir):

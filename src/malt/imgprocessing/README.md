@@ -28,7 +28,7 @@ these are the files to perform contour detection on!
 #### 1.2 Modifying the default directories
 
 The default directories and files to be used are defined in
-[imgprocessing.py](imgprocessing.py#L19) and can be changed there. It is also
+[imgprocessing.py](imgprocessing.py#L22) and can be changed there. It is also
 possible to use [symlinks](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/mklink)
 (directory junction) in place of the default directories.
 
