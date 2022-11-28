@@ -1,12 +1,20 @@
 # Malt
 
-## About Malt
-
 Malt is a collection of Hops components for Rhino Grasshopper.
 
 - The Hops components run using a local [ghhops-server](https://github.com/mcneel/compute.rhino3d/tree/master/src/ghhops-server-py).
 - The components are written in Python 3.8 and defined in `componentserver.py`.
 - Rhino functionality is provided using [Rhino.Inside.Cpython](https://github.com/mcneel/rhino.inside-cpython).
+
+## Table of Contents
+
+[General](#general)  
+[Installation & Updates](#installation--updates)  
+[Development](#development)  
+[Licensing & References](#licensing--references)  
+[To-Do & Extension Ideas](#to-do--extension-ideas)  
+
+# General
 
 ## About the DDU/IAS Research Virtual Environment
 
@@ -31,7 +39,7 @@ Currently, Malt is being tested to work using the following stack:
 While different Rhino and/or Hops versions *might* work, there is no guarantee
 at the moment as malt is in a very early stage.
 
-# Installation
+# Installation & Updates
 
 ## 1. Clone the repository into a directory of your choice
 
@@ -153,8 +161,10 @@ on the mesh using the `/igl.MeshIsoCurves` endpoint.
 
 ## 6. Updating
 
+### 6.1 Updating the `malt` repository
+
 To update your local repository, open a Powershell or Terminal and `cd` into
-the directory of the repository, for me that's
+*your* directory of the repository, for me that's
 ```
 cd "C:\source\repos\malt"
 ```
@@ -179,22 +189,40 @@ pip install .
 pip install -e .
 ```
 
-## 7. Development
+### 6.2 Updating the conda environment
 
-### 7.1 Components
+If you need to update your conda environment after the release of a new version
+of the supplied `ddu_ias_research.yml` file, here is how you can do this:
+
+First, `cd` into *your* `malt` repository directory as always, for me that's
+```
+cd "C:\source\repos\malt"
+```
+
+then update your conda environment by running
+```
+conda env update --name ddu_ias_research --file ddu_ias_research_env.yml --prune
+```
+
+*et voila* - your conda environment should now be updated with the newly
+specified dependencies.
+
+# Development
+
+## 1. Components
 
 If you want to contribute to malt development, the easiest way is to develop
 own components and add them to `componentserver.py`. For now, all components
 have to be defined in this file, since Hops does not support it in any other
 way yet.
 
-### 7.2 Submodules
+## 2. Submodules
 
 If you want to contribute by adding submodules, please add your modules in the
 `/malt` directory. Make sure that you have installed the malt package in
 development mode using `pip install -e .`.
 
-### 7.3 Tests
+## 3. Tests
 
 Malt uses `pytest` for testing. It is included in the `ddu_ias_research.yml`
 conda environment file and does not need to be installed separately.
@@ -206,7 +234,7 @@ To run all available test, call
 invoke test
 ```
 
-### 7.4 Linting
+## 4. Linting
 
 Please use the `flake8` linter when contributing code to malt. It is included
 in the `ddu_ias_research.yml` conda environment file and does not need to be
@@ -217,7 +245,7 @@ To lint all code, call
 invoke lint
 ```
 
-## Licensing & References
+# Licensing & References
 
 - Original code is licensed under the MIT License.
 - The `malt.ipc` module is based on code by Yijiang Huang. This code is licensed under the MIT License found under `licenses/compas_rpc_example`.
@@ -227,8 +255,8 @@ invoke lint
 - The `malt.sshd` module is based on [ShapeDescriptor](https://github.com/ReNicole/ShapeDescriptor) by GitHub user [ReNicole](https://github.com/ReNicole). Unfortunately, no license is provided by its author for this public open-source code. The code is based on the paper *"Description of 3D-shape using a complex function on the sphere" by D.V. Vranic, D. Saupe, 2002*.
 - Tha `malt.imgprocessing` module makes heavy use of the [OpenCV](https://opencv.org/) library, more specifically its [pre-built packages for python](https://anaconda.org/conda-forge/opencv) via conda-forge.
 
-## To-Do & Extension Ideas
+# To-Do & Extension Ideas
 
-### Possible Future Integrations
+## Possible Future Integrations
 
 - [Google Mediapipe](https://github.com/google/mediapipe)
