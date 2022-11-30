@@ -4,6 +4,7 @@ from .imgprocessing import (_CHESSBOARD_DIR, # NOQA401
                             _UD_OUTDIR,
                             _XFORM_FILE,
                             _XFORM_IMG,
+                            approximate_contour,
                             capture_image,
                             calibrate_camera_image,
                             calibrate_camera_file,

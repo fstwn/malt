@@ -1093,6 +1093,7 @@ def opencv_LoadCameraXForm(filepath: str = ""):
         hs.HopsInteger("Width", "W", "The width of the working area.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("Height", "H", "The height of the working area.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("ChainApproximation", "C", "The chain approximation to use during contour detection. Defaults to 0.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsNumber("Epsilon", "E", "The epsilon value for contour approximation in post-processing. Defaults to 0 (disabled).", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsBoolean("Invert", "I", "If True, threshold image will be inverted. Use the invert function to detect black objects on white background.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsBoolean("ExtOnly", "E", "If True, only external contours will be returned.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsNumber("Transform", "X", "The transformation parameters from camera calibration.", hs.HopsParamAccess.TREE), # NOQA501
@@ -1108,6 +1109,7 @@ def opencv_DetectContoursCaptureComponent(run,
                                           width=3780,
                                           height=1890,
                                           chain=0,
+                                          eps=0.0,
                                           invert=False,
                                           external=True,
                                           xformtree=None):
@@ -1141,14 +1143,18 @@ def opencv_DetectContoursCaptureComponent(run,
             # create .NET list because Polyline constructor won't correctly
             # handle python lists (it took a while to find that out....)
             if len(cnt) >= 2:
+                if eps > 0.0:
+                    cntpts = imgprocessing.approximate_contour(cnt, eps)
+                else:
+                    cntpts = cnt
                 ptL = System.Collections.Generic.List[Rhino.Geometry.Point3d]()
                 # add contour points to .NET list
                 [ptL.Add(Rhino.Geometry.Point3d(float(pt[0][0]),
                                                 float(pt[0][1]),
-                                                0.0)) for pt in cnt]
+                                                0.0)) for pt in cntpts]
                 # add first point again to close polyline
-                ptL.Add(Rhino.Geometry.Point3d(float(cnt[0][0][0]),
-                                               float(cnt[0][0][1]),
+                ptL.Add(Rhino.Geometry.Point3d(float(cntpts[0][0][0]),
+                                               float(cntpts[0][0][1]),
                                                0.0))
                 # create polylinecurve from .NET list and scale with factor
                 plc = Rhino.Geometry.PolylineCurve(ptL)
@@ -1190,6 +1196,7 @@ def opencv_DetectContoursCaptureComponent(run,
         hs.HopsInteger("Width", "W", "The width of the working area.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("Height", "H", "The height of the working area.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("ChainApproximation", "C", "The chain approximation to use during contour detection. Defaults to 0.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsNumber("Epsilon", "E", "The epsilon value for contour approximation in post-processing. Defaults to 0 (disabled).", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsBoolean("Invert", "I", "If True, threshold image will be inverted. Use the invert function to detect black objects on white background.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsBoolean("ExtOnly", "E", "If True, only external contours will be returned.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsNumber("Transform", "X", "The transformation parameters from camera calibration.", hs.HopsParamAccess.TREE), # NOQA501
@@ -1205,6 +1212,7 @@ def opencv_DetectContoursFileComponent(run,
                                        width=1000,
                                        height=1000,
                                        chain=0,
+                                       eps=0.0,
                                        invert=False,
                                        external=True,
                                        xformtree=None):
@@ -1238,14 +1246,18 @@ def opencv_DetectContoursFileComponent(run,
             # create .NET list because Polyline constructor won't correctly
             # handle python lists (it took a while to find that out....)
             if len(cnt) >= 2:
+                if eps > 0.0:
+                    cntpts = imgprocessing.approximate_contour(cnt, eps)
+                else:
+                    cntpts = cnt
                 ptL = System.Collections.Generic.List[Rhino.Geometry.Point3d]()
                 # add contour points to .NET list
                 [ptL.Add(Rhino.Geometry.Point3d(float(pt[0][0]),
                                                 float(pt[0][1]),
-                                                0.0)) for pt in cnt]
+                                                0.0)) for pt in cntpts]
                 # add first point again to close polyline
-                ptL.Add(Rhino.Geometry.Point3d(float(cnt[0][0][0]),
-                                               float(cnt[0][0][1]),
+                ptL.Add(Rhino.Geometry.Point3d(float(cntpts[0][0][0]),
+                                               float(cntpts[0][0][1]),
                                                0.0))
                 # create polylinecurve from .NET list and scale with factor
                 plc = Rhino.Geometry.PolylineCurve(ptL)

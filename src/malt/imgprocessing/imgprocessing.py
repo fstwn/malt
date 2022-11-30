@@ -39,6 +39,15 @@ _XFORM_IMG = glob.glob(os.path.join(_UD_OUTDIR, "*.jpg"))[0]
 
 # FUNCTION DEFINITIONS --------------------------------------------------------
 
+def approximate_contour(cnt, eps):
+    """
+    Approximate the a contour using the Ramer-Douglas-Peucker algorithm
+    """
+    peri = cv2.arcLength(cnt, True)
+    approx = cv2.approxPolyDP(cnt, eps * peri, True)
+    return approx
+
+
 def capture_image(device: int = 0):
     """Capture an image using a connected camera and return the frame."""
     # set video device to external USB camera
@@ -608,4 +617,17 @@ if __name__ == "__main__":
     # test_detect_contours_from_image()
 
     # calibrate_camera(1)
+
+    fp = os.path.join(_HERE, "qrcode_test_2.jpg")
+
+    from pyzbar.pyzbar import decode as qrdecode
+
+    img = cv2.imread(fp)
+
+    decoded_list = qrdecode(img)
+
+    print(len(decoded_list))
+
+    print(decoded_list[0].data.decode())
+
     pass
