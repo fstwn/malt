@@ -33,8 +33,17 @@ _COEFF_FILE = sanitize_path(os.path.join(_HERE, "coefficients.yml"))
 # default xform file
 _XFORM_FILE = sanitize_path(os.path.join(_HERE, "xform.yml"))
 
+
 # default image for perspective transform
-_XFORM_IMG = glob.glob(os.path.join(_UD_OUTDIR, "*.jpg"))[0]
+def __get_xform_img():
+    folder = glob.glob(os.path.join(_UD_OUTDIR, "*.jpg"))
+    try:
+        return folder[0]
+    except IndexError:
+        return ""
+
+
+_XFORM_IMG = __get_xform_img()
 
 
 # FUNCTION DEFINITIONS --------------------------------------------------------
