@@ -31,11 +31,13 @@ If you want to use Anaconda with the Powershell, you can do it like this:
 3. Close the Anaconda Powershell and open a *regular* Powershell.
 
 4. You *might* get an error like this:
+
 ```
 \WindowsPowerShell\profile.ps1 cannot be loaded because running scripts is disabled on this system. For more information, see about_Execution_Policies at https:/go.microsoft.com/fwlink/?LinkID=135170. At line:1 char:3
 ```
 
 5. If not, you`re all set. If you get the error, run this in Powershell:
+
 ```
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned
 ```
