@@ -24,34 +24,3 @@ the installation process!
 You can find a more in-depth guide on how to get started with git [here](https://github.com/git-guides/install-git).
 
 There is also a cheat-sheet for working with git available [here](https://about.gitlab.com/images/press/git-cheat-sheet.pdf).
-
-## 3. Collaboration using Git
-
-The main purposes of git are version control and, of course, collaboration
-with multiple people on one codebase. This can get very complex, so we rely
-on git to make the process manageable.
-
-To get started with your own contributions to a repository, we have to
-get familiar with *branches*. Branches allow us to store multiple versions
-of the codebase separately from one another, so every collaborator can work
-on their version of the codebase without messing up the production code or the
-code of others.
-
-At first, every repository has only one branch. In our case this branch is
-called `main`[^1], because it is (you might have guessed it) the main branch.
-The main branch is supposed to store the current, working version of the
-codebase.
-
-If you want to contribute to this repository in a meaningful way, you have to
-create your own development branch. When you have developed some new features
-that are ready, you can open a `pull request` to merge them from your
-development branch into the main branch.
-
-
-[^1]: A little bit of history: Formerly, the main branch was commonly referred
-to as *master* branch. The *master* and *slave* metaphors in technology and
-especially in software development date back to the early 20th century. In
-recent years this language, which blatantly reproduces racism, has been and is
-being questioned (and rightfully so!). So, I will not use this terminology
-anymore. Better words to use are for example *main*, *primary/replica* or
-*leader/follower*.
