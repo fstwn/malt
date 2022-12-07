@@ -119,6 +119,12 @@ def solve_csp(m: np.array,
     # cM_i,j is the cost to manufacture or install element j (reuse or new)
     # at position i
     # TODO: add correct cost values / computation
+    #
+    # NOTE:
+    # - Production impact of 1m³ of concrete is the basis for caclulating
+    # the cost of a new element
+    # - "cj" is a placeholder for cS_j!
+    # - cS is a cost list of the processing cost of all stock elements
     cj = 10
     model.setObjective(
         gp.quicksum((cj * y[j]) for j in range(len(R))) +
