@@ -35,7 +35,8 @@ on git to make the process manageable.
 people come in, I strongly suggest using the source control function of a
 code editor like VSCode. It will be a lot easier and less intimidating than
 doing everything over the commandline **BUT** you should already be familiar
-with the basic actions that git provides.*
+with the basic actions that git provides, so I recommend reading this until
+the end before doing anything.*
 
 To get started with your own contributions to a repository, you have to
 get familiar with *branches*. Branches allow us to store multiple versions
@@ -81,7 +82,7 @@ git checkout dev_yourname
 This will switch the current working branch to `dev_yourname`. Note that if you
 have uncommitted changes before switching branches, this action will not work!
 
-### 3.2 Commiting to your development branch
+### 3.2 Staging changes and commiting to your development branch
 
 Since git is a version control system, it will track all changes made to files
 within the repository. That means if you just have written some new code, you
@@ -120,7 +121,73 @@ can run:
 git add --all
 ```
 
-Suppose you have added a change to the staging area by accident, 
+Once you have staged some changes, it's time for your first commit! The commit
+is used for telling Git *"Yes, I have made those changes, I want to save this
+state of things"*. A commit should *always* include a commmit message. Think of
+it as keeping a tiny diary about the things that you have done to the code.
+You can do your first commit just like this:
+
+```
+git commit -m "Added a new fancy script doing some fancy stuff - yay!"
+```
+
+**Hooooray!** You have just made the first commit to you *local* version of the
+repository! You have successfully learnt about branches, how to stage changes
+*and* how to commit!
+
+### 3.3 Pushing changes to the remote
+
+Now there is only one left thing to do: Pushing your changes to the remote
+repository (e.g. on GitHub). But first, a word of caution...
+
+***ATTENTION:*** **Pushing changes is a potentially dangerous operation. Thus,
+if your name is not Max Benjamin Eschenbach, please *NEVER, EVER EVER EVER*
+push anything to the `main` branch! Follow the coming section on pull requests
+instead to learn how to safely contribute to the `main` branch. Thank you :-)**
+
+So, once you have commited your changes to your newly created local development
+branch, we are going to push these changes *and* the branch to the remote. If
+you are pushing **the first commit on your development branch** run:
+
+```
+git push -u origin dev_yourname
+```
+
+This command will push your local development branch with your changes to the
+remote (i.e. on GitHub). The `-u` flag tells git to set that remote branch as
+*upstream* for your local branch, meaning that your local branch and the remote
+branch are 'linked' now. You only have to use `-u` when first pushing a new
+branch. After that, you can just push like this:
+
+```
+git push origin dev_yourname
+```
+
+Awesome! Your development branch and your changes are now also saved within the
+remote repository. Thank you for your contribution!
+
+### 3.4 Pull requests
+
+Once you have done all the above steps, you can open a pull request. This is
+like saying *"Hey, I have written some cool stuff in my dev branch, can you
+please merge it to the main branch?"*
+
+Personally, I recommend doing pull requests using the web interface of GitHub.
+For this reason, I will simply link the official GitHub tutorial on that:
+
+[Creating a pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request)
+
+If you have any questions about pull requests, of course feel free to ask.
+
+### 3.5 Last but not least
+
+As said in the beginning, I *strongly* recommend managing branches, staging and
+commits using a graphical interface. Personally, I recommend using the source
+control feature of VSCode. Once you arrived at this section, you should know
+enough about git to work with it in a pretty straightforward way, so I'm
+simply linking the tutorial:
+
+[Using Git source control in VS Code](https://code.visualstudio.com/docs/sourcecontrol/overview)
 
 
 [^1]: A little bit of history: Formerly, the main branch was commonly referred
