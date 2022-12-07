@@ -31,7 +31,7 @@ The main purposes of git are version control and, of course, collaboration
 with multiple people on one codebase. This can get very complex, so we rely
 on git to make the process manageable.
 
-To get started with your own contributions to a repository, we have to
+To get started with your own contributions to a repository, you have to
 get familiar with *branches*. Branches allow us to store multiple versions
 of the codebase separately from one another, so every collaborator can work
 on their version of the codebase without messing up the production code or the
@@ -46,6 +46,38 @@ If you want to contribute to this repository in a meaningful way, you have to
 create your own development branch. When you have developed some new features
 that are ready, you can open a `pull request` to merge them from your
 development branch into the main branch.
+
+### 3.1 Creating a development branch for your code contribution
+
+Okay, say you have written some code and want to contribute it to the
+repository - great! Let's get started:
+
+**IMPORTANT:** *Before continuing, please backup your code to make sure it
+won't get lost during the process of creating and switching to you development
+branch*
+
+To create a new branch for your developments, run the following command
+while having the current working directory set to the directory of the
+`malt` repository:
+
+```
+git branch dev_yourname
+```
+
+This will create a branch with the name `dev_yourname`. Of course please feel
+free to name this branch however you like. Next, we need to switch to that
+branch to start working on it:
+
+```
+git checkout dev_yourname
+```
+
+This will switch the current working branch to `dev_yourname`. Note that if you
+have uncommitted changes before switching branches, this action will not work!
+
+
+
+
 
 
 [^1]: A little bit of history: Formerly, the main branch was commonly referred
