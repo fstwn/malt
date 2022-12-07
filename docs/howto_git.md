@@ -198,5 +198,3 @@ recent years this language, which blatantly reproduces racism, has been and is
 being questioned (and rightfully so!). So, I will not use this terminology
 anymore. Better words to use are for example *main*, *primary/replica* or
 *leader/follower*.
-
-There is also a cheat-sheet for working with git available [here](https://about.gitlab.com/images/press/git-cheat-sheet.pdf).
