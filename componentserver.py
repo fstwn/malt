@@ -431,6 +431,71 @@ def gurobi_SolveCSPComponent(stock_len,
             hsutil.np_float_array_to_hops_tree(N))
 
 
+@hops.component(
+    "/gurobi.FT20OptimizeMatching",
+    name="FT20OptimizeMatching",
+    nickname="FT20Opt",
+    description="Optimize a FT20 demand based on a given stock.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsNumber("StockLength", "SL", "Stock Length", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("StockCrossSectionLong", "SCL", "Stock Cross Section Long Side", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("StockCrossSectionShort", "SCS", "Stock Cross Section Short Side", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("DemandLength", "DL", "Demand Length", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("DemandCrossSectionLong", "DCL", "Demand Cross Section Long Side", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("DemandCrossSectionShort", "DCS", "Demand Cross Section Short Side", hs.HopsParamAccess.LIST), # NOQA501
+    ],
+    outputs=[
+        hs.HopsNumber("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("NewComponents", "N", "Components produced new.", hs.HopsParamAccess.TREE), # NOQA501
+    ])
+def gurobi_FT20OptimizeMatchingComponent(stock_len,
+                                         stock_cs_x,
+                                         stock_cs_y,
+                                         demand_len,
+                                         demand_cs_x,
+                                         demand_cs_y):
+
+    # SANITIZE INPUT DATA -----------------------------------------------------
+
+    if not len(stock_len) == len(stock_cs_x) == len(stock_cs_y):
+        raise ValueError("Stock Length and Cross Section Size lists must "
+                         "correspond in length!")
+    if not len(demand_len) == len(demand_cs_x) == len(demand_cs_y):
+        raise ValueError("Demand Length and Cross Section Size lists must "
+                         "correspond in length!")
+
+    # BUILD NP ARRAYS ---------------------------------------------------------
+
+    m = np.column_stack((np.array([round(x, 6) for x in demand_len]),
+                         np.array([round(x, 6) for x in demand_cs_x]),
+                         np.array([round(x, 6) for x in demand_cs_y])))
+
+    R = np.column_stack((np.array([round(x, 6) for x in stock_len]),
+                         np.array([round(x, 6) for x in stock_cs_x]),
+                         np.array([round(x, 6) for x in stock_cs_y])))
+
+    # COMPOSE N ON BASIS OF M -------------------------------------------------
+
+    cs_set = sorted(list(set([(x[1], x[2]) for x in m])), reverse=True)
+    N = np.array([(float("inf"), x[0], x[1]) for x in cs_set])
+
+    # RUN CUTTING STOCK OPTIMIZATION ------------------------------------------
+
+    optimisation_result = miphopper.ft20_optimize_matching(m, R, N)
+
+    # RETURN THE OPTIMIZATION RESULTS -----------------------------------------
+
+    return ([float(int(x[1])) for x in optimisation_result],
+            hsutil.np_float_array_to_hops_tree(N))
+
+
+# FERTIGTEIL 2.0 FARO API /////////////////////////////////////////////////////
+
+# TODO: ADD API COMPONENTS
+
 # ITERATIVE CLOSEST POINT /////////////////////////////////////////////////////
 
 @hops.component(

@@ -1,4 +1,6 @@
 from .hopsutilities import (sanitize_path, # NOQA401
+                            slash_join,
+                            validate_uuid,
                             rhino_points_to_np_array,
                             rhino_mesh_to_np_arrays,
                             hops_path_to_tuple,
