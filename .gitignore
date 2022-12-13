@@ -32,6 +32,9 @@ __pycache__/
 /src/malt/ifc/
 /src/malt/polyfit/
 
+# ft20 faro api config
+/src/malt/ft20/config.yml
+
 # MISC
 _archive
 malt_decentralized.py
