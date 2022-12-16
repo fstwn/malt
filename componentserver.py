@@ -3,6 +3,7 @@
 import argparse
 import clr
 from itertools import product
+import json
 import logging
 import os
 
@@ -179,6 +180,7 @@ from malt import intri # NOQA402
 from malt import miphopper # NOQA402
 from malt import shapesph # NOQA402
 from malt import sshd # NOQA402
+from malt import ft20 # NOQA402
 
 
 # REGSISTER FLASK AND/OR RHINOINSIDE HOPS APP ---------------------------------
@@ -428,6 +430,113 @@ def gurobi_SolveCSPComponent(stock_len,
 
     return ([float(int(x[1])) for x in optimisation_result],
             hsutil.np_float_array_to_hops_tree(N))
+
+
+# FERTIGTEIL 2.0 AND FARO API /////////////////////////////////////////////////
+
+@hops.component(
+    "/ft20.GetAllObjects",
+    name="FT20GetAllObjects",
+    nickname="FT20GetAllObjects",
+    description="Get all objects from the FARO component repository server.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsBoolean("Refresh", "R", "Refresh the server.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsString("RepositoryComponents", "RC", "All repository components.", hs.HopsParamAccess.LIST), # NOQA501
+    ])
+def ft20_GetAllObjectsComponent(refresh: bool = True):
+
+    stkey = 'FT20_COMPONENT_REPOSITORY'
+
+    if stkey not in malt._STICKY.keys():
+        malt._STICKY[stkey] = []
+
+    if refresh:
+        components = ft20.api.get_all_objects()
+        malt._STICKY[stkey] = components
+
+    json_comps = [obj.JSON for obj in malt._STICKY[stkey]]
+    return json_comps
+
+
+@hops.component(
+    "/ft20.FT20OptimizeMatching",
+    name="FT20OptimizeMatching",
+    nickname="FT20Opt",
+    description="Optimize a FT20 demand based on a given stock.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsString("RepositoryComponents", "R", "Stock of components from the repository.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsString("DemandComponents", "D", "Demand of components.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsString("ReUseCoeffs", "RC", "ReUse Coefficients.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsString("ProductionCoeffs", "PC", "Production Coefficients.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsPoint("LabLocation", "LL", "Location of the Fabrication Laboratory.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsNumber("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("NewComponents", "N", "Components produced new.", hs.HopsParamAccess.TREE), # NOQA501
+    ])
+def ft20_FT20OptimizeMatchingComponent(repository_components,
+                                       demand_components,
+                                       reusecoeffs,
+                                       productioncoeffs,
+                                       lab_location):
+
+    # SANITIZE JSON DATA AS CLASSES AND DICTS ---------------------------------
+
+    # TODO: On component creation, check for incomplete transport history and
+    # calculate distances!
+
+    repository_components = [
+        ft20.RepositoryComponent.CreateFromDict(json.loads(obj))
+        for obj in repository_components
+        ]
+
+    demand_components = [
+        ft20.DemandComponent.CreateFromDict(json.loads(obj))
+        for obj in demand_components
+        ]
+
+    reusecoeffs = json.loads(reusecoeffs)
+    productioncoeffs = json.loads(productioncoeffs)
+
+    # COMPUTE TRANSPORT DISTANCES ---------------------------------------------
+
+    # NOTE: assumption: site location is the same for all demand components!
+
+    # for cS: compute tranport history up until lab location!
+    lab_location = (lab_location.X, lab_location.Y)
+
+    transport_distances = ft20.compute_transport_distances(
+        repository_components,
+        lab_location
+        )
+
+    # for cM: compute transport from lab to site
+
+    # for cM: compute transport from current location (should be lab location
+    # if available) to site
+
+    # RUN CUTTING STOCK OPTIMIZATION ------------------------------------------
+
+    optimization_result = ft20.optimize_matching(
+        repository_components,
+        demand_components,
+        transport_distances,
+        reusecoeffs,
+        productioncoeffs
+        )
+
+    # RETURN THE OPTIMIZATION RESULTS -----------------------------------------
+
+    return ([float(int(x[1])) for x in optimization_result],
+            hsutil.np_float_array_to_hops_tree([]))
 
 
 # ITERATIVE CLOSEST POINT /////////////////////////////////////////////////////
