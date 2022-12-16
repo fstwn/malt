@@ -3,5 +3,4 @@ from .assignment import (solve_assignment_2d, # NOQA402
                          )
 
 from .csp import (solve_csp, # NOQA402
-                  ft20_optimize_matching,
                   )

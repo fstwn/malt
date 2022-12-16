@@ -37,6 +37,9 @@ TESTDIR = hopsutilities.sanitize_path(os.path.join(ROOTDIR, "../../tests"))
 IMGDIR = hopsutilities.sanitize_path(os.path.join(ROOTDIR, "imgprocessing"))
 """str: Path to the imgprocessing folder of the malt repository."""
 
+_STICKY = {}
+"""dict: Sticky dictionary for storing of persistent data."""
+
 __all__ = [
     "__author__", "__author_email__", "__copyright__", "__description__",
     "__license__", "__title__", "__url__", "__version__",

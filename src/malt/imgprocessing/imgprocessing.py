@@ -620,23 +620,27 @@ def test_detect_contours_from_image():
 # MAIN ROUTINE ----------------------------------------------------------------
 
 if __name__ == "__main__":
+    pass
     # test contour detection
     # test_detect_contours()
     # capture_image()
     # test_detect_contours_from_image()
-
     # calibrate_camera(1)
 
-    fp = os.path.join(_HERE, "qrcode_test_2.jpg")
+    # QR-Code detection
+    # imgs = glob.glob(os.path.join(_UD_OUTDIR, "*.jpg"))
+    # imgfile = imgs[4]
+    # from pyzbar.pyzbar import decode as qrdecode
+    # img = cv2.imread(imgfile)
+    # decoded_list = qrdecode(img)
+    # print(decoded_list[0])
 
-    from pyzbar.pyzbar import decode as qrdecode
-
-    img = cv2.imread(fp)
-
-    decoded_list = qrdecode(img)
-
-    print(len(decoded_list))
-
-    print(decoded_list[0].data.decode())
-
-    pass
+    # ARUCO Detection
+    aruco_img = cv2.imread(os.path.join(_HERE, 'aruco_test.jpg'))
+    aruco_params = cv2.aruco.DetectorParameters_create()
+    aruco_dict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
+    (corners, ids, rejected) = cv2.aruco.detectMarkers(
+        aruco_img,
+        aruco_dict,
+        parameters=aruco_params)
+    print(corners, ids)

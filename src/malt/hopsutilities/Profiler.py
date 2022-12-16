@@ -16,7 +16,7 @@ class Profiler(object):
 
     def start(self):
         """
-        Start the timer and save the star time.
+        Start the timer and save the start time.
         """
         self.stop_time = None
         self.start_time = time.time()

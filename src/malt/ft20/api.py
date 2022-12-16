@@ -198,10 +198,10 @@ if __name__ == "__main__":
         "material": "1.4.01 (Beton 30/37)",
         "process": [],
         "transporthistory": [
-            ('52.284726, 10.548717',
+            ['52.284726, 10.548717',
              '49.863323, 8.678350',
-             '369.8203',
-             'Schwertransport')
+             '-1',
+             'Schwertransport']
         ],
         "componenthistory": [],
         "geometry": "",
@@ -212,12 +212,7 @@ if __name__ == "__main__":
 
     create_object(testcomp)
 
-    print(get_all_objects())
-
-    testcomp.availability = False
-    update_object(testcomp)
-
     print(get_object(
-        '82cedaaf-44cc-4956-88c6-865cd871a814')[1].transporthistory_parsed)
+        '82cedaaf-44cc-4956-88c6-865cd871a814')[1].transporthistory)
 
     delete_object("82cedaaf-44cc-4956-88c6-865cd871a814")

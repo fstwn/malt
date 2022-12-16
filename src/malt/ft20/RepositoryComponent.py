@@ -1,8 +1,9 @@
 # PYTHON STANDARD LIBRARY IMPORTS ---------------------------------------------
 
+import itertools
 import json
 import uuid
-from typing import List, Sequence
+from typing import Sequence, Tuple
 
 
 # LOCAL MODULE IMPORTS --------------------------------------------------------
@@ -35,21 +36,21 @@ class RepositoryComponent(object):
     # CONSTRUCTORS ------------------------------------------------------------
 
     def __init__(self,
-                 objtype,
-                 availability,
-                 location,
-                 dummy,
-                 date,
-                 boundingbox,
-                 pointcloud,
-                 ifcobject,
-                 dom,
-                 material,
-                 process,
-                 transporthistory,
-                 componenthistory,
-                 geometry,
-                 uid=None):
+                 objtype: str,
+                 availability: bool,
+                 location: Tuple[float, float],
+                 dummy: bool,
+                 date: str,
+                 boundingbox: Sequence[float],
+                 pointcloud: str,
+                 ifcobject: str,
+                 dom: int,
+                 material: str,
+                 process: Sequence[Sequence[str]],
+                 transporthistory: Sequence[Sequence[str]],
+                 componenthistory: Sequence[str],
+                 geometry: str,
+                 uid: str = ''):
 
         self.objtype = objtype
         self.availability = availability
@@ -62,7 +63,8 @@ class RepositoryComponent(object):
         self.dom = dom
         self.material = material
         self.process = process
-        self.transporthistory = transporthistory
+        self.transporthistory = self._validate_transporthistory(
+            transporthistory)
         self.componenthistory = componenthistory
         self.geometry = geometry
 
@@ -91,14 +93,14 @@ class RepositoryComponent(object):
             dataset['transporthistory'],
             dataset['componenthistory'],
             dataset['geometry'],
-            uid=dataset['uid']
+            uid=dataset['uid'] if 'uid' in dataset.keys() else ''
         )
 
     @classmethod
-    def CreateFromJSON(cls, jsonobj):
-        return cls.CreateFromDict(json.loads(jsonobj))
+    def CreateFromJSON(cls, jsonstr):
+        return cls.CreateFromDict(json.loads(jsonstr))
 
-    # PROPERTIES --------------------------------------------------------------
+    # PROPERTIES- -------------------------------------------------------------
 
     # OBJTYPE
 
@@ -128,7 +130,9 @@ class RepositoryComponent(object):
 
     @location.setter
     def location(self, location: Sequence[float]):
-        self.__location = location
+        if len(location) != 2:
+            raise
+        self.__location = tuple(location)
 
     # DUMMY
 
@@ -158,6 +162,8 @@ class RepositoryComponent(object):
 
     @boundingbox.setter
     def boundingbox(self, boundingbox: Sequence[float]):
+        if len(boundingbox) != 3:
+            raise
         self.__boundingbox = boundingbox
 
     # POINTCLOUD
@@ -253,7 +259,7 @@ class RepositoryComponent(object):
     # DATA
 
     @property
-    def Data(self):
+    def DataDict(self):
         datadict = {}
         datadict['type'] = self.objtype
         datadict['availability'] = self.availability
@@ -274,36 +280,58 @@ class RepositoryComponent(object):
 
     @property
     def JSON(self):
-        return json.dumps(self.Data)
+        return json.dumps(self.DataDict)
 
     # REPRESENTATION ----------------------------------------------------------
 
     def __str__(self):
-        return f'<RepositoryComponent [{self.uid}]>'
+        return self.JSON
 
     def __repr__(self):
-        return self.__str__()
+        return self.JSON
 
     def ToString(self):
-        return self.__str__()
+        return self.JSON
 
     # UTILS -------------------------------------------------------------------
 
-    def _parse_transporthistory(self, transporthistory: List[List[str]]):
+    def _validate_transporthistory(self, transporthistory: Sequence[Sequence]):
+        """
+        Validate a transporthistory by ensuring all distances are present
+        and the signature matches that of the API server.
+        """
+        from malt.ft20 import calculate_transporthistory
+        if (all(isinstance(obj, str)
+                for obj in itertools.chain.from_iterable(transporthistory))):
+            transporthistory = self._parse_transporthistory(transporthistory)
+        transporthistory = calculate_transporthistory(transporthistory)
+        transporthistory = self._str_transporthistory(transporthistory)
+        return transporthistory
+
+    def _parse_transporthistory(self,
+                                transporthistory: Sequence[Sequence[str]]):
+        """
+        Parse a transporthistory from all-string signature into
+        [[[float, float], [float, float], int, str]] signature.
+        """
         new_history = []
         for obj in transporthistory:
-            loc_a = tuple([float(c.strip(' ')) for c in obj[0].split(',')])
-            loc_b = tuple([float(c.strip(' ')) for c in obj[1].split(',')])
+            loc_a = [float(c.strip(' ')) for c in obj[0].split(',')]
+            loc_b = [float(c.strip(' ')) for c in obj[1].split(',')]
             dist = float(obj[2])
             ttype = obj[3]
-            new_history.append((loc_a, loc_b, dist, ttype))
+            new_history.append([loc_a, loc_b, dist, ttype])
         return new_history
 
-    def _str_transporthistory(self, transporthistory):
+    def _str_transporthistory(self, transporthistory: Sequence[Sequence]):
+        """
+        Convert a transporthistory to all string signature
+        [[str, str, str, str]]
+        """
         new_history = []
         for obj in transporthistory:
-            loc_a = str(obj[0]).strip('()')
-            loc_b = str(obj[1]).strip('()')
+            loc_a = str(obj[0]).strip('[]')
+            loc_b = str(obj[1]).strip('[]')
             dist = str(obj[2])
             ttype = str(obj[3])
             new_history.append([loc_a, loc_b, dist, ttype])
