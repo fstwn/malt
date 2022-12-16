@@ -179,7 +179,6 @@ from malt import intri # NOQA402
 from malt import miphopper # NOQA402
 from malt import shapesph # NOQA402
 from malt import sshd # NOQA402
-from malt import ft20 # NOQA402
 
 
 # REGSISTER FLASK AND/OR RHINOINSIDE HOPS APP ---------------------------------
