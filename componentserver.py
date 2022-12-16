@@ -3,7 +3,6 @@
 import argparse
 import clr
 from itertools import product
-import json
 import logging
 import os
 
