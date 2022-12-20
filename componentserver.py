@@ -472,11 +472,11 @@ def ft20_GetAllObjectsComponent(refresh: bool = True):
     subcategory=None,
     icon="resources/icons/220204_malt_icon.png",
     inputs=[
-        hs.HopsString("RepositoryComponents", "R", "Stock of components from the repository.", hs.HopsParamAccess.LIST), # NOQA501
-        hs.HopsString("DemandComponents", "D", "Demand of components.", hs.HopsParamAccess.LIST), # NOQA501
-        hs.HopsString("ReUseCoeffs", "RC", "ReUse Coefficients.", hs.HopsParamAccess.ITEM), # NOQA501
-        hs.HopsString("ProductionCoeffs", "PC", "Production Coefficients.", hs.HopsParamAccess.ITEM), # NOQA501
-        hs.HopsPoint("LabLocation", "LL", "Location of the Fabrication Laboratory.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsString("RepositoryComponents", "RepositoryComponents", "Stock of components from the repository.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsString("DemandComponents", "DemandComponents", "Demand of components.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsString("ReUseCoeffs", "ReUseCoeffs", "ReUse Coefficients.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsString("ProductionCoeffs", "ProductionCoeffs", "Production Coefficients.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsPoint("LabLocation", "LabLocation", "Location of the Fabrication Laboratory.", hs.HopsParamAccess.ITEM), # NOQA501
     ],
     outputs=[
         hs.HopsNumber("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.LIST), # NOQA501
@@ -489,9 +489,6 @@ def ft20_FT20OptimizeMatchingComponent(repository_components,
                                        lab_location):
 
     # SANITIZE JSON DATA AS CLASSES AND DICTS ---------------------------------
-
-    # TODO: On component creation, check for incomplete transport history and
-    # calculate distances!
 
     repository_components = [
         ft20.RepositoryComponent.CreateFromDict(json.loads(obj))
@@ -508,20 +505,20 @@ def ft20_FT20OptimizeMatchingComponent(repository_components,
 
     # COMPUTE TRANSPORT DISTANCES ---------------------------------------------
 
-    # NOTE: assumption: site location is the same for all demand components!
-
-    # for cS: compute tranport history up until lab location!
-    lab_location = (lab_location.X, lab_location.Y)
-
-    transport_distances = ft20.compute_transport_distances(
-        repository_components,
-        lab_location
-        )
+    # for cS: - compute distance from origin location to nearest landfill
+    #         - compute distance from site location to nearest concrete factory
+    # NOTE - ASSUMPTION: site location is the same for all demand components!
+    landfill_distances = ft20.compute_landfill_distances(repository_components)
+    factory_distances = ft20.compute_factory_distances(
+        demand_components[0].location)
 
     # for cM: compute transport from lab to site
-
-    # for cM: compute transport from current location (should be lab location
-    # if available) to site
+    # NOTE - ASSUMPTION: site location is the same for all demand components!
+    # NOTE - ASSUMPTION: current location is always a lab location!
+    transport_distances = [ft20.compute_transport_to_site(
+        repository_components,
+        demand_components[0].location)
+        ]
 
     # RUN CUTTING STOCK OPTIMIZATION ------------------------------------------
 

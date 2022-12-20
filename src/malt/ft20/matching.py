@@ -12,7 +12,7 @@ from malt import hopsutilities as hsutil
 
 def optimize_matching(repository_components=None,
                       demand_components=None,
-                      transport_distances=None,
+                      transport_to_site=None,
                       reusecoeffs=None,
                       productioncoeffs=None,
                       verbose: bool = True):
@@ -39,21 +39,30 @@ def optimize_matching(repository_components=None,
 
     # BUILD NP ARRAYS FROM COMPONENTS -----------------------------------------
 
+    # extract length and corss section from demand components
     demand_len = [obj.boundingbox[0] for obj in demand_components]
     demand_cs_x = [obj.boundingbox[1] for obj in demand_components]
     demand_cs_y = [obj.boundingbox[2] for obj in demand_components]
 
+    # build 'm' matrix
     m = np.column_stack((np.array([round(x, 6) for x in demand_len]),
                          np.array([round(x, 6) for x in demand_cs_x]),
                          np.array([round(x, 6) for x in demand_cs_y])))
 
+    # extract length and corss section from repository components
     stock_len = [obj.boundingbox[0] for obj in repository_components]
     stock_cs_x = [obj.boundingbox[1] for obj in repository_components]
     stock_cs_y = [obj.boundingbox[2] for obj in repository_components]
 
+    # build 'R' matrix
     R = np.column_stack((np.array([round(x, 6) for x in stock_len]),
                          np.array([round(x, 6) for x in stock_cs_x]),
                          np.array([round(x, 6) for x in stock_cs_y])))
+
+    # extract transport kilometers to lab
+    # NOTE: assume that the first transport in history is always the one to lab
+    transport_to_lab = [obj.transporthistory_parsed[0][2]
+                        for obj in repository_components]
 
     # COMPOSE N ON BASIS OF m -------------------------------------------------
 
@@ -76,10 +85,10 @@ def optimize_matching(repository_components=None,
 
         # compute individual impacts
         disassembly_impact = volume * reusecoeffs['disassembly']
-        transportation_lab_impact = (volume *
-                                     reusecoeffs['transport_lab'] *
-                                     transport_distances[j])
-        cS[j] = disassembly_impact + transportation_lab_impact
+        transport_lab_impact = (volume *
+                                reusecoeffs['transport_lab'] *
+                                transport_to_lab[j])
+        cS[j] = disassembly_impact + transport_lab_impact
 
     print("[MIPHOPPER] Building Cost Matrix cM...")
     # cM -> cost matrix for fabrication and installation of every component
@@ -98,8 +107,8 @@ def optimize_matching(repository_components=None,
                 # compute impacts based on volume
                 fabrication_impact = volume * reusecoeffs['fabrication']
                 transport_site_impact = (volume *
-                                         reusecoeffs['transport_lab'] *
-                                         transport_distances[j])
+                                         reusecoeffs['transport_site'] *
+                                         transport_to_site[j])
                 assembly_impact = volume * reusecoeffs['assembly']
                 total_reuse_impact = (fabrication_impact +
                                       transport_site_impact +
