@@ -476,6 +476,7 @@ def ft20_GetAllObjectsComponent(refresh: bool = True):
         hs.HopsString("DemandComponents", "DemandComponents", "Demand of components.", hs.HopsParamAccess.LIST), # NOQA501
         hs.HopsString("ReUseCoeffs", "ReUseCoeffs", "ReUse Coefficients.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsString("ProductionCoeffs", "ProductionCoeffs", "Production Coefficients.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsNumber("MIPGap", "MIPGap", "Acceptable MIPGap for Gurobi Solver.", hs.HopsParamAccess.ITEM), # NOQA501
     ],
     outputs=[
         hs.HopsNumber("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.LIST), # NOQA501
@@ -484,7 +485,8 @@ def ft20_GetAllObjectsComponent(refresh: bool = True):
 def ft20_FT20OptimizeMatchingComponent(repository_components,
                                        demand_components,
                                        reusecoeffs,
-                                       productioncoeffs):
+                                       productioncoeffs,
+                                       mipgap: float = 0.0):
 
     # SANITIZE JSON DATA AS CLASSES AND DICTS ---------------------------------
 
@@ -500,6 +502,11 @@ def ft20_FT20OptimizeMatchingComponent(repository_components,
 
     reusecoeffs = json.loads(reusecoeffs)
     productioncoeffs = json.loads(productioncoeffs)
+
+    # SANITIZE OTHER INPUT DATA -----------------------------------------------
+
+    mipgap = abs(mipgap)
+    mipgap = mipgap if mipgap <= 1.0 else 1.0
 
     # COMPUTE TRANSPORT DISTANCES ---------------------------------------------
 
@@ -517,7 +524,7 @@ def ft20_FT20OptimizeMatchingComponent(repository_components,
         repository_components,
         demand_components[0].location)
 
-    # RUN CUTTING STOCK OPTIMIZATION ------------------------------------------
+    # RUN FT2.0 MATCHING OPTIMIZATION -----------------------------------------
 
     optimization_result, N = ft20.optimize_matching(
         repository_components,
@@ -526,8 +533,10 @@ def ft20_FT20OptimizeMatchingComponent(repository_components,
         factory_distance,
         transport_to_site,
         reusecoeffs,
-        productioncoeffs
-        )
+        productioncoeffs,
+        mipgap,
+        verbose=True
+    )
 
     # RETURN THE OPTIMIZATION RESULTS -----------------------------------------
 

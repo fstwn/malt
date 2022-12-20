@@ -1,3 +1,7 @@
+# PYTHON STANDARD LIBRARY IMPORTS ---------------------------------------------
+
+from typing import Sequence
+
 # ADDITIONAL MODULE IMPORTS ---------------------------------------------------
 
 import gurobipy as gp
@@ -6,17 +10,19 @@ import numpy as np
 # LOCAL MODULE IMPORTS --------------------------------------------------------
 
 from malt import hopsutilities as hsutil
+from malt.ft20 import RepositoryComponent, DemandComponent
 
 
 # FUNCTION DEFINITIONS --------------------------------------------------------
 
-def optimize_matching(repository_components,
-                      demand_components,
-                      landfill_distances,
-                      factory_distance,
-                      transport_to_site,
-                      reusecoeffs,
-                      productioncoeffs,
+def optimize_matching(repository_components: Sequence[RepositoryComponent],
+                      demand_components: Sequence[DemandComponent],
+                      landfill_distances: Sequence[float],
+                      factory_distance: float,
+                      transport_to_site: Sequence[float],
+                      reusecoeffs: dict,
+                      productioncoeffs: dict,
+                      mipgap: float = 0.0,
                       verbose: bool = True):
     """
     Optimizes a matching for Fertigteil 2.0
@@ -41,25 +47,17 @@ def optimize_matching(repository_components,
 
     # BUILD NP ARRAYS FROM COMPONENTS -----------------------------------------
 
-    # extract length and corss section from demand components
-    demand_len = [obj.boundingbox[0] for obj in demand_components]
-    demand_cs_x = [obj.boundingbox[1] for obj in demand_components]
-    demand_cs_y = [obj.boundingbox[2] for obj in demand_components]
+    # build 'm' matrix for demand
+    m_bbx = [obj.boundingbox for obj in demand_components]
+    m = np.column_stack((np.array([round(bbx[0], 6) for bbx in m_bbx]),
+                         np.array([round(bbx[1], 6) for bbx in m_bbx]),
+                         np.array([round(bbx[2], 6) for bbx in m_bbx])))
 
-    # build 'm' matrix
-    m = np.column_stack((np.array([round(x, 6) for x in demand_len]),
-                         np.array([round(x, 6) for x in demand_cs_x]),
-                         np.array([round(x, 6) for x in demand_cs_y])))
-
-    # extract length and corss section from repository components
-    stock_len = [obj.boundingbox[0] for obj in repository_components]
-    stock_cs_x = [obj.boundingbox[1] for obj in repository_components]
-    stock_cs_y = [obj.boundingbox[2] for obj in repository_components]
-
-    # build 'R' matrix
-    R = np.column_stack((np.array([round(x, 6) for x in stock_len]),
-                         np.array([round(x, 6) for x in stock_cs_x]),
-                         np.array([round(x, 6) for x in stock_cs_y])))
+    # build 'R' matrix for available stock to reuse
+    R_bbx = [obj.boundingbox for obj in repository_components]
+    R = np.column_stack((np.array([round(bbx[0], 6) for bbx in R_bbx]),
+                         np.array([round(bbx[1], 6) for bbx in R_bbx]),
+                         np.array([round(bbx[2], 6) for bbx in R_bbx])))
 
     # extract transport kilometers to lab
     # NOTE: assume that the first transport in history is always the one to lab
@@ -77,7 +75,7 @@ def optimize_matching(repository_components,
     # create assignment matrix T as an empty matrix
     T = np.zeros((len(m), S))
 
-    print("[MIPHOPPER] Building Cost Array cS...")
+    print("[MIPHOPPER] Building cost array cS...")
     # cS -> cost array for disassembly and transport for every stock component
     cS = np.zeros(len(R))
     # loop over stock to compose cS
@@ -97,7 +95,7 @@ def optimize_matching(repository_components,
         # set impact to cost array
         cS[j] = disassembly_impact + transport_lab_impact
 
-    print("[MIPHOPPER] Building Cost Matrix cM...")
+    print("[MIPHOPPER] Building cost matrix cM...")
     # cM -> cost matrix for fabrication and installation of every component
     # regardless of new or reused!
     cM = np.zeros((len(m), S))
@@ -211,14 +209,15 @@ def optimize_matching(repository_components,
     # for each member i, either one stock element j is reused or one new
     # element j is produced, as defined by the following constraint:
     # sum_{j = 1}^{s} t_{ij} = 1 for all i
-    model.addConstrs((gp.quicksum(t[i, j] for j in range(S)) == 1
-                      for i in range(T.shape[0])),
-                     name='reuse_or_new')
+    model.addConstrs((
+        gp.quicksum(t[i, j] for j in range(S)) == 1
+        for i in range(T.shape[0])),
+        name='reuse_or_new'
+    )
 
     # the use of stock element {j ElementOf R} for one or more members is
     # constrained by the available length
-    # NOTE:
-    # m[i][0] = demand length (l´i)
+    # m[i][0] = demand length (l'i)
     # R[j][0] = stock length (lj)
     model.addConstrs((
         gp.quicksum(t[i, j] * m[i][0] for i in range(len(m))) <= y[j] * R[j][0]
@@ -239,10 +238,12 @@ def optimize_matching(repository_components,
         for j in range(S):
             model.addConstr(
                 t[i, j] * m[i][1] == t[i, j] * RN[j][1],
-                name='cross_section_x')
+                name='cross_section_x'
+            )
             model.addConstr(
                 t[i, j] * m[i][2] == t[i, j] * RN[j][2],
-                name='cross_section_y')
+                name='cross_section_y'
+            )
 
     # the objective value is the sum of two cost indices
     # cS_j is the cost to source and process stock element {j ElementOf R}
@@ -267,31 +268,41 @@ def optimize_matching(repository_components,
 
     # don't print all of the info...
     if not verbose:
-        model.setParam("OutputFlag", False)
+        model.setParam('OutputFlag', False)
+
+    # set MIPGap
+    if mipgap > 0.0:
+        model.setParam('MIPGap', mipgap)
 
     # stop the profiler and print time elapsed for building model
-    print("[MIPHOPPER] Building model took {0} ms".format(timer.rawstop()))
+    print('[MIPHOPPER] Building model took {0} ms'.format(timer.rawstop()))
 
     # optimize the model and time it with the simple profiler
+    print('[MIPHOPPER] Optimizing model...')
     timer.start()
     model.optimize()
 
     # stop profiler and print time elaspsed for solving
-    print("[MIPHOPPER] Solving model took {0} ms".format(timer.rawstop()))
+    print('[MIPHOPPER] Solving model took {0} ms'.format(timer.rawstop()))
 
-    # Collect results of binary variable t
-    # Reuse or New Production
-    t_result = [(k[0], k[1]) for k in t.keys() if t[k].x > 0]
-    y_result = [y[k].x for k in y.keys()]
+    # collect results of binary variable t: reuse or new production
+    # NOTE: we have to round the binary decision variable 't' here to avoid
+    # multiple elements being assigned to one demand!
+    t_result = [(k[0], k[1]) for k in t.keys() if round(t[k].x) > 0]
 
-    # Print some info
-    # y = 1 if one or more members is cut from stock!
+    # collect results of binary variable y: one or more members cut from stock
+    # y_result = [y[k].x for k in y.keys()]
+
+    # print some info
     if verbose:
-        print(y.keys())
-        print(y_result)
-
-        [print("Demand {0}: Stock {1}".format(result[0], result[1]))
-         for result in t_result]
+        for res in t_result:
+            impact = cM[res[0], res[1]]
+            if res[1] < len(R):
+                impact += cS[res[1]]
+                print(f'Demand {res[0]} is cut from Stock {res[1]}.')
+            else:
+                print(f'Demand {res[0]} is produced new ({res[1]}).')
+            print(f'Impact is: {impact} kg CO2e')
 
     # return the optimal solution
     return (np.array(t_result), N)

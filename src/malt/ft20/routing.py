@@ -423,7 +423,6 @@ def _hours_between(d1: str, d2: str):
 # RUN SCRIPT ------------------------------------------------------------------
 
 if __name__ == "__main__":
-
     # test osrm routing query
     loc_a = (49.863323, 8.678350)
     loc_b = (52.284726, 10.548717)
