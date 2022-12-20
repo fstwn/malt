@@ -476,7 +476,6 @@ def ft20_GetAllObjectsComponent(refresh: bool = True):
         hs.HopsString("DemandComponents", "DemandComponents", "Demand of components.", hs.HopsParamAccess.LIST), # NOQA501
         hs.HopsString("ReUseCoeffs", "ReUseCoeffs", "ReUse Coefficients.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsString("ProductionCoeffs", "ProductionCoeffs", "Production Coefficients.", hs.HopsParamAccess.ITEM), # NOQA501
-        hs.HopsPoint("LabLocation", "LabLocation", "Location of the Fabrication Laboratory.", hs.HopsParamAccess.ITEM), # NOQA501
     ],
     outputs=[
         hs.HopsNumber("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.LIST), # NOQA501
@@ -485,8 +484,7 @@ def ft20_GetAllObjectsComponent(refresh: bool = True):
 def ft20_FT20OptimizeMatchingComponent(repository_components,
                                        demand_components,
                                        reusecoeffs,
-                                       productioncoeffs,
-                                       lab_location):
+                                       productioncoeffs):
 
     # SANITIZE JSON DATA AS CLASSES AND DICTS ---------------------------------
 
@@ -509,23 +507,24 @@ def ft20_FT20OptimizeMatchingComponent(repository_components,
     #         - compute distance from site location to nearest concrete factory
     # NOTE - ASSUMPTION: site location is the same for all demand components!
     landfill_distances = ft20.compute_landfill_distances(repository_components)
-    factory_distances = ft20.compute_factory_distances(
+    factory_distance = ft20.compute_factory_distance(
         demand_components[0].location)
 
     # for cM: compute transport from lab to site
     # NOTE - ASSUMPTION: site location is the same for all demand components!
     # NOTE - ASSUMPTION: current location is always a lab location!
-    transport_distances = [ft20.compute_transport_to_site(
+    transport_to_site = ft20.compute_transport_to_site(
         repository_components,
         demand_components[0].location)
-        ]
 
     # RUN CUTTING STOCK OPTIMIZATION ------------------------------------------
 
-    optimization_result = ft20.optimize_matching(
+    optimization_result, N = ft20.optimize_matching(
         repository_components,
         demand_components,
-        transport_distances,
+        landfill_distances,
+        factory_distance,
+        transport_to_site,
         reusecoeffs,
         productioncoeffs
         )
@@ -533,7 +532,7 @@ def ft20_FT20OptimizeMatchingComponent(repository_components,
     # RETURN THE OPTIMIZATION RESULTS -----------------------------------------
 
     return ([float(int(x[1])) for x in optimization_result],
-            hsutil.np_float_array_to_hops_tree([]))
+            hsutil.np_float_array_to_hops_tree(N))
 
 
 # ITERATIVE CLOSEST POINT /////////////////////////////////////////////////////

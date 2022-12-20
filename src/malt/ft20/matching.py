@@ -10,11 +10,13 @@ from malt import hopsutilities as hsutil
 
 # FUNCTION DEFINITIONS --------------------------------------------------------
 
-def optimize_matching(repository_components=None,
-                      demand_components=None,
-                      transport_to_site=None,
-                      reusecoeffs=None,
-                      productioncoeffs=None,
+def optimize_matching(repository_components,
+                      demand_components,
+                      landfill_distances,
+                      factory_distance,
+                      transport_to_site,
+                      reusecoeffs,
+                      productioncoeffs,
                       verbose: bool = True):
     """
     Optimizes a matching for Fertigteil 2.0
@@ -49,6 +51,8 @@ def optimize_matching(repository_components=None,
                          np.array([round(x, 6) for x in demand_cs_x]),
                          np.array([round(x, 6) for x in demand_cs_y])))
 
+    print(m)
+
     # extract length and corss section from repository components
     stock_len = [obj.boundingbox[0] for obj in repository_components]
     stock_cs_x = [obj.boundingbox[1] for obj in repository_components]
@@ -58,6 +62,8 @@ def optimize_matching(repository_components=None,
     R = np.column_stack((np.array([round(x, 6) for x in stock_len]),
                          np.array([round(x, 6) for x in stock_cs_x]),
                          np.array([round(x, 6) for x in stock_cs_y])))
+
+    print(R)
 
     # extract transport kilometers to lab
     # NOTE: assume that the first transport in history is always the one to lab
@@ -82,12 +88,17 @@ def optimize_matching(repository_components=None,
     for j, stock_obj in enumerate(R):
         # compute volume in m3
         volume = stock_obj[0] * stock_obj[1] * stock_obj[2]
-
         # compute individual impacts
-        disassembly_impact = volume * reusecoeffs['disassembly']
-        transport_lab_impact = (volume *
-                                reusecoeffs['transport_lab'] *
-                                transport_to_lab[j])
+        disassembly_impact = (
+            volume *
+            reusecoeffs['disassembly']
+        )
+        transport_lab_impact = (
+            volume *
+            reusecoeffs['transport_lab'] *
+            transport_to_lab[j]
+        )
+        # set impact to cost array
         cS[j] = disassembly_impact + transport_lab_impact
 
     print("[MIPHOPPER] Building Cost Matrix cM...")
@@ -103,43 +114,79 @@ def optimize_matching(repository_components=None,
             if j < len(R):
                 # if item is inside stock domain, compute environmental
                 # impact as cost, based on reuse coefficients
-
-                # compute impacts based on volume
-                fabrication_impact = volume * reusecoeffs['fabrication']
-                transport_site_impact = (volume *
-                                         reusecoeffs['transport_site'] *
-                                         transport_to_site[j])
-                assembly_impact = volume * reusecoeffs['assembly']
-                total_reuse_impact = (fabrication_impact +
-                                      transport_site_impact +
-                                      assembly_impact)
+                fabrication_impact = (
+                    volume *
+                    reusecoeffs['fabrication']
+                )
+                transport_site_impact = (
+                    volume *
+                    transport_to_site[j] *
+                    reusecoeffs['transport_site']
+                )
+                assembly_impact = (
+                    volume *
+                    reusecoeffs['assembly']
+                )
+                # sum total impact of reuse
+                total_reuse_impact = (
+                    fabrication_impact +
+                    transport_site_impact +
+                    assembly_impact
+                )
                 # set impact to cost matrix
                 cM[i, j] = total_reuse_impact
             else:
                 # compute impacts based on volume
-                demolition_impact = volume * productioncoeffs['demolition']
-                # TODO: transport to factory, where is the factory???
-                processing_impact = volume * productioncoeffs['processing']
+                demolition_impact = (
+                    volume *
+                    productioncoeffs['demolition']
+                )
+                # TODO: HOW TO CALC LANDFILL IMPACT FOR DEMAND ???
+                # (NO ORIGINAL LOC) ???
+                transport_landfill_impact = (
+                    volume *
+                    # landfill_distances[j] *
+                    productioncoeffs['transport_landfill']
+                )
+                processing_impact = (
+                    volume *
+                    productioncoeffs['processing']
+                )
                 rawmat_manufacturing_impact = (
                     volume *
-                    productioncoeffs['rawmat_manufacturing'])
-                # NOTE: transport_rawmat_impact is not based on distance (!)
+                    productioncoeffs['rawmat_manufacturing']
+                )
+                # NOTE: transport_rawmat_impact is NOT based on distance (!)
                 transport_rawmat_impact = (
                     volume *
-                    productioncoeffs['transport_rawmat'])
-                fabrication_impact = volume * productioncoeffs['fabrication']
-                # TODO: transport impact from factory to site??? ow to calc?
-                assembly_impact = volume * productioncoeffs['assembly']
-                total_production_impact = (demolition_impact +
-                                           processing_impact +
-                                           rawmat_manufacturing_impact +
-                                           transport_rawmat_impact +
-                                           fabrication_impact +
-                                           assembly_impact)
+                    productioncoeffs['transport_rawmat']
+                )
+                fabrication_impact = (
+                    volume *
+                    productioncoeffs['fabrication']
+                )
+                transport_factory_impact = (
+                    volume *
+                    factory_distance *
+                    productioncoeffs['transport_site']
+                )
+                assembly_impact = (
+                    volume *
+                    productioncoeffs['assembly']
+                )
+                # sum total production impact
+                total_production_impact = (
+                    demolition_impact +
+                    transport_landfill_impact +
+                    processing_impact +
+                    rawmat_manufacturing_impact +
+                    transport_rawmat_impact +
+                    fabrication_impact +
+                    transport_factory_impact +
+                    assembly_impact
+                )
                 # set impact to cost matrix
                 cM[i, j] = total_production_impact
-
-    return []
 
     # print info and create profiler
     print("[MIPHOPPER] Building Gurobi Model for Cutting Stock Problem...")
@@ -177,19 +224,21 @@ def optimize_matching(repository_components=None,
     # NOTE:
     # m[i][0] = demand length (l´i)
     # R[j][0] = stock length (lj)
-    model.addConstrs((gp.quicksum(t[i, j] * m[i][0] for i in range(len(m))) <= y[j] * R[j][0] # NOQA501
-                      for j in range(R.shape[0])),
-                     name="available_length")
+    model.addConstrs((
+        gp.quicksum(t[i, j] * m[i][0] for i in range(len(m))) <= y[j] * R[j][0]
+        for j in range(R.shape[0])),
+        name="available_length"
+    )
 
-    # concatenate R and N to get all elements available from stock and new
-    # production
-    RN = np.concatenate((R, N), axis=0)
     # the assignment of members to elements is constrained by matching
     # cross sections
     # NOTE: m[i][1] = long cs demand
     #       RN[j][1] = long cs stock + production
     #       m[i][2] = short cs demand
     #       RN[j][2] = short cs stock + production
+    # concatenate R and N to get all elements available from stock and new
+    # production
+    RN = np.concatenate((R, N), axis=0)
     for i in range(len(m)):
         for j in range(S):
             model.addConstr(t[i, j] * m[i][1] == t[i, j] * RN[j][1])
@@ -233,10 +282,10 @@ def optimize_matching(repository_components=None,
     # Collect results of binary variable t
     # Reuse or New Production
     t_result = [(k[0], k[1]) for k in t.keys() if t[k].x > 0]
-
     y_result = [y[k].x for k in y.keys()]
 
     # Print some info
+    # y = 1 if one or more members is cut from stock!
     if verbose:
         print(y.keys())
         print(y_result)
@@ -245,4 +294,4 @@ def optimize_matching(repository_components=None,
          for result in t_result]
 
     # return the optimal solution
-    return np.array(t_result)
+    return np.array(t_result), N

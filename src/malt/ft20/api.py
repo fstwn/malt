@@ -207,12 +207,8 @@ if __name__ == "__main__":
         "geometry": "",
         "uid": "82cedaaf-44cc-4956-88c6-865cd871a814",
     }
-
     testcomp = RepositoryComponent.CreateFromDict(testdata)
-
     create_object(testcomp)
-
     print(get_object(
         '82cedaaf-44cc-4956-88c6-865cd871a814')[1].transporthistory)
-
     delete_object("82cedaaf-44cc-4956-88c6-865cd871a814")

@@ -10,10 +10,11 @@ from .api import ( # NOQA402
     )
 
 from .routing import ( # NOQA402
+    calculate_route,
     calculate_transporthistory,
     compute_transport_to_site,
     compute_landfill_distances,
-    compute_factory_distances,
+    compute_factory_distance,
     get_distance,
     )
 
