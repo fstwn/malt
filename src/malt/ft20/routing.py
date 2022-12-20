@@ -115,6 +115,7 @@ def _get_concrete_landfills():
         ');'
         'out center;'
         )
+    print('[FT20 ROUTING] Querying for Concrete Landfill locations...')
     response = requests.get(_OVERPASS_URL,
                             params={'data': query},
                             headers=headers)
@@ -137,6 +138,7 @@ def _get_concrete_factories():
         ');'
         'out center;'
         )
+    print('[FT20 ROUTING] Querying for Concrete Factory locations...')
     response = requests.get(_OVERPASS_URL,
                             params={'data': query},
                             headers=headers)
@@ -241,7 +243,7 @@ def compute_landfill_distances(
     # read from file
     with open(cache, 'r', encoding='utf-8') as f:
         landfills = json.load(f)
-    last_refresh = _hours_between(now, landfills['file_version'])
+    last_refresh = _hours_between(landfills['file_version'], now)
     print(('[FT20 ROUTING] Last refresh for Concrete Landfill cache was'
            f' {last_refresh} hours ago.'))
     if last_refresh > interval:
@@ -279,7 +281,7 @@ def compute_factory_distance(
     # read from file
     with open(cache, 'r', encoding='utf-8') as f:
         factories = json.load(f)
-    last_refresh = _hours_between(now, factories['file_version'])
+    last_refresh = _hours_between(factories['file_version'], now)
     print(('[FT20 ROUTING] Last refresh for Concrete Factory cache was'
            f' {last_refresh} hours ago.'))
     if last_refresh > interval:
@@ -415,7 +417,7 @@ def _hours_between(d1: str, d2: str):
     """
     d1 = datetime.datetime.strptime(d1, '%Y-%m-%d-%H')
     d2 = datetime.datetime.strptime(d2, '%Y-%m-%d-%H')
-    return abs((d2 - d1).seconds / 3600)
+    return ((d2 - d1).seconds / 3600)
 
 
 # RUN SCRIPT ------------------------------------------------------------------
