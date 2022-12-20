@@ -51,8 +51,6 @@ def optimize_matching(repository_components,
                          np.array([round(x, 6) for x in demand_cs_x]),
                          np.array([round(x, 6) for x in demand_cs_y])))
 
-    print(m)
-
     # extract length and corss section from repository components
     stock_len = [obj.boundingbox[0] for obj in repository_components]
     stock_cs_x = [obj.boundingbox[1] for obj in repository_components]
@@ -62,8 +60,6 @@ def optimize_matching(repository_components,
     R = np.column_stack((np.array([round(x, 6) for x in stock_len]),
                          np.array([round(x, 6) for x in stock_cs_x]),
                          np.array([round(x, 6) for x in stock_cs_y])))
-
-    print(R)
 
     # extract transport kilometers to lab
     # NOTE: assume that the first transport in history is always the one to lab
@@ -189,12 +185,12 @@ def optimize_matching(repository_components,
                 cM[i, j] = total_production_impact
 
     # print info and create profiler
-    print("[MIPHOPPER] Building Gurobi Model for Cutting Stock Problem...")
+    print("[MIPHOPPER] Building Gurobi Model for Matching Optimization...")
     timer = hsutil.Profiler()
     timer.start()
 
     # create the gurobi model
-    model = gp.Model("Cutting Stock Problem")
+    model = gp.Model('FT2.0 Matching Optimization')
 
     # add binary decision variable if member i is either cut from stock element
     # {j ElementOf R} or produced new with cross-section {j ElementOf N}
@@ -203,21 +199,21 @@ def optimize_matching(repository_components,
     t = model.addVars(T.shape[0],
                       T.shape[1],
                       vtype=gp.GRB.BINARY,
-                      name="t")
+                      name='t')
 
     # add binary decision variable if one or more members are cut out from
     # stock element {j ElementOf R} (1) or if no member is cut out from stock
     # element {j ElementOf R} (0), i.e. element j remains unused.
     y = model.addVars(len(R),
                       vtype=gp.GRB.BINARY,
-                      name="y")
+                      name='y')
 
     # for each member i, either one stock element j is reused or one new
     # element j is produced, as defined by the following constraint:
     # sum_{j = 1}^{s} t_{ij} = 1 for all i
     model.addConstrs((gp.quicksum(t[i, j] for j in range(S)) == 1
                       for i in range(T.shape[0])),
-                     name="reuse_or_new")
+                     name='reuse_or_new')
 
     # the use of stock element {j ElementOf R} for one or more members is
     # constrained by the available length
@@ -227,7 +223,7 @@ def optimize_matching(repository_components,
     model.addConstrs((
         gp.quicksum(t[i, j] * m[i][0] for i in range(len(m))) <= y[j] * R[j][0]
         for j in range(R.shape[0])),
-        name="available_length"
+        name='available_length'
     )
 
     # the assignment of members to elements is constrained by matching
@@ -241,8 +237,12 @@ def optimize_matching(repository_components,
     RN = np.concatenate((R, N), axis=0)
     for i in range(len(m)):
         for j in range(S):
-            model.addConstr(t[i, j] * m[i][1] == t[i, j] * RN[j][1])
-            model.addConstr(t[i, j] * m[i][2] == t[i, j] * RN[j][2])
+            model.addConstr(
+                t[i, j] * m[i][1] == t[i, j] * RN[j][1],
+                name='cross_section_x')
+            model.addConstr(
+                t[i, j] * m[i][2] == t[i, j] * RN[j][2],
+                name='cross_section_y')
 
     # the objective value is the sum of two cost indices
     # cS_j is the cost to source and process stock element {j ElementOf R}
@@ -294,4 +294,4 @@ def optimize_matching(repository_components,
          for result in t_result]
 
     # return the optimal solution
-    return np.array(t_result), N
+    return (np.array(t_result), N)
