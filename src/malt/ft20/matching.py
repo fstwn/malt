@@ -135,13 +135,13 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
                     volume *
                     productioncoeffs['demolition']
                 )
-                # TODO: HOW TO CALC LANDFILL IMPACT FOR DEMAND ???
-                # (NO ORIGINAL LOC) ???
-                transport_landfill_impact = (
-                    volume *
-                    # landfill_distances[j] *
-                    productioncoeffs['transport_landfill']
-                )
+                # NOTE: transport to landfill can not be computed since there
+                # is no origin location!
+                # transport_landfill_impact = (
+                #     volume *
+                #     landfill_distances[j] *
+                #     productioncoeffs['transport_landfill']
+                # )
                 processing_impact = (
                     volume *
                     productioncoeffs['processing']
@@ -168,10 +168,9 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
                     volume *
                     productioncoeffs['assembly']
                 )
-                # sum total production impact
+                # sum total impact for new production of demand component
                 total_production_impact = (
                     demolition_impact +
-                    transport_landfill_impact +
                     processing_impact +
                     rawmat_manufacturing_impact +
                     transport_rawmat_impact +
@@ -249,8 +248,6 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
     # cS_j is the cost to source and process stock element {j ElementOf R}
     # cM_i,j is the cost to manufacture or install element j (reuse or new)
     # at position i
-    # TODO: add correct cost values / computation
-    #
     # NOTE:
     # - Production impact of 1m³ of concrete is the basis for caclulating
     # the cost of a new element
@@ -270,7 +267,7 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
     if not verbose:
         model.setParam('OutputFlag', False)
 
-    # set MIPGap
+    # set MIPGap if the parameter was supplied
     if mipgap > 0.0:
         model.setParam('MIPGap', mipgap)
 
@@ -291,7 +288,7 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
     t_result = [(k[0], k[1]) for k in t.keys() if round(t[k].x) > 0]
 
     # collect results of binary variable y: one or more members cut from stock
-    # y_result = [y[k].x for k in y.keys()]
+    # y_result = [round(y[k].x) for k in y.keys()]
 
     # print some info
     if verbose:
