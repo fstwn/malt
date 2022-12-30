@@ -454,6 +454,7 @@ def ft20_GetAllObjectsComponent(refresh: bool = True):
 
     if stkey not in malt._STICKY.keys():
         malt._STICKY[stkey] = []
+        refresh = True
 
     if refresh:
         components = ft20.api.get_all_objects()
@@ -479,8 +480,9 @@ def ft20_GetAllObjectsComponent(refresh: bool = True):
         hs.HopsNumber("MIPGap", "MIPGap", "Acceptable MIPGap for Gurobi Solver.", hs.HopsParamAccess.ITEM), # NOQA501
     ],
     outputs=[
-        hs.HopsNumber("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.LIST), # NOQA501
-        hs.HopsNumber("NewComponents", "N", "Components produced new.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsNumber("Assignment", "Assignment", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsNumber("NewComponents", "NewProduction", "Components produced new.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsString("ResultObjects", "ResultObjects", "Components produced new.", hs.HopsParamAccess.LIST), # NOQA501
     ])
 def ft20_FT20OptimizeMatchingComponent(repository_components,
                                        demand_components,
@@ -513,7 +515,6 @@ def ft20_FT20OptimizeMatchingComponent(repository_components,
     # for cS: - compute distance from origin location to nearest landfill
     #         - compute distance from site location to nearest concrete factory
     # NOTE - ASSUMPTION: site location is the same for all demand components!
-    landfill_distances = ft20.compute_landfill_distances(repository_components)
     factory_distance = ft20.compute_factory_distance(
         demand_components[0].location)
 
@@ -526,10 +527,9 @@ def ft20_FT20OptimizeMatchingComponent(repository_components,
 
     # RUN FT2.0 MATCHING OPTIMIZATION -----------------------------------------
 
-    optimization_result, N = ft20.optimize_matching(
+    optimization_result, N, result_objects = ft20.optimize_matching(
         repository_components,
         demand_components,
-        landfill_distances,
         factory_distance,
         transport_to_site,
         reusecoeffs,
@@ -541,7 +541,8 @@ def ft20_FT20OptimizeMatchingComponent(repository_components,
     # RETURN THE OPTIMIZATION RESULTS -----------------------------------------
 
     return ([float(int(x[1])) for x in optimization_result],
-            hsutil.np_float_array_to_hops_tree(N))
+            hsutil.np_float_array_to_hops_tree(N),
+            [json.dumps(ro) for ro in result_objects])
 
 
 # ITERATIVE CLOSEST POINT /////////////////////////////////////////////////////
