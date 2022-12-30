@@ -17,7 +17,6 @@ from malt.ft20 import RepositoryComponent, DemandComponent
 
 def optimize_matching(repository_components: Sequence[RepositoryComponent],
                       demand_components: Sequence[DemandComponent],
-                      landfill_distances: Sequence[float],
                       factory_distance: float,
                       transport_to_site: Sequence[float],
                       reusecoeffs: dict,
@@ -78,10 +77,15 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
     print("[MIPHOPPER] Building cost array cS...")
     # cS -> cost array for disassembly and transport for every stock component
     cS = np.zeros(len(R))
+    # create dict for lookup of LCA results after optimization
+    cS_results = {}
+    # create array for lookup of volumes after optimization
+    volumes_R = np.zeros(len(R))
     # loop over stock to compose cS
     for j, stock_obj in enumerate(R):
-        # compute volume in m3
+        # compute volume in m3 and store for lookup
         volume = stock_obj[0] * stock_obj[1] * stock_obj[2]
+        volumes_R[j] = volume
         # compute individual impacts
         disassembly_impact = (
             volume *
@@ -94,15 +98,21 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
         )
         # set impact to cost array
         cS[j] = disassembly_impact + transport_lab_impact
+        cS_results[j] = (disassembly_impact, transport_lab_impact)
 
     print("[MIPHOPPER] Building cost matrix cM...")
     # cM -> cost matrix for fabrication and installation of every component
     # regardless of new or reused!
     cM = np.zeros((len(m), S))
+    # create dict for lookup of LCA results after optimization
+    cM_results = {}
+    # create array for lookup of volumes after optimization
+    volumes_m = np.zeros(len(m))
     # loop over demand to compose cM
     for i, demand_obj in enumerate(m):
-        # compute volume in m3
+        # compute volume in m3 and store for lookup
         volume = demand_obj[0] * demand_obj[1] * demand_obj[2]
+        volumes_m[i] = volume
         # loop over stock + new production
         for j in range(S):
             if j < len(R):
@@ -127,10 +137,14 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
                     transport_site_impact +
                     assembly_impact
                 )
-                # set impact to cost matrix
+                # set impact to cost matrix and results dictionary
                 cM[i, j] = total_reuse_impact
+                cM_results[(i, j)] = (fabrication_impact,
+                                      transport_site_impact,
+                                      assembly_impact)
             else:
-                # compute impacts based on volume
+                # if item is outside stock domain, compute impacts as cost
+                # based on volume and new production coefficients
                 demolition_impact = (
                     volume *
                     productioncoeffs['demolition']
@@ -178,8 +192,15 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
                     transport_factory_impact +
                     assembly_impact
                 )
-                # set impact to cost matrix
+                # set impact to cost matrix and results dict
                 cM[i, j] = total_production_impact
+                cM_results[(i, j)] = (demolition_impact,
+                                      processing_impact,
+                                      rawmat_manufacturing_impact,
+                                      transport_rawmat_impact,
+                                      fabrication_impact,
+                                      transport_factory_impact,
+                                      assembly_impact)
 
     # print info and create profiler
     print("[MIPHOPPER] Building Gurobi Model for Matching Optimization...")
@@ -254,6 +275,7 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
     # - "cj" is a placeholder for cS_j!
     # - cS is a cost list of the processing cost of the stock elements
 
+    # TODO: does volume percentage need to be added for optimization???
     model.setObjective(
         gp.quicksum((cS[j] * y[j]) for j in range(len(R))) +
 
@@ -288,18 +310,113 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
     t_result = [(k[0], k[1]) for k in t.keys() if round(t[k].x) > 0]
 
     # collect results of binary variable y: one or more members cut from stock
+    # NOTE: currently not needed for anything
     # y_result = [round(y[k].x) for k in y.keys()]
 
-    # print some info
-    if verbose:
-        for res in t_result:
-            impact = cM[res[0], res[1]]
-            if res[1] < len(R):
-                impact += cS[res[1]]
-                print(f'Demand {res[0]} is cut from Stock {res[1]}.')
-            else:
-                print(f'Demand {res[0]} is produced new ({res[1]}).')
-            print(f'Impact is: {impact} kg CO2e')
+    # compute number of occurrences of stock members in solution
+    # NOTE: currently not needed for anything
+    # stock_occurrences = {}
+    # all_reuse_indices = [tr[1] for tr in t_result if tr[1] < len(R)]
+    # for j in range(len(R)):
+    #     stock_occurrences[j] = all_reuse_indices.count(j)
+
+    # loop over binary variable results and extract impact information
+    # compile results as json objects indexed by demand
+    result_objects = []
+    for res in t_result:
+        i = res[0]
+        j = res[1]
+        result_obj = {'id': i,
+                      'utilization': 0}
+        obj_impacts = {'demo_decon': 0,
+                       'transport_lab': 0,
+                       'processing': 0,
+                       'rawmat_man': 0,
+                       'rawmat_trans': 0,
+                       'fabrication': 0,
+                       'transport_site': 0,
+                       'assembly': 0}
+
+        if j < len(R):
+            # if element is cut from stock
+            # compute utilization (volume percentage)
+            vp = volumes_m[i] / volumes_R[j]
+            # retrieve individual impacts from cS results dict
+            # deconstruction impact
+            obj_impacts['demo_decon'] = cS_results[j][0] * vp
+            # transport to lab impact
+            obj_impacts['transport_lab'] = cS_results[j][1] * vp
+            # fabrication impact
+            obj_impacts['fabrication'] = cM_results[(i, j)][0]
+            # transport to site impact
+            obj_impacts['transport_site'] = cM_results[(i, j)][1]
+            # assembly and installation impact
+            obj_impacts['assembly'] = cM_results[(i, j)][2]
+
+            # compilte JSON result object
+            result_obj.update({'reuse': True,
+                               'stock_index': j,
+                               'impacts': obj_impacts,
+                               'utilization': vp})
+
+            if verbose:
+                # print info on verbose setting
+                print(f'Demand {i} is cut from Stock {j} '
+                      f'({round(vp * 100, 2)}% utilization).')
+                print('    Deconstruction impact: '
+                      f'{obj_impacts["demo_decon"]} kg CO2e')
+                print('    Transport to Lab impact: '
+                      f'{obj_impacts["transport_lab"]} kg CO2e')
+                print('    Fabrication to Lab impact: '
+                      f'{obj_impacts["fabrication"]} kg CO2e')
+                print('    Transport to Site impact: '
+                      f'{obj_impacts["transport_site"]} kg CO2e')
+                print('    Assembly & Installation impact: '
+                      f'{obj_impacts["assembly"]} kg CO2e')
+
+        else:
+            # else: if element is produced new
+            # demolition impact
+            obj_impacts['demo_decon'] = cM_results[(i, j)][0]
+            # processing impact
+            obj_impacts['processing'] = cM_results[(i, j)][1]
+            # raw materials manufacturing impact
+            obj_impacts['rawmat_man'] = cM_results[(i, j)][2]
+            # transport of raw materials impact
+            obj_impacts['rawmat_trans'] = cM_results[(i, j)][3]
+            # fabrication impact
+            obj_impacts['fabrication'] = cM_results[(i, j)][4]
+            # transport from factory to site impact
+            obj_impacts['transport_site'] = cM_results[(i, j)][5]
+            # assembly and installation impact
+            obj_impacts['assembly'] = cM_results[(i, j)][6]
+
+            # compilte JSON result object
+            result_obj.update({'reuse': False,
+                               'stock_index': -1,
+                               'impacts': obj_impacts,
+                               'utilization': -1})
+
+            if verbose:
+                # print info on verbose setting
+                print(f'Demand {i} is produced new (idx: {j}).')
+                print('    Demolition impact: '
+                      f'{obj_impacts["demo_decon"]} kg CO2e')
+                print('    Processing impact: '
+                      f'{obj_impacts["processing"]} kg CO2e')
+                print('    Raw Materials Manufacturing impact: '
+                      f'{obj_impacts["rawmat_man"]} kg CO2e')
+                print('    Raw Materials Transport impact: '
+                      f'{obj_impacts["rawmat_trans"]} kg CO2e')
+                print('    Fabrication impact: '
+                      f'{obj_impacts["fabrication"]} kg CO2e')
+                print('    Transport to Site impact: '
+                      f'{obj_impacts["transport_site"]} kg CO2e')
+                print('    Assembly & Installation impact: '
+                      f'{obj_impacts["assembly"]} kg CO2e')
+
+        # append JSON result object to list
+        result_objects.append(result_obj)
 
     # return the optimal solution
-    return (np.array(t_result), N)
+    return (np.array(t_result), N, result_objects)
