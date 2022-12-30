@@ -238,6 +238,10 @@ def compute_landfill_distances(
         repository_components: List[RepositoryComponent],
         cache: str = _LANDFILL_CACHE,
         interval: int = _LANDFILL_CACHING_INTERVAL):
+    """
+    Compute the distance to the nearest concrete factory based on a given
+    location.
+    """
     # create file version to check against file
     now = datetime.datetime.now().strftime('%Y-%m-%d-%H')
     # read from file
