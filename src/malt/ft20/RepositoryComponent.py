@@ -301,6 +301,9 @@ class RepositoryComponent(object):
         and the signature matches that of the API server.
         """
         from malt.ft20 import calculate_transporthistory
+        if not transporthistory:
+            raise ValueError('Transporthistory is missing! Validation not '
+                             'possible, component is invalid!')
         if (all(isinstance(obj, str)
                 for obj in itertools.chain.from_iterable(transporthistory))):
             transporthistory = self._parse_transporthistory(transporthistory)
