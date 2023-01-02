@@ -173,7 +173,7 @@ def calculate_route(loc_a: Tuple[float, float],
     known route exists.
     """
     # create file version to check against file
-    now = datetime.datetime.now().strftime('%Y-%m-%d-%H')
+    now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
     # get known routes and file version from file
     known_routes, version = _get_known_routes()
     loc_a_str = _loc_to_str(loc_a)
@@ -188,7 +188,7 @@ def calculate_route(loc_a: Tuple[float, float],
         known_routes[route_b] = dist
         _update_known_routes(known_routes)
     else:
-        last_refresh = _hours_between(now, version)
+        last_refresh = _hours_between(version, now)
         if last_refresh > interval:
             print('[FT20 ROUTING] Calculating car-route from '
                   f'{loc_a} to {loc_b} using OSRM...')
@@ -239,11 +239,11 @@ def compute_landfill_distances(
         cache: str = _LANDFILL_CACHE,
         interval: int = _LANDFILL_CACHING_INTERVAL):
     """
-    Compute the distance to the nearest concrete factory based on a given
+    Compute the distance to the nearest concrete landfill based on a given
     location.
     """
     # create file version to check against file
-    now = datetime.datetime.now().strftime('%Y-%m-%d-%H')
+    now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
     # read from file
     with open(cache, 'r', encoding='utf-8') as f:
         landfills = json.load(f)
@@ -281,7 +281,7 @@ def compute_factory_distance(
     location.
     """
     # create file version to check against file
-    now = datetime.datetime.now().strftime('%Y-%m-%d-%H')
+    now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
     # read from file
     with open(cache, 'r', encoding='utf-8') as f:
         factories = json.load(f)
@@ -397,7 +397,7 @@ def _get_known_routes(known_routes_file: str = _KNOWN_ROUTES):
     Utility function to retrieve known routes from json file.
     """
     # create file version to check against file
-    version = datetime.datetime.now().strftime('%Y-%m-%d-%H')
+    version = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
     # get known routes and file version from file
     with open(known_routes_file, 'r', encoding='utf-8') as f:
         known_routes = json.load(f)
@@ -408,7 +408,7 @@ def _get_known_routes(known_routes_file: str = _KNOWN_ROUTES):
 
 def _update_known_routes(known_routes: dict,
                          known_routes_file: str = _KNOWN_ROUTES):
-    version = datetime.datetime.now().strftime('%Y-%m-%d-%H')
+    version = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
     known_routes['file_version'] = version
     with open(_KNOWN_ROUTES, 'w', encoding='utf-8') as f:
         json.dump(known_routes, f, ensure_ascii=False, indent=4)
@@ -419,9 +419,13 @@ def _hours_between(d1: str, d2: str):
     """
     Computes the hours between two file version strings for caching.
     """
-    d1 = datetime.datetime.strptime(d1, '%Y-%m-%d-%H')
-    d2 = datetime.datetime.strptime(d2, '%Y-%m-%d-%H')
-    return ((d2 - d1).seconds / 3600)
+    d1 = datetime.datetime.strptime(d1, '%Y-%m-%d-%H-%M-%S')
+    d2 = datetime.datetime.strptime(d2, '%Y-%m-%d-%H-%M-%S')
+    td = (d2 - d1)
+    hb = ((td.days * 24) +
+          (td.seconds / 3600) +
+          (td.microseconds * 2.777778e-10))
+    return hb
 
 
 # RUN SCRIPT ------------------------------------------------------------------
