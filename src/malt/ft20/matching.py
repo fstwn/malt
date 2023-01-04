@@ -302,12 +302,13 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
     model.optimize()
 
     # stop profiler and print time elaspsed for solving
-    print('[MIPHOPPER] Solving model took {0} ms'.format(timer.rawstop()))
+    print('[MIPHOPPER] Optimizing model took {0} ms'.format(timer.rawstop()))
 
     # collect results of binary variable t: reuse or new production
     # NOTE: we have to round the binary decision variable 't' here to avoid
     # multiple elements being assigned to one demand!
-    t_result = [(k[0], k[1]) for k in t.keys() if round(t[k].x) > 0]
+    t_result = [(int(round(k[0])), int(round(k[1]))) 
+                for k in t.keys() if round(t[k].x) > 0]
 
     # collect results of binary variable y: one or more members cut from stock
     # NOTE: currently not needed for anything
@@ -327,7 +328,8 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
         i = res[0]
         j = res[1]
         result_obj = {'id': i,
-                      'utilization': 0}
+                      'utilization': 0,
+                      'bbx': m_bbx[i]}
         obj_impacts = {'demo_decon': 0,
                        'transport_lab': 0,
                        'processing': 0,
@@ -336,11 +338,19 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
                        'fabrication': 0,
                        'transport_site': 0,
                        'assembly': 0}
-
+        np_impacts = {'demo_decon': 0,
+                      'transport_lab': 0,
+                      'processing': 0,
+                      'rawmat_man': 0,
+                      'rawmat_trans': 0,
+                      'fabrication': 0,
+                      'transport_site': 0,
+                      'assembly': 0}
+        volume_m = volumes_m[i]
         if j < len(R):
             # if element is cut from stock
             # compute utilization (volume percentage)
-            vp = volumes_m[i] / volumes_R[j]
+            vp = volume_m / volumes_R[j]
             # retrieve individual impacts from cS results dict
             # deconstruction impact
             obj_impacts['demo_decon'] = cS_results[j][0] * vp
@@ -357,6 +367,7 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
             result_obj.update({'reuse': True,
                                'stock_index': j,
                                'impacts': obj_impacts,
+                               'volume': volume_m,
                                'utilization': vp})
 
             if verbose:
@@ -395,6 +406,7 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
             result_obj.update({'reuse': False,
                                'stock_index': -1,
                                'impacts': obj_impacts,
+                               'volume': volume_m,
                                'utilization': -1})
 
             if verbose:
@@ -414,6 +426,31 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
                       f'{obj_impacts["transport_site"]} kg CO2e')
                 print('    Assembly & Installation impact: '
                       f'{obj_impacts["assembly"]} kg CO2e')
+
+        # compute comparison scenario as new production impacts
+        # demolition impact
+        np_impacts['demo_decon'] = (volume * 
+                                    productioncoeffs['demolition'])
+        # processing impact
+        np_impacts['processing'] = (volume * 
+                                    productioncoeffs['processing'])
+        # raw materials manufacturing impact
+        np_impacts['rawmat_man'] = (volume *
+                                    productioncoeffs['rawmat_manufacturing'])
+        # transport of raw materials impact
+        np_impacts['rawmat_trans'] = (volume *
+                                      productioncoeffs['transport_rawmat'])
+        # fabrication impact
+        np_impacts['fabrication'] = (volume *
+                                     productioncoeffs['fabrication'])
+        # transport from factory to site impact
+        np_impacts['transport_site'] = (volume *
+                                        productioncoeffs['transport_site'])
+        # assembly and installation impact
+        np_impacts['assembly'] = (volume *
+                                  productioncoeffs['assembly'])
+        # update result obj with np impacts
+        result_obj.update({'np_impacts': np_impacts})
 
         # append JSON result object to list
         result_objects.append(result_obj)
