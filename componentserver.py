@@ -238,7 +238,7 @@ def hops_AvailableComponentsComponent():
         hs.HopsNumber("Inventory", "I", "The datapoints that define the inventory from which to choose the assignment as DataTree of Numbers, where each Branch represents one Point.", hs.HopsParamAccess.TREE), # NOQA501
     ],
     outputs=[
-        hs.HopsNumber("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsInteger("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.TREE), # NOQA501
         hs.HopsNumber("Cost", "C", "The cost values for the optimal solution.", hs.HopsParamAccess.TREE), # NOQA501
     ])
 def gurobi_SolveAssignment2DPointsComponent(design,
@@ -263,7 +263,7 @@ def gurobi_SolveAssignment2DPointsComponent(design,
     assignment, assignment_cost = miphopper.solve_assignment_2d(cost)
 
     # return data as hops tree
-    return (hsutil.np_int_array_to_hops_tree(assignment, design_p),
+    return (hsutil.np_int_array_to_hops_tree(assignment, design_p, True),
             hsutil.np_float_array_to_hops_tree(assignment_cost, design_p))
 
 
@@ -281,7 +281,7 @@ def gurobi_SolveAssignment2DPointsComponent(design,
         hs.HopsBoolean("SimplifyCase", "S", "Simplify the 3d problem case (or at least try to) by pre-computing the minimum cost and solving the resulting 2d cost matrix.", hs.HopsParamAccess.ITEM), # NOQA501
     ],
     outputs=[
-        hs.HopsNumber("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsInteger("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.TREE), # NOQA501
         hs.HopsNumber("Cost", "C", "The cost values for the optimal solution.", hs.HopsParamAccess.TREE), # NOQA501
     ])
 def gurobi_SolveAssignment3DPointsComponent(design,
@@ -367,7 +367,7 @@ def gurobi_SolveAssignment3DPointsComponent(design,
         assignment, assignment_cost = miphopper.solve_assignment_3d(cost)
 
     # return data as hops tree
-    return (hsutil.np_int_array_to_hops_tree(assignment, design_p),
+    return (hsutil.np_int_array_to_hops_tree(assignment, design_p, True),
             hsutil.np_float_array_to_hops_tree(assignment_cost, design_p))
 
 
@@ -388,7 +388,7 @@ def gurobi_SolveAssignment3DPointsComponent(design,
         hs.HopsNumber("DemandCrossSectionShort", "DCS", "Demand Cross Section Short Side", hs.HopsParamAccess.LIST), # NOQA501
     ],
     outputs=[
-        hs.HopsNumber("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsInteger("Assignment", "A", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.LIST), # NOQA501
         hs.HopsNumber("NewComponents", "N", "Components produced new.", hs.HopsParamAccess.TREE), # NOQA501
     ])
 def gurobi_SolveCSPComponent(stock_len,
@@ -428,7 +428,7 @@ def gurobi_SolveCSPComponent(stock_len,
 
     # RETURN THE OPTIMIZATION RESULTS -----------------------------------------
 
-    return ([float(int(x[1])) for x in optimisation_result],
+    return ([System.Int32(int(x[1])) for x in optimisation_result],
             hsutil.np_float_array_to_hops_tree(N))
 
 
@@ -480,7 +480,7 @@ def ft20_GetAllObjectsComponent(refresh: bool = True):
         hs.HopsNumber("MIPGap", "MIPGap", "Acceptable MIPGap for Gurobi Solver.", hs.HopsParamAccess.ITEM), # NOQA501
     ],
     outputs=[
-        hs.HopsNumber("Assignment", "Assignment", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsInteger("Assignment", "Assignment", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.LIST), # NOQA501
         hs.HopsNumber("NewComponents", "NewProduction", "Components produced new.", hs.HopsParamAccess.TREE), # NOQA501
         hs.HopsString("ResultObjects", "ResultObjects", "Components produced new.", hs.HopsParamAccess.LIST), # NOQA501
     ])
@@ -596,7 +596,7 @@ def icp_RegisterPointCloudsComponent(scene_pts,
                                         nn_alg=alg)
 
     # convert the transformation array to an actual rhino transform
-    xform = hsutil.np_array_to_rhino_transform(res[0], Rhino)
+    xform = hsutil.np_array_to_rhino_transform(res[0])
 
     # copy scene points and transform the copy using the xform
     transformed_pts = scene_pts[:]
@@ -647,7 +647,7 @@ def igl_MeshIsocurvesComponent(mesh, values, count):
 
     isoV, isoE = igl.isolines(V, F, values, count)
 
-    isoV = hsutil.np_array_to_rhino_points(isoV, Rhino)
+    isoV = hsutil.np_array_to_rhino_points(isoV)
 
     isoLines = []
     for edge in isoE:
@@ -793,8 +793,7 @@ def open3d_AlphaShapeComponent(points, alpha=1.0):
     # create rhino mesh from o3d output and add vertices and faces
     rhino_mesh = hsutil.np_arrays_to_rhino_triangle_mesh(
                                             np.asarray(a_shape.vertices),
-                                            np.asarray(a_shape.triangles),
-                                            Rhino=Rhino)
+                                            np.asarray(a_shape.triangles))
 
     # return the rhino mesh
     return rhino_mesh
@@ -832,8 +831,7 @@ def open3d_ConvexHullComponent(points):
     # create rhino mesh from o3d output and add vertices and faces
     rhino_mesh = hsutil.np_arrays_to_rhino_triangle_mesh(
                                         np.asarray(convex_hull[0].vertices),
-                                        np.asarray(convex_hull[0].triangles),
-                                        Rhino=Rhino)
+                                        np.asarray(convex_hull[0].triangles))
 
     # return the rhino mesh
     return rhino_mesh
@@ -892,8 +890,7 @@ def open3d_BallPivotingMeshComponent(points,
     # create rhino mesh from o3d output and vertices and faces
     rhino_mesh = hsutil.np_arrays_to_rhino_triangle_mesh(
                                         np.asarray(bpa_mesh.vertices),
-                                        np.asarray(bpa_mesh.triangles),
-                                        Rhino=Rhino)
+                                        np.asarray(bpa_mesh.triangles))
 
     # return the rhino mesh
     return rhino_mesh
@@ -958,8 +955,7 @@ def open3d_BallPivotingMeshNormalsComponent(points,
     # create rhino mesh from results
     rhino_mesh = hsutil.np_arrays_to_rhino_triangle_mesh(
                                             np.asarray(bpa_mesh.vertices),
-                                            np.asarray(bpa_mesh.triangles),
-                                            Rhino=Rhino)
+                                            np.asarray(bpa_mesh.triangles))
 
     # return the rhino mesh
     return rhino_mesh
@@ -1014,8 +1010,7 @@ def open3d_PoissonMeshComponent(points,
     # create rhino mesh from o3d output and add vertices and faces
     rhino_mesh = hsutil.np_arrays_to_rhino_triangle_mesh(
                                             np.asarray(p_mesh_crop.vertices),
-                                            np.asarray(p_mesh_crop.triangles),
-                                            Rhino=Rhino)
+                                            np.asarray(p_mesh_crop.triangles))
 
     # return the rhino mesh
     return rhino_mesh
@@ -1076,8 +1071,7 @@ def open3d_PoissonMeshNormalsComponent(points,
     # create rhino mesh from o3d output and vertices and faces
     rhino_mesh = hsutil.np_arrays_to_rhino_triangle_mesh(
                                             np.asarray(p_mesh_crop.vertices),
-                                            np.asarray(p_mesh_crop.triangles),
-                                            Rhino=Rhino)
+                                            np.asarray(p_mesh_crop.triangles))
 
     # return the rhino mesh
     return rhino_mesh
@@ -1586,8 +1580,8 @@ def pp3d_MeshVectorHeatParallelTransportComponent(mesh,
                       ext_vectors[:, 1, np.newaxis] * basisY)
 
     # convert vectors to rhino
-    rh_vectors = hsutil.np_array_to_rhino_vectors(ext_vectors, Rhino)
-    rh_vectors_3d = hsutil.np_array_to_rhino_vectors(ext_vectors_3d, Rhino)
+    rh_vectors = hsutil.np_array_to_rhino_vectors(ext_vectors)
+    rh_vectors_3d = hsutil.np_array_to_rhino_vectors(ext_vectors_3d)
 
     # return the results of the parallel transport
     return frames, rh_vectors, rh_vectors_3d
@@ -1843,6 +1837,20 @@ def test_PlaneComponent(plane):
     if not plane:
         plane = Rhino.Geometry.Plane.WorldXY
     return plane
+
+
+@hops.component(
+    "/test.IntegerOutput",
+    name="tIntegerOutput",
+    nickname="tIntegerOutput",
+    description="Add numbers with CPython",
+    inputs=[
+        hs.HopsInteger("A", "A", "First number"),
+        hs.HopsInteger("B", "B", "Second number"),
+    ],
+    outputs=[hs.HopsInteger("Sum", "S", "A + B")])
+def test_IntegerOutput(a, b):
+    return System.Int32(a + b)
 
 
 # RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------
