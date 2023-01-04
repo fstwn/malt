@@ -540,7 +540,7 @@ def ft20_FT20OptimizeMatchingComponent(repository_components,
 
     # RETURN THE OPTIMIZATION RESULTS -----------------------------------------
 
-    return ([float(int(x[1])) for x in optimization_result],
+    return ([System.Int32(int(x[1])) for x in optimization_result],
             hsutil.np_float_array_to_hops_tree(N),
             [json.dumps(ro) for ro in result_objects])
 
