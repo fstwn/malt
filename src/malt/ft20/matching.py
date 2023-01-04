@@ -307,7 +307,7 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
     # collect results of binary variable t: reuse or new production
     # NOTE: we have to round the binary decision variable 't' here to avoid
     # multiple elements being assigned to one demand!
-    t_result = [(int(round(k[0])), int(round(k[1]))) 
+    t_result = [(int(round(k[0])), int(round(k[1])))
                 for k in t.keys() if round(t[k].x) > 0]
 
     # collect results of binary variable y: one or more members cut from stock
@@ -429,10 +429,10 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
 
         # compute comparison scenario as new production impacts
         # demolition impact
-        np_impacts['demo_decon'] = (volume * 
+        np_impacts['demo_decon'] = (volume *
                                     productioncoeffs['demolition'])
         # processing impact
-        np_impacts['processing'] = (volume * 
+        np_impacts['processing'] = (volume *
                                     productioncoeffs['processing'])
         # raw materials manufacturing impact
         np_impacts['rawmat_man'] = (volume *
