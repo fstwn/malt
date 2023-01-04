@@ -7,9 +7,13 @@ from typing import List
 import uuid
 
 
-# ADDITIONAL MODULE IMPORTS ---------------------------------------------------
+# THIRD PARTY MODULE IMPORTS --------------------------------------------------
 
 import numpy as np
+import rhinoinside
+rhinoinside.load()
+import Rhino # NOQA402
+import System # NOQA402
 
 
 # FUNCTION DEFINITIONS --------------------------------------------------------
@@ -72,15 +76,10 @@ def rhino_mesh_to_np_arrays(mesh):
     return V, F
 
 
-def np_array_to_rhino_transform(xform_np_array: np.array, Rhino=None):
+def np_array_to_rhino_transform(xform_np_array: np.array):
     """
     Converts a 4x4 numpy array to a Rhino.Geometry.Transform transformation
     matrix.
-
-    Remarks
-    -------
-    Caller needs to pass an imported Rhino to run this function. This is to
-    avoid rhinoinside.load multiple times.
     """
     if not Rhino:
         raise ValueError("No Rhino instance supplied!")
@@ -90,14 +89,9 @@ def np_array_to_rhino_transform(xform_np_array: np.array, Rhino=None):
     return rhino_xform
 
 
-def np_array_to_rhino_points(pt_np_array: np.array, Rhino=None):
+def np_array_to_rhino_points(pt_np_array: np.array):
     """
     Converts a Nx3 numpy array to a list of Rhino.Geometry.Point3d objects.
-
-    Remarks
-    -------
-    Caller needs to pass an imported Rhino to run this function. This is to
-    avoid rhinoinside.load multiple times.
     """
     if not Rhino:
         raise ValueError("No Rhino instance supplied!")
@@ -105,14 +99,9 @@ def np_array_to_rhino_points(pt_np_array: np.array, Rhino=None):
             for v in pt_np_array]
 
 
-def np_array_to_rhino_vectors(vec_np_array: np.array, Rhino=None):
+def np_array_to_rhino_vectors(vec_np_array: np.array):
     """
     Converts a Nx3 numpy array to a list of Rhino.Geometry.Vector3d objects.
-
-    Remarks
-    -------
-    Caller needs to pass an imported Rhino to run this function. This is to
-    avoid rhinoinside.load multiple times.
     """
     if not Rhino:
         raise ValueError("No Rhino instance supplied!")
@@ -127,15 +116,9 @@ def np_array_to_rhino_vectors(vec_np_array: np.array, Rhino=None):
 
 
 def np_arrays_to_rhino_triangle_mesh(v_np_array: np.array,
-                                     f_np_array: np.array,
-                                     Rhino=None):
+                                     f_np_array: np.array):
     """
     Converts a numpy arrays for vertices and faces to a rhino mesh.
-
-    Remarks
-    -------
-    Caller needs to pass an imported Rhino to run this function. This is to
-    avoid rhinoinside.load multiple times.
     """
     # create rhino mesh from o3d output and add vertices and faces
     rhino_mesh = Rhino.Geometry.Mesh()
@@ -205,7 +188,9 @@ def np_float_array_to_hops_tree(np_array: np.array, paths: List[str] = []):
     return tree
 
 
-def np_int_array_to_hops_tree(np_array: np.array, paths: List[str] = []):
+def np_int_array_to_hops_tree(np_array: np.array,
+                              paths: List[str] = [],
+                              sysint: bool = False):
     """
     Converts a numpy int array to a Hops DataTree (dict with paths as keys).
     """
@@ -214,10 +199,16 @@ def np_int_array_to_hops_tree(np_array: np.array, paths: List[str] = []):
     tree = {}
     if len(np_array.shape) == 1:
         for i, branch in enumerate(np_array):
-            tree[paths[i].strip("}{")] = [int(branch)]
+            if sysint:
+                tree[paths[i].strip("}{")] = [System.Int32(branch)]
+            else:
+                tree[paths[i].strip("}{")] = [int(branch)]
     elif len(np_array.shape) == 2:
         for i, branch in enumerate(np_array):
-            tree[paths[i].strip("}{")] = [int(v) for v in branch]
+            if sysint:
+                tree[paths[i].strip("}{")] = [System.Int32(v) for v in branch]
+            else:
+                tree[paths[i].strip("}{")] = [int(v) for v in branch]
     return tree
 
 
