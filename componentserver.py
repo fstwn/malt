@@ -428,7 +428,7 @@ def gurobi_SolveCSPComponent(stock_len,
 
     # RETURN THE OPTIMIZATION RESULTS -----------------------------------------
 
-    return ([int(x[1]) for x in optimisation_result],
+    return ([System.Int32(int(x[1])) for x in optimisation_result],
             hsutil.np_float_array_to_hops_tree(N))
 
 
@@ -1882,7 +1882,7 @@ def test_PlaneComponent(plane):
     "/test.IntegerOutput",
     name="tIntegerOutput",
     nickname="tIntegerOutput",
-    description="Add numbers with CPython and Test Integer output.", # NOQA501
+    description="Add numbers with CPython",
     inputs=[
         hs.HopsInteger("A", "A", "First number"), # NOQA501
         hs.HopsInteger("B", "B", "Second number"), # NOQA501
