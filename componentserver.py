@@ -263,7 +263,7 @@ def gurobi_SolveAssignment2DPointsComponent(design,
     assignment, assignment_cost = miphopper.solve_assignment_2d(cost)
 
     # return data as hops tree
-    return (hsutil.np_int_array_to_hops_tree(assignment, design_p, True),
+    return (hsutil.np_int_array_to_hops_tree(assignment, design_p),
             hsutil.np_float_array_to_hops_tree(assignment_cost, design_p))
 
 
@@ -367,7 +367,7 @@ def gurobi_SolveAssignment3DPointsComponent(design,
         assignment, assignment_cost = miphopper.solve_assignment_3d(cost)
 
     # return data as hops tree
-    return (hsutil.np_int_array_to_hops_tree(assignment, design_p, True),
+    return (hsutil.np_int_array_to_hops_tree(assignment, design_p),
             hsutil.np_float_array_to_hops_tree(assignment_cost, design_p))
 
 
@@ -428,7 +428,7 @@ def gurobi_SolveCSPComponent(stock_len,
 
     # RETURN THE OPTIMIZATION RESULTS -----------------------------------------
 
-    return ([System.Int32(int(x[1])) for x in optimisation_result],
+    return ([int(x[1]) for x in optimisation_result],
             hsutil.np_float_array_to_hops_tree(N))
 
 
@@ -579,7 +579,7 @@ def ft20_FT20OptimizeMatchingComponent(repository_components,
 
     # RETURN THE OPTIMIZATION RESULTS -----------------------------------------
 
-    return ([System.Int32(int(x[1])) for x in optimization_result],
+    return ([int(x[1]) for x in optimization_result],
             hsutil.np_float_array_to_hops_tree(N),
             [json.dumps(ro) for ro in result_objects])
 
