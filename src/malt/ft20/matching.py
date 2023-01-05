@@ -329,7 +329,7 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
         j = res[1]
         result_obj = {'id': i,
                       'utilization': 0,
-                      'bbx': m_bbx[i]}
+                      'boundingbox': m_bbx[i]}
         obj_impacts = {'demo_decon': 0,
                        'transport_lab': 0,
                        'processing': 0,
@@ -368,7 +368,8 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
                                'stock_index': j,
                                'impacts': obj_impacts,
                                'volume': volume_m,
-                               'utilization': vp})
+                               'utilization': vp,
+                               'uid': repository_components[j].uid})
 
             if verbose:
                 # print info on verbose setting
@@ -407,7 +408,8 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
                                'stock_index': -1,
                                'impacts': obj_impacts,
                                'volume': volume_m,
-                               'utilization': -1})
+                               'utilization': -1,
+                               'uid': ''})
 
             if verbose:
                 # print info on verbose setting
