@@ -2,7 +2,6 @@
 
 import argparse
 import clr
-import json
 import logging
 import os
 from itertools import product
@@ -180,7 +179,6 @@ from malt import intri # NOQA402
 from malt import miphopper # NOQA402
 from malt import shapesph # NOQA402
 from malt import sshd # NOQA402
-from malt import ft20 # NOQA402
 
 
 # REGSISTER FLASK AND/OR RHINOINSIDE HOPS APP ---------------------------------
@@ -430,158 +428,6 @@ def gurobi_SolveCSPComponent(stock_len,
 
     return ([int(x[1]) for x in optimisation_result],
             hsutil.np_float_array_to_hops_tree(N))
-
-
-# FERTIGTEIL 2.0 AND FARO API /////////////////////////////////////////////////
-
-@hops.component(
-    "/ft20.GetAllObjects",
-    name="FT20GetAllObjects",
-    nickname="FT20GetAllObjects",
-    description="Get all objects from the FARO component repository server.", # NOQA501
-    category=None,
-    subcategory=None,
-    icon="resources/icons/220204_malt_icon.png",
-    inputs=[
-        hs.HopsBoolean("Refresh", "R", "Refresh the server.", hs.HopsParamAccess.ITEM), # NOQA501
-    ],
-    outputs=[
-        hs.HopsString("RepositoryComponents", "RC", "All repository components.", hs.HopsParamAccess.LIST), # NOQA501
-    ])
-def ft20_GetAllObjectsComponent(refresh: bool = True):
-
-    stkey = 'FT20_COMPONENT_REPOSITORY'
-
-    if stkey not in malt._STICKY.keys():
-        malt._STICKY[stkey] = []
-        refresh = True
-
-    if refresh:
-        components = ft20.api.get_all_objects()
-        malt._STICKY[stkey] = components
-
-    json_comps = [obj.JSON for obj in malt._STICKY[stkey]]
-    return json_comps
-
-
-@hops.component(
-    "/ft20.CreateObject",
-    name="FT20CreateObject",
-    nickname="FT20CreateObject",
-    description="Create a component object on the FARO component repository server.", # NOQA501
-    category=None,
-    subcategory=None,
-    icon="resources/icons/220204_malt_icon.png",
-    inputs=[
-        hs.HopsBoolean("Create", "C", "Create the objects on the server.", hs.HopsParamAccess.ITEM), # NOQA501
-        hs.HopsString("RepositoryComponents", "R", "RepositoryComponents to create on the server.", hs.HopsParamAccess.LIST), # NOQA501
-    ],
-    outputs=[])
-def ft20_CreateObjectComponent(create, repositorycomponents):
-    if create:
-        for i, comp in enumerate(repositorycomponents):
-            cls_comp = ft20.RepositoryComponent.CreateFromJSON(comp)
-            ft20.api.create_object(cls_comp)
-
-
-@hops.component(
-    "/ft20.ClearServer",
-    name="FT20ClearServer",
-    nickname="FT20ClearServer",
-    description="Clear the FARO component repository server by deleting all components.", # NOQA501
-    category=None,
-    subcategory=None,
-    icon="resources/icons/220204_malt_icon.png",
-    inputs=[
-        hs.HopsBoolean("Clear", "C", "Clear the server.", hs.HopsParamAccess.ITEM), # NOQA501
-    ],
-    outputs=[])
-def ft20_ClearServerComponent(clear):
-    if clear:
-        all_components = ft20.api.get_all_objects()
-        for comp in all_components:
-            ft20.api.delete_object(comp.uid)
-
-
-@hops.component(
-    "/ft20.FT20OptimizeMatching",
-    name="FT20OptimizeMatching",
-    nickname="FT20Opt",
-    description="Optimize a FT20 demand based on a given stock.", # NOQA501
-    category=None,
-    subcategory=None,
-    icon="resources/icons/220204_malt_icon.png",
-    inputs=[
-        hs.HopsString("RepositoryComponents", "RepositoryComponents", "Stock of components from the repository.", hs.HopsParamAccess.LIST), # NOQA501
-        hs.HopsString("DemandComponents", "DemandComponents", "Demand of components.", hs.HopsParamAccess.LIST), # NOQA501
-        hs.HopsString("ReUseCoeffs", "ReUseCoeffs", "ReUse Coefficients.", hs.HopsParamAccess.ITEM), # NOQA501
-        hs.HopsString("ProductionCoeffs", "ProductionCoeffs", "Production Coefficients.", hs.HopsParamAccess.ITEM), # NOQA501
-        hs.HopsNumber("MIPGap", "MIPGap", "Acceptable MIPGap for Gurobi Solver.", hs.HopsParamAccess.ITEM), # NOQA501
-    ],
-    outputs=[
-        hs.HopsInteger("Assignment", "Assignment", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.LIST), # NOQA501
-        hs.HopsNumber("NewComponents", "NewProduction", "Components produced new.", hs.HopsParamAccess.TREE), # NOQA501
-        hs.HopsString("ResultObjects", "ResultObjects", "Components produced new.", hs.HopsParamAccess.LIST), # NOQA501
-    ])
-def ft20_FT20OptimizeMatchingComponent(repository_components,
-                                       demand_components,
-                                       reusecoeffs,
-                                       productioncoeffs,
-                                       mipgap: float = 0.0):
-
-    # SANITIZE JSON DATA AS CLASSES AND DICTS ---------------------------------
-
-    repository_components = [
-        ft20.RepositoryComponent.CreateFromDict(json.loads(obj))
-        for obj in repository_components
-        ]
-
-    demand_components = [
-        ft20.DemandComponent.CreateFromDict(json.loads(obj))
-        for obj in demand_components
-        ]
-
-    reusecoeffs = json.loads(reusecoeffs)
-    productioncoeffs = json.loads(productioncoeffs)
-
-    # SANITIZE OTHER INPUT DATA -----------------------------------------------
-
-    mipgap = abs(mipgap)
-    mipgap = mipgap if mipgap <= 1.0 else 1.0
-
-    # COMPUTE TRANSPORT DISTANCES ---------------------------------------------
-
-    # for cS: - compute distance from origin location to nearest landfill
-    #         - compute distance from site location to nearest concrete factory
-    # NOTE - ASSUMPTION: site location is the same for all demand components!
-    factory_distance = ft20.compute_factory_distance(
-        demand_components[0].location)
-
-    # for cM: compute transport from lab to site
-    # NOTE - ASSUMPTION: site location is the same for all demand components!
-    # NOTE - ASSUMPTION: current location is always a lab location!
-    transport_to_site = ft20.compute_transport_to_site(
-        repository_components,
-        demand_components[0].location)
-
-    # RUN FT2.0 MATCHING OPTIMIZATION -----------------------------------------
-
-    optimization_result, N, result_objects = ft20.optimize_matching(
-        repository_components,
-        demand_components,
-        factory_distance,
-        transport_to_site,
-        reusecoeffs,
-        productioncoeffs,
-        mipgap,
-        verbose=True
-    )
-
-    # RETURN THE OPTIMIZATION RESULTS -----------------------------------------
-
-    return ([System.Int32(int(x[1])) for x in optimization_result],
-            hsutil.np_float_array_to_hops_tree(N),
-            [json.dumps(ro) for ro in result_objects])
 
 
 # ITERATIVE CLOSEST POINT /////////////////////////////////////////////////////
