@@ -1884,10 +1884,12 @@ def test_PlaneComponent(plane):
     nickname="tIntegerOutput",
     description="Add numbers with CPython",
     inputs=[
-        hs.HopsInteger("A", "A", "First number"),
-        hs.HopsInteger("B", "B", "Second number"),
+        hs.HopsInteger("A", "A", "First number"), # NOQA501
+        hs.HopsInteger("B", "B", "Second number"), # NOQA501
     ],
-    outputs=[hs.HopsInteger("Sum", "S", "A + B")])
+    outputs=[
+        hs.HopsInteger("Sum", "S", "A + B"), # NOQA501
+    ])
 def test_IntegerOutputComponent(a, b):
     return a + b
 
