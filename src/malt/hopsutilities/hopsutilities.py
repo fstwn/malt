@@ -13,7 +13,6 @@ import numpy as np
 import rhinoinside
 rhinoinside.load()
 import Rhino # NOQA402
-import System # NOQA402
 
 
 # FUNCTION DEFINITIONS --------------------------------------------------------
