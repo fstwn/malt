@@ -1724,6 +1724,22 @@ def test_PlaneComponent(plane):
     return plane
 
 
+@hops.component(
+    "/test.IntegerOutput",
+    name="tIntegerOutput",
+    nickname="tIntegerOutput",
+    description="Add numbers with CPython and Test Integer output.", # NOQA501
+    inputs=[
+        hs.HopsInteger("A", "A", "First number"), # NOQA501
+        hs.HopsInteger("B", "B", "Second number"), # NOQA501
+    ],
+    outputs=[
+        hs.HopsInteger("Sum", "S", "A + B"), # NOQA501
+    ])
+def test_IntegerOutputComponent(a, b):
+    return a + b
+
+
 # RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------
 
 if __name__ == "__main__":
