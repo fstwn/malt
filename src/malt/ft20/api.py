@@ -135,7 +135,7 @@ def get_object(uid: str):
 
 def create_object(component: RepositoryComponent):
     """
-    Create an object on the FARO Component Repository.
+    Create an object on the FARO Component Repository server.
     """
     # test if component already exists on server
     if get_object(component.uid)[0]:
