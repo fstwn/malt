@@ -14,11 +14,11 @@
 # PYTHON STANDARD LIBRARY IMPORTS ---------------------------------------------
 
 import datetime
-import math
 import json
-from operator import itemgetter
+import math
 import os
 import time
+from operator import itemgetter
 from typing import List, Sequence, Tuple
 
 
