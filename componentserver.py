@@ -2,10 +2,10 @@
 
 import argparse
 import clr
-from itertools import product
 import json
 import logging
 import os
+from itertools import product
 
 
 # COMMAND LINE ARGUMENT PARSING -----------------------------------------------
@@ -160,7 +160,7 @@ if _USING_K2:
     import KangarooSolver as ks # NOQA402
 
 
-# MODULE IMPORTS --------------------------------------------------------------
+# THIRD PARTY MODULE IMPORTS --------------------------------------------------
 
 import igl # NOQA402
 import numpy as np # NOQA402
@@ -462,6 +462,45 @@ def ft20_GetAllObjectsComponent(refresh: bool = True):
 
     json_comps = [obj.JSON for obj in malt._STICKY[stkey]]
     return json_comps
+
+
+@hops.component(
+    "/ft20.CreateObject",
+    name="FT20CreateObject",
+    nickname="FT20CreateObject",
+    description="Create a component object on the FARO component repository server.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsBoolean("Create", "C", "Create the objects on the server.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsString("RepositoryComponents", "R", "RepositoryComponents to create on the server.", hs.HopsParamAccess.LIST), # NOQA501
+    ],
+    outputs=[])
+def ft20_CreateObjectComponent(create, repositorycomponents):
+    if create:
+        for i, comp in enumerate(repositorycomponents):
+            cls_comp = ft20.RepositoryComponent.CreateFromJSON(comp)
+            ft20.api.create_object(cls_comp)
+
+
+@hops.component(
+    "/ft20.ClearServer",
+    name="FT20ClearServer",
+    nickname="FT20ClearServer",
+    description="Clear the FARO component repository server by deleting all components.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsBoolean("Clear", "C", "Clear the server.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[])
+def ft20_ClearServerComponent(clear):
+    if clear:
+        all_components = ft20.api.get_all_objects()
+        for comp in all_components:
+            ft20.api.delete_object(comp.uid)
 
 
 @hops.component(
@@ -1849,8 +1888,8 @@ def test_PlaneComponent(plane):
         hs.HopsInteger("B", "B", "Second number"),
     ],
     outputs=[hs.HopsInteger("Sum", "S", "A + B")])
-def test_IntegerOutput(a, b):
-    return System.Int32(a + b)
+def test_IntegerOutputComponent(a, b):
+    return a + b
 
 
 # RUN HOPS APP AS EITHER FLASK OR DEFAULT -------------------------------------
