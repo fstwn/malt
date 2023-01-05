@@ -187,7 +187,9 @@ def np_float_array_to_hops_tree(np_array: np.array, paths: List[str] = []):
     return tree
 
 
-def np_int_array_to_hops_tree(np_array: np.array, paths: List[str] = []):
+def np_int_array_to_hops_tree(np_array: np.array,
+                              paths: List[str] = [],
+                              sysint: bool = False):
     """
     Converts a numpy int array to a Hops DataTree (dict with paths as keys).
     """
@@ -196,10 +198,16 @@ def np_int_array_to_hops_tree(np_array: np.array, paths: List[str] = []):
     tree = {}
     if len(np_array.shape) == 1:
         for i, branch in enumerate(np_array):
-            tree[paths[i].strip("}{")] = [int(branch)]
+            if sysint:
+                tree[paths[i].strip("}{")] = [System.Int32(branch)]
+            else:
+                tree[paths[i].strip("}{")] = [int(branch)]
     elif len(np_array.shape) == 2:
         for i, branch in enumerate(np_array):
-            tree[paths[i].strip("}{")] = [int(v) for v in branch]
+            if sysint:
+                tree[paths[i].strip("}{")] = [System.Int32(v) for v in branch]
+            else:
+                tree[paths[i].strip("}{")] = [int(v) for v in branch]
     return tree
 
 
