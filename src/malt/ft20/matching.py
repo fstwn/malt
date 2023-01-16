@@ -1,5 +1,6 @@
 # PYTHON STANDARD LIBRARY IMPORTS ---------------------------------------------
 
+import uuid
 from typing import Sequence
 
 # ADDITIONAL MODULE IMPORTS ---------------------------------------------------
@@ -208,7 +209,10 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
     timer.start()
 
     # create the gurobi model
-    model = gp.Model('FT2.0 Matching Optimization')
+    modeluid = str(uuid.uuid4())
+    modelname = f'FT2.0 Matching Optimization (id: {modeluid})'
+    model = gp.Model(modelname)
+    print(f'[MIPHOPPER] Model is {modelname}')
 
     # add binary decision variable if member i is either cut from stock element
     # {j ElementOf R} or produced new with cross-section {j ElementOf N}
