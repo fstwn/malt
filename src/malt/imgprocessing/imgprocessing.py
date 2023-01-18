@@ -556,7 +556,6 @@ def warp_image(image, xform, width, height):
 
 
 def detect_qr_codes_from_file(filepath: str, display_results: bool = False):
-    
     """
     Detect QR-Codes in an image file.
     """
