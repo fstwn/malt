@@ -21,5 +21,12 @@ from .imgprocessing import (_CHESSBOARD_DIR, # NOQA401
                             save_perspective_xform,
                             undistort_image,
                             undistort_image_files,
-                            warp_image
+                            warp_image,
+                            detect_qr_codes_from_file,
+                            detect_qr_codes_from_image,
                             )
+
+from .qrgen import (gen_qrcodes, # NOQA401
+                    _FONTSDIR,
+                    _QRDIR,
+                    )

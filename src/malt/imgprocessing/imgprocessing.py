@@ -7,6 +7,7 @@ import os
 
 import numpy as np
 import cv2
+from pyzbar import pyzbar
 
 # LOCAL MODULE IMPORTS --------------------------------------------------------
 
@@ -15,27 +16,30 @@ from malt.hopsutilities import sanitize_path
 
 # ENVIRONMENT VARIABLES -------------------------------------------------------
 
-# directory of this particular file
 _HERE = os.path.dirname(sanitize_path(__file__))
+"""str: Directory of this particular file."""
 
-# default chessboard image directory
 _CHESSBOARD_DIR = sanitize_path(os.path.join(_HERE, "imgs_chessboard"))
+"""str: Default chessboard image directory."""
 
-# default directory of raw images before undistortion
 _UD_INDIR = sanitize_path(os.path.join(_HERE, "imgs_raw"))
+"""str: Default directory of raw images before undistortion."""
 
-# default directory to save resulting, undistorted images
 _UD_OUTDIR = sanitize_path(os.path.join(_HERE, "imgs_undistorted"))
+"""str: Default directory to save resulting, undistorted images."""
 
-# default coefficients file
 _COEFF_FILE = sanitize_path(os.path.join(_HERE, "coefficients.yml"))
+"""str: Default coefficients file."""
 
-# default xform file
 _XFORM_FILE = sanitize_path(os.path.join(_HERE, "xform.yml"))
+"""str: Default xform file."""
 
 
 # default image for perspective transform
 def __get_xform_img():
+    """
+    Get the default image for perspective transform.
+    """
     folder = glob.glob(os.path.join(_UD_OUTDIR, "*.jpg"))
     try:
         return folder[0]
@@ -44,6 +48,7 @@ def __get_xform_img():
 
 
 _XFORM_IMG = __get_xform_img()
+"""str: Default image for perspective transform."""
 
 
 # FUNCTION DEFINITIONS --------------------------------------------------------
@@ -365,16 +370,18 @@ def detect_contours_from_file(filepath: str,
                               thresh_area: float,
                               approx: int = 0,
                               invert: bool = False,
-                              extonly: bool = False):
+                              extonly: bool = False,
+                              otsu: bool = False):
     # read image from filepath
-    image = cv2.imread(os.path.normpath(filepath))
+    image = read_image(filepath)
 
     return detect_contours_from_image(image,
                                       thresh_binary,
                                       thresh_area,
                                       approx,
                                       invert,
-                                      extonly)
+                                      extonly,
+                                      otsu)
 
 
 def detect_contours_from_image(image: np.ndarray,
@@ -382,11 +389,20 @@ def detect_contours_from_image(image: np.ndarray,
                                thresh_area: float,
                                approx: int = 0,
                                invert: bool = False,
-                               extonly: bool = False):
+                               extonly: bool = False,
+                               otsu: bool = True):
     if invert:
-        threshold_type = cv2.THRESH_BINARY_INV
+        if otsu:
+            threshold_type = cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
+            thresh_binary = 0
+        else:
+            threshold_type = cv2.THRESH_BINARY_INV
     else:
-        threshold_type = cv2.THRESH_BINARY
+        if otsu:
+            threshold_type = cv2.THRESH_BINARY + cv2.THRESH_OTSU
+            thresh_binary = 0
+        else:
+            threshold_type = cv2.THRESH_BINARY
 
     # flip image to avoid mirrored contours
     image = cv2.flip(image, 0)
@@ -539,6 +555,92 @@ def warp_image(image, xform, width, height):
     return cv2.warpPerspective(image, xform, (width, height))
 
 
+def detect_qr_codes_from_file(filepath: str, display_results: bool = False):
+    
+    """
+    Detect QR-Codes in an image file.
+    """
+    return detect_qr_codes_from_image(read_image(filepath),
+                                      display_results=display_results)
+
+
+def detect_qr_codes_from_image(image: np.ndarray,
+                               display_results: bool = False):
+    """
+    Detect QR-Codes in an image.
+    """
+    # copy the image for security reasons
+    img_copy = image.copy()
+    # binarize the image
+    img_gray = cv2.cvtColor(img_copy, cv2.COLOR_RGB2GRAY)
+    th, img_bw = cv2.threshold(img_gray,
+                               0,
+                               255,
+                               cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+    # find the qr codes in the image and decode each of the codes
+    # TODO: find better way to make qr code detection more stable instead of
+    #       performing it three times ...
+    qrcodes_bw = pyzbar.decode(img_bw, [pyzbar.ZBarSymbol.QRCODE])
+    qrcodes_gray = pyzbar.decode(img_gray, [pyzbar.ZBarSymbol.QRCODE])
+    qrcodes_col = pyzbar.decode(image, [pyzbar.ZBarSymbol.QRCODE])
+
+    codes_rect = [code.rect for code in qrcodes_bw]
+    codes_data = [code.data.decode('utf-8') for code in qrcodes_bw]
+    codes_found = set(codes_data)
+
+    for i, graycode in enumerate(qrcodes_gray):
+        # get code data
+        cdata = graycode.data.decode('utf-8')
+        # continue if already found
+        if cdata in codes_found:
+            continue
+        # append new data
+        codes_rect.append(graycode.rect)
+        codes_data.append(cdata)
+        # add to found set
+        codes_found.add(cdata)
+
+    for i, colcode in enumerate(qrcodes_col):
+        # get code data
+        cdata = colcode.data.decode('utf-8')
+        # continue if already found
+        if cdata in codes_found:
+            continue
+        # append new data
+        codes_rect.append(colcode.rect)
+        codes_data.append(cdata)
+        # add to found set
+        codes_found.add(cdata)
+
+    if display_results:
+        for i, cdata in enumerate(codes_data):
+            x, y, w, h = codes_rect[i]
+            cv2.rectangle(img_copy, (x, y), (x + w, y + h), (0, 0, 255), 2)
+            text = f'{cdata}'
+            cv2.putText(img_copy,
+                        text,
+                        (x, y - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.2,
+                        (0, 0, 255),
+                        2)
+            print(f'[INFO] Found QRCODE (index {i}): {cdata}')
+        windowname = 'Processed Image'
+        cv2.namedWindow(windowname, flags=cv2.WINDOW_NORMAL)
+        cv2.imshow(windowname, img_copy)
+        cv2.waitKey(20000)
+        cv2.destroyAllWindows()
+    else:
+        for i, cdata in enumerate(codes_data):
+            print(f'[INFO] Found QRCODE (index {i}): {cdata}')
+
+    if codes_data and codes_rect:
+        return (codes_data, codes_rect)
+    else:
+        return ((), ())
+
+
 # UTILITY FUNCTIONS -----------------------------------------------------------
 
 def save_coefficients(mtx, dist, path):
@@ -590,16 +692,16 @@ def reset_windows():
 def test_detect_contours_from_file():
     # use the demo image to perform some contour detection
     thisfolder = os.path.dirname(sanitize_path((__file__)))
-    fp = sanitize_path(thisfolder + r"\demo_image.jpg")
+    fp = sanitize_path(thisfolder + r'\demo_image.jpg')
     image, crvs = detect_contours_from_file(fp, 170, 50.0)
 
     # draw only largest contour
     image = cv2.drawContours(image, crvs, -1, (0, 255, 0), 2)
 
     # show the image
-    cv2.imshow("image", image)
+    cv2.imshow('image', image)
 
-    cv2.waitKey(0)
+    cv2.waitKey(10000)
     cv2.destroyAllWindows()
 
 
@@ -611,36 +713,34 @@ def test_detect_contours_from_image():
     image = cv2.drawContours(image, crvs, -1, (0, 255, 0), 2)
 
     # show the image
-    cv2.imshow("Detected Contours in Captured Image", image)
+    cv2.imshow('Detected Contours in Captured Image', image)
 
-    cv2.waitKey(0)
+    cv2.waitKey(10000)
     cv2.destroyAllWindows()
+
+
+def test_detect_qr_codes_from_file():
+    thisfolder = os.path.dirname(sanitize_path((__file__)))
+    fp = sanitize_path(os.path.join(thisfolder, 'qr_detection_test.jpg'))
+    detect_qr_codes_from_file(fp, display_results=True)
 
 
 # MAIN ROUTINE ----------------------------------------------------------------
 
 if __name__ == "__main__":
     pass
-    # test contour detection
-    # test_detect_contours()
-    # capture_image()
-    # test_detect_contours_from_image()
-    # calibrate_camera(1)
+    # Test contour detection
+    test_detect_contours_from_file()
 
-    # QR-Code detection
-    # imgs = glob.glob(os.path.join(_UD_OUTDIR, "*.jpg"))
-    # imgfile = imgs[4]
-    # from pyzbar.pyzbar import decode as qrdecode
-    # img = cv2.imread(imgfile)
-    # decoded_list = qrdecode(img)
-    # print(decoded_list[0])
+    # Test QR-Code detection
+    test_detect_qr_codes_from_file()
 
     # ARUCO Detection
-    aruco_img = cv2.imread(os.path.join(_HERE, 'aruco_test.jpg'))
-    aruco_params = cv2.aruco.DetectorParameters_create()
-    aruco_dict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
-    (corners, ids, rejected) = cv2.aruco.detectMarkers(
-        aruco_img,
-        aruco_dict,
-        parameters=aruco_params)
-    print(corners, ids)
+    # aruco_img = cv2.imread(os.path.join(_HERE, 'aruco_test.jpg'))
+    # aruco_params = cv2.aruco.DetectorParameters_create()
+    # aruco_dict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
+    # (corners, ids, rejected) = cv2.aruco.detectMarkers(
+    #     aruco_img,
+    #     aruco_dict,
+    #     parameters=aruco_params)
+    # print(corners, ids)

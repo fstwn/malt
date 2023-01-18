@@ -28,6 +28,8 @@ __pycache__/
 /src/malt/imgprocessing/imgs_raw/*.jpg
 /src/malt/imgprocessing/imgs_undistorted/*.jpg
 
+/src/malt/imgprocessing/qrcodes/*.jpg
+
 # ifc submodule
 /src/malt/ifc/
 /src/malt/polyfit/

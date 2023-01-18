@@ -141,7 +141,6 @@ def imgcalibration(c,
     """
     Run image camera calibration routine from imgprocessing module
     """
-
     with chdir(malt.IMGDIR):
         log.info("Running camera calibration routine...")
         malt.imgprocessing.compute_camera_coefficients(
@@ -160,7 +159,6 @@ def imgundistortion(c,
     """
     Run image undistortion routine from imgprocessing module.
     """
-
     with chdir(malt.IMGDIR):
         log.info("Running undistortion routine...")
         malt.imgprocessing.undistort_image_files(indir=indir,
@@ -182,7 +180,6 @@ def imgperspective(c,
     """
     Run image perspective calibration and save transformation matrix to file.
     """
-
     with chdir(malt.IMGDIR):
         log.info("Running camera perspective calibration routine...")
         log.info("Width: {0} // Height: {1}".format(width, height))
@@ -190,6 +187,33 @@ def imgperspective(c,
                                                      xfp=xform,
                                                      dwidth=width,
                                                      dheight=height)
+
+
+@task(help={
+    'n': 'Number of Qr-Codes to generate.',
+    'cols': 'Number of columns for the sheet of QR-Codes.',
+    'rows': 'Number of rows for the sheet of QR-Codes.',
+    'prefix': 'Prefix for human-readable name/id.',
+    'qrdir': 'Folder where to save the generated sheets with QR-Codes.',
+    'fontsdir': 'Folder to look for the fonts used in QR-Code generation.'})
+def qrcodegeneration(c,
+                     n=105,
+                     cols=3,
+                     rows=7,
+                     prefix='A',
+                     qrdir=malt.imgprocessing._QRDIR,
+                     fontsdir=malt.imgprocessing._FONTSDIR):
+    """
+    Run QR-Code generation.
+    """
+    with chdir(malt.IMGDIR):
+        log.info('Running QR-Code generation routine...')
+        malt.imgprocessing.gen_qrcodes(N=n,
+                                       cols=cols,
+                                       rows=rows,
+                                       prefix=prefix,
+                                       qrdir=qrdir,
+                                       fontsdir=fontsdir)
 
 
 # CONTEXT ---------------------------------------------------------------------
