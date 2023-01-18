@@ -18,6 +18,7 @@ from malt.ft20 import RepositoryComponent, DemandComponent
 
 def optimize_matching(repository_components: Sequence[RepositoryComponent],
                       demand_components: Sequence[DemandComponent],
+                      cut_loss: float,
                       factory_distance: float,
                       transport_to_site: Sequence[float],
                       reusecoeffs: dict,
@@ -243,11 +244,23 @@ def optimize_matching(repository_components: Sequence[RepositoryComponent],
     # constrained by the available length
     # m[i][0] = demand length (l'i)
     # R[j][0] = stock length (lj)
-    model.addConstrs((
-        gp.quicksum(t[i, j] * m[i][0] for i in range(len(m))) <= y[j] * R[j][0]
-        for j in range(R.shape[0])),
-        name='available_length'
-    )
+    if cut_loss > 0.0:
+        # TODO: Cut loss is also applied if only one element is cut, this
+        #       should be changed to only apply if at least two elements are
+        #       cut from the same stock!
+        model.addConstrs((
+            gp.quicksum((t[i, j] * m[i][0]) + (t[i, j] * cut_loss)
+                        for i in range(len(m))) <= y[j] * R[j][0]
+            for j in range(R.shape[0])),
+            name='available_length'
+        )
+    else:
+        model.addConstrs((
+            gp.quicksum(t[i, j] * m[i][0]
+                        for i in range(len(m))) <= y[j] * R[j][0]
+            for j in range(R.shape[0])),
+            name='available_length'
+        )
 
     # the assignment of members to elements is constrained by matching
     # cross sections

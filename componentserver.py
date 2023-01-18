@@ -516,6 +516,7 @@ def ft20_ClearServerComponent(clear):
         hs.HopsString("DemandComponents", "DemandComponents", "Demand of components.", hs.HopsParamAccess.LIST), # NOQA501
         hs.HopsString("ReUseCoeffs", "ReUseCoeffs", "ReUse Coefficients.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsString("ProductionCoeffs", "ProductionCoeffs", "Production Coefficients.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsNumber("CutLoss", "CutLoss", "Length Amount that is lost for each cut, i.e. through sawing.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsNumber("MIPGap", "MIPGap", "Acceptable MIPGap for Gurobi Solver.", hs.HopsParamAccess.ITEM), # NOQA501
     ],
     outputs=[
@@ -527,6 +528,7 @@ def ft20_FT20OptimizeMatchingComponent(repository_components,
                                        demand_components,
                                        reusecoeffs,
                                        productioncoeffs,
+                                       cut_loss: float = 0.0,
                                        mipgap: float = 0.0):
 
     # SANITIZE JSON DATA AS CLASSES AND DICTS ---------------------------------
@@ -569,6 +571,7 @@ def ft20_FT20OptimizeMatchingComponent(repository_components,
     optimization_result, N, result_objects = ft20.optimize_matching(
         repository_components,
         demand_components,
+        cut_loss,
         factory_distance,
         transport_to_site,
         reusecoeffs,
