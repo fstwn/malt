@@ -3,7 +3,7 @@
 from itertools import product
 from re import split as regexsplit
 import os
-from typing import List
+from typing import List, Sequence
 import uuid
 
 
@@ -13,7 +13,6 @@ import numpy as np
 import rhinoinside
 rhinoinside.load()
 import Rhino # NOQA402
-import System # NOQA402
 
 
 # FUNCTION DEFINITIONS --------------------------------------------------------
@@ -26,6 +25,7 @@ def sanitize_path(fp: str = ''):
 
 
 def slash_join(*args):
+    """Joins together a bunch of strings using slashes."""
     return '/'.join(arg.strip('/') for arg in args)
 
 
@@ -33,16 +33,16 @@ def validate_uuid(uuid_to_test: str, version: int = 4):
     """
     Check if uuid_to_test is a valid UUID.
 
-     Parameters
+    Parameters
     ----------
     uuid_to_test : str
     version : {1, 2, 3, 4}
 
-     Returns
+    Returns
     -------
     `True` if uuid_to_test is a valid UUID, otherwise `False`.
 
-     Examples
+    Examples
     --------
     >>> is_valid_uuid('c9bf9e57-1685-4c89-bafb-ff5af830be8a')
     True
@@ -188,9 +188,7 @@ def np_float_array_to_hops_tree(np_array: np.array, paths: List[str] = []):
     return tree
 
 
-def np_int_array_to_hops_tree(np_array: np.array,
-                              paths: List[str] = [],
-                              sysint: bool = False):
+def np_int_array_to_hops_tree(np_array: np.array, paths: List[str] = []):
     """
     Converts a numpy int array to a Hops DataTree (dict with paths as keys).
     """
@@ -199,16 +197,25 @@ def np_int_array_to_hops_tree(np_array: np.array,
     tree = {}
     if len(np_array.shape) == 1:
         for i, branch in enumerate(np_array):
-            if sysint:
-                tree[paths[i].strip("}{")] = [System.Int32(branch)]
-            else:
-                tree[paths[i].strip("}{")] = [int(branch)]
+            tree[paths[i].strip("}{")] = [int(branch)]
     elif len(np_array.shape) == 2:
         for i, branch in enumerate(np_array):
-            if sysint:
-                tree[paths[i].strip("}{")] = [System.Int32(v) for v in branch]
-            else:
-                tree[paths[i].strip("}{")] = [int(v) for v in branch]
+            tree[paths[i].strip("}{")] = [int(v) for v in branch]
+    return tree
+
+
+# PYTHON & HOPS DATA //////////////////////////////////////////////////////////
+
+def nested_sequence_to_hops_tree(nestedseq: Sequence[Sequence[object]],
+                                 paths: Sequence[str] = []):
+    """
+    Converts a nested python list to a Hops DataTree (dict with paths as keys).
+    """
+    if not paths:
+        paths = ["{0;" + str(x) + "}" for x in range(len(nestedseq))]
+    tree = {}
+    for i, branch in enumerate(nestedseq):
+        tree[paths[i].strip("}{")] = [obj for obj in branch]
     return tree
 
 

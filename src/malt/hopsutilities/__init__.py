@@ -13,6 +13,7 @@ from .hopsutilities import (sanitize_path, # NOQA401
                             np_float_array_to_hops_tree,
                             np_int_array_to_hops_tree,
                             np_arrays_to_rhino_triangle_mesh,
+                            nested_sequence_to_hops_tree,
                             )
 
 from .Profiler import Profiler # NOQA401

@@ -2,7 +2,7 @@
 
 import argparse
 import clr
-import json
+import glob
 import logging
 import os
 from itertools import product
@@ -180,7 +180,6 @@ from malt import intri # NOQA402
 from malt import miphopper # NOQA402
 from malt import shapesph # NOQA402
 from malt import sshd # NOQA402
-from malt import ft20 # NOQA402
 
 
 # REGSISTER FLASK AND/OR RHINOINSIDE HOPS APP ---------------------------------
@@ -1237,7 +1236,7 @@ def opencv_LoadCameraXForm(filepath: str = ""):
     icon="resources/icons/220204_malt_icon.png",
     inputs=[
         hs.HopsBoolean("Run", "R", "Run the capturing and contour detection routine.", hs.HopsParamAccess.ITEM), # NOQA501
-        hs.HopsInteger("BinaryThreshold", "B", "The threshold for binary (black & white) conversion of the image. Defaults to 127.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("BinaryThreshold", "B", "The threshold for binary (black & white) conversion of the image. Defaults to 127, set to -1 to detect automatically based on image input.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsNumber("AreaThreshold", "T", "The area threshold for filtering the returned contours in pixels. Deactivated if set to 0. Defaults to 0.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("Device", "D", "The identifier of the capture device to use. Defaults to 0.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("Width", "W", "The width of the working area.", hs.HopsParamAccess.ITEM), # NOQA501
@@ -1275,13 +1274,18 @@ def opencv_DetectContoursCaptureComponent(run,
         warped_img = imgprocessing.warp_image(image, xform, width, height)
 
         # run contour detection using opencv
+        if bthresh == -1:
+            otsu = True
+        else:
+            otsu = False
         warped_img, contours = imgprocessing.detect_contours_from_image(
                                         warped_img,
                                         bthresh,
                                         athresh,
                                         chain,
                                         invert,
-                                        external)
+                                        external,
+                                        otsu)
 
         # compute scaling factor for results
         h_dst, w_dst, c_dst = warped_img.shape
@@ -1341,7 +1345,7 @@ def opencv_DetectContoursCaptureComponent(run,
     inputs=[
         hs.HopsBoolean("Run", "R", "Run the capturing and contour detection routine.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsString("FilePath", "F", "The filepath of the image.", hs.HopsParamAccess.ITEM), # NOQA501
-        hs.HopsInteger("BinaryThreshold", "B", "The threshold for binary (black & white) conversion of the image. Defaults to 127.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("BinaryThreshold", "B", "The threshold for binary (black & white) conversion of the image. Defaults to 127, set to -1 to detect automatically based on image input.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsNumber("AreaThreshold", "T", "The area threshold for filtering the returned contours in pixels. Deactivated if set to 0. Defaults to 0.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("Width", "W", "The width of the working area.", hs.HopsParamAccess.ITEM), # NOQA501
         hs.HopsInteger("Height", "H", "The height of the working area.", hs.HopsParamAccess.ITEM), # NOQA501
@@ -1354,6 +1358,7 @@ def opencv_DetectContoursCaptureComponent(run,
     outputs=[
         hs.HopsCurve("Boundary", "B", "The detected image boundary.", hs.HopsParamAccess.LIST), # NOQA501
         hs.HopsCurve("Contours", "C", "The detected contours as Polylines.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsString("QRData", "Q", "The decoded data of detected QR-Codes", hs.HopsParamAccess.LIST), # NOQA501
     ])
 def opencv_DetectContoursFileComponent(run,
                                        filepath="",
@@ -1377,14 +1382,23 @@ def opencv_DetectContoursFileComponent(run,
         # create warped image
         warped_img = imgprocessing.warp_image(image, xform, width, height)
 
+        # copy image and perform qr code detection
+        qr_img = warped_img.copy()
+        qrdata, qrbbx = imgprocessing.detect_qr_codes_from_image(qr_img)
+
         # run contour detection using opencv
+        if bthresh == -1:
+            otsu = True
+        else:
+            otsu = False
         warped_img, contours = imgprocessing.detect_contours_from_image(
                                         warped_img,
                                         bthresh,
                                         athresh,
                                         chain,
                                         invert,
-                                        external)
+                                        external,
+                                        otsu)
 
         # compute scaling factor for results
         h_dst, w_dst, c_dst = warped_img.shape
@@ -1428,9 +1442,141 @@ def opencv_DetectContoursFileComponent(run,
         boundary.Scale(scalingfactor)
 
         # return output
-        return ([boundary], plcs)
+        return ([boundary], plcs, qrdata)
 
-    return ([], [])
+    return ([], [], [])
+
+
+@hops.component(
+    "/opencv.DetectContoursFileMulti",
+    name="DetectContoursFileMulti",
+    nickname="DetConFileMulti",
+    description="Use a directory full of images and detect contours in every image using OpenCV.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsBoolean("Run", "R", "Run the capturing and contour detection routine.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsString("Directory", "D", "The path to the directory where the images are stored.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("BinaryThreshold", "B", "The threshold for binary (black & white) conversion of the image. Defaults to 127, set to -1 to detect automatically based on image input.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsNumber("AreaThreshold", "T", "The area threshold for filtering the returned contours in pixels. Deactivated if set to 0. Defaults to 0.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Width", "W", "The width of the working area.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Height", "H", "The height of the working area.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("ChainApproximation", "C", "The chain approximation to use during contour detection. Defaults to 0.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsNumber("Epsilon", "E", "The epsilon value for contour approximation in post-processing. Defaults to 0 (disabled).", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsBoolean("Invert", "I", "If True, threshold image will be inverted. Use the invert function to detect black objects on white background.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsBoolean("ExtOnly", "E", "If True, only external contours will be returned.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsNumber("Transform", "X", "The transformation parameters from camera calibration.", hs.HopsParamAccess.TREE), # NOQA501
+    ],
+    outputs=[
+        hs.HopsCurve("Boundary", "B", "The detected image boundary.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsCurve("Contours", "C", "The detected contours as Polylines.", hs.HopsParamAccess.TREE), # NOQA501
+        hs.HopsString("QRData", "Q", "The decoded data of detected QR-Codes", hs.HopsParamAccess.TREE), # NOQA501
+    ])
+def opencv_DetectContoursFileMultiComponent(run,
+                                            filepath='',
+                                            bthresh=127,
+                                            athresh=0.0,
+                                            width=1000,
+                                            height=1000,
+                                            chain=0,
+                                            eps=0.0,
+                                            invert=False,
+                                            external=True,
+                                            xformtree=None):
+
+    if run:
+        # read all images from the directory filepath
+        img_types = ['*.jpg', '*.png', '*.jpeg']
+        img_fps = []
+        for it in img_types:
+            img_fps.extend(glob.glob(os.path.join(filepath, it)))
+        # retrieve transformation matrix from calibrate camera tree input
+        xform = hsutil.hops_tree_to_np_array(xformtree)[1]
+        # set otsu flag
+        if bthresh == -1:
+            otsu = True
+        else:
+            otsu = False
+        # loop over all image file paths in the directory
+        image_boundary = None
+        all_contours = []
+        all_qrdata = []
+        for i, fp in enumerate(img_fps):
+            print('[OPENCV] Running contour detection for '
+                  f'{fp} ({i}/{len(img_fps)})...')
+            # read image into array
+            image = imgprocessing.read_image(fp)
+            # create warped image
+            warped_img = imgprocessing.warp_image(image, xform, width, height)
+            # copy image and perform qr code detection
+            qr_img = warped_img.copy()
+            qrdata, qrbbx = imgprocessing.detect_qr_codes_from_image(qr_img)
+            all_qrdata.append(qrdata)
+            # run contour detection using opencv
+            warped_img, contours = imgprocessing.detect_contours_from_image(
+                                            warped_img,
+                                            bthresh,
+                                            athresh,
+                                            chain,
+                                            invert,
+                                            external,
+                                            otsu)
+            # compute scaling factor for results
+            h_dst, w_dst, c_dst = warped_img.shape
+            scalingfactor = width / w_dst
+            # construct polylines from contour output
+            plcs = []
+            for cnt in contours:
+                # create .NET list because Polyline constructor won't correctly
+                # handle python lists (it took a while to find that out....)
+                if len(cnt) >= 2:
+                    if eps > 0.0:
+                        cntpts = imgprocessing.approximate_contour(cnt, eps)
+                    else:
+                        cntpts = cnt
+                    ptL = System.Collections.Generic.List[
+                        Rhino.Geometry.Point3d]()
+                    # add contour points to .NET list
+                    [ptL.Add(Rhino.Geometry.Point3d(float(pt[0][0]),
+                                                    float(pt[0][1]),
+                                                    0.0)) for pt in cntpts]
+                    # add first point again to close polyline
+                    ptL.Add(Rhino.Geometry.Point3d(float(cntpts[0][0][0]),
+                                                   float(cntpts[0][0][1]),
+                                                   0.0))
+                    # create polylinecurve from .NET list and scale with factor
+                    plc = Rhino.Geometry.PolylineCurve(ptL)
+                    plc.Scale(scalingfactor)
+                    # append to output list
+                    plcs.append(plc)
+            # append list of polyline curves to list of all detected contours
+            all_contours.append(plcs)
+            # create image boundary as polyline curve for reference
+            if i == 0:
+                bPts = System.Collections.Generic.List[
+                    Rhino.Geometry.Point3d]()
+                # add boundary points to .NET list
+                bPts.Add(Rhino.Geometry.Point3d(0.0, 0.0, 0.0))
+                bPts.Add(Rhino.Geometry.Point3d(float(w_dst), 0.0, 0.0))
+                bPts.Add(Rhino.Geometry.Point3d(float(w_dst),
+                                                float(h_dst),
+                                                0.0))
+                bPts.Add(Rhino.Geometry.Point3d(0.0, float(h_dst), 0.0))
+                bPts.Add(Rhino.Geometry.Point3d(0.0, 0.0, 0.0))
+                # create polylinecurve from .NET list and scale with factor
+                image_boundary = Rhino.Geometry.PolylineCurve(bPts)
+                image_boundary.Scale(scalingfactor)
+
+        # return output
+        return ([image_boundary],
+                hsutil.nested_sequence_to_hops_tree(all_contours),
+                hsutil.nested_sequence_to_hops_tree(all_qrdata))
+
+    # return empty output if run flag is False
+    return ([],
+            hsutil.nested_sequence_to_hops_tree([]),
+            hsutil.nested_sequence_to_hops_tree([]))
 
 
 # POTPOURRI3D /////////////////////////////////////////////////////////////////
@@ -1885,7 +2031,7 @@ def test_PlaneComponent(plane):
     "/test.IntegerOutput",
     name="tIntegerOutput",
     nickname="tIntegerOutput",
-    description="Add numbers with CPython",
+    description="Add numbers with CPython and Test Integer output.", # NOQA501
     inputs=[
         hs.HopsInteger("A", "A", "First number"), # NOQA501
         hs.HopsInteger("B", "B", "Second number"), # NOQA501
