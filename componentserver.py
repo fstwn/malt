@@ -521,7 +521,7 @@ def ft20_ClearServerComponent(clear):
         hs.HopsNumber("MIPGap", "MIPGap", "Acceptable MIPGap for Gurobi Solver.", hs.HopsParamAccess.ITEM), # NOQA501
     ],
     outputs=[
-        hs.HopsInteger("Assignment", "Assignment", "An optimal solution for the given assignment problem.", hs.HopsParamAccess.LIST), # NOQA501
+        hs.HopsInteger("Assignment", "Assignment", "An optimal solution for the given demand.", hs.HopsParamAccess.LIST), # NOQA501
         hs.HopsNumber("NewComponents", "NewProduction", "Components produced new.", hs.HopsParamAccess.TREE), # NOQA501
         hs.HopsString("ResultObjects", "ResultObjects", "Components produced new.", hs.HopsParamAccess.LIST), # NOQA501
     ])
