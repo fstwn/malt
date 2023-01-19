@@ -5,6 +5,7 @@ import clr
 import glob
 import logging
 import os
+import json
 from itertools import product
 
 
@@ -173,6 +174,7 @@ from sklearn.decomposition import PCA # NOQA402
 # LOCAL MODULE IMPORTS --------------------------------------------------------
 
 import malt # NOQA402
+from malt import ft20 # NOQA402
 from malt import hopsutilities as hsutil # NOQA402
 from malt import icp # NOQA402
 from malt import imgprocessing # NOQA402
