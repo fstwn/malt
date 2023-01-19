@@ -207,6 +207,7 @@ def calculate_transporthistory(transporthistory: Sequence[Sequence]):
     """
     known_routes, version = _get_known_routes()
     for i, transport in enumerate(transporthistory):
+        # only calculate if distance is not present
         if int(transport[2]) == -1:
             loc_a = transport[0]
             loc_b = transport[1]
