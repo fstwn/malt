@@ -182,6 +182,7 @@ from malt import intri # NOQA402
 from malt import miphopper # NOQA402
 from malt import shapesph # NOQA402
 from malt import sshd # NOQA402
+from malt import vsa # NOQA402
 
 
 # REGSISTER FLASK AND/OR RHINOINSIDE HOPS APP ---------------------------------
@@ -1928,6 +1929,48 @@ def shapesph_MeshSphericalHarmonicsDescriptorRIComponent(mesh):
 
     # return results
     return sdescr
+
+
+# VARIATIONAL SURFACE APPROXIMATION ///////////////////////////////////////////
+
+@hops.component(
+    "/vsa.VariationalSurfaceApproximation",
+    name="VariationalSurfaceApproximation",
+    nickname="VSA",
+    description="Run VSA on a Mesh.", # NOQA501
+    category=None,
+    subcategory=None,
+    icon="resources/icons/220204_malt_icon.png",
+    inputs=[
+        hs.HopsMesh("Mesh", "M", "The triangle mesh to run VSA on.", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("NumRegions", "N", "The number of regions for the VSA", hs.HopsParamAccess.ITEM), # NOQA501
+        hs.HopsInteger("Iterations", "I", "The number of iterations to run VSA.", hs.HopsParamAccess.ITEM), # NOQA501
+    ],
+    outputs=[
+        hs.HopsMesh("Regions", "R", "The regions as a result of the VSA solve.", hs.HopsParamAccess.LIST), # NOQA501
+    ])
+def vsa_VariationalSurfaceApproximationComponent(mesh, n, iters):
+    # check if mesh is all triangles
+    if mesh.Faces.QuadCount > 0:
+        raise ValueError("Mesh has to be triangular!")
+
+    # get plyfile elements of vertices and faces
+    V, F = hsutil.rhino_mesh_to_np_arrays(mesh)
+
+    # create new vsa instance
+    VSA = vsa.VariationalSurfaceApproximation(V, F, n)
+
+    # solve for x iterations
+    region_meshes = VSA.Solve(iters)
+
+    # create rhino meshes
+    rhino_region_meshes = []
+    for m in region_meshes:
+        rhinomesh = hsutil.np_arrays_to_rhino_triangle_mesh(m[0], m[1])
+        rhino_region_meshes.append(rhinomesh)
+
+    # return the results
+    return rhino_region_meshes
 
 
 # UTILS ///////////////////////////////////////////////////////////////////////

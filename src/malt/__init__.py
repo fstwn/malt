@@ -17,6 +17,7 @@ import malt.intri as intri # NOQA402
 import malt.miphopper as miphopper # NOQA402
 import malt.shapesph as shapesph # NOQA402
 import malt.sshd as sshd # NOQA402
+import malt.vsa as vsa # NOQA402
 import malt.ft20 as ft20 # NOQA402
 
 
