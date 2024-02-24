@@ -1177,8 +1177,8 @@ def opencv_CalibrateCameraCaptureComponent(run,
     ])
 def opencv_CalibrateCameraFileComponent(run,
                                         filepath="",
-                                        width=3780,
-                                        height=1890):
+                                        width=1131,
+                                        height=1131):
     # initilize identity matrix
     xform = np.eye(3)
 
@@ -1258,8 +1258,8 @@ def opencv_DetectContoursCaptureComponent(run,
                                           bthresh=127,
                                           athresh=0.0,
                                           device=0,
-                                          width=3780,
-                                          height=1890,
+                                          width=1131,
+                                          height=1131,
                                           chain=0,
                                           eps=0.0,
                                           invert=False,
@@ -1367,8 +1367,8 @@ def opencv_DetectContoursFileComponent(run,
                                        filepath="",
                                        bthresh=127,
                                        athresh=0.0,
-                                       width=1000,
-                                       height=1000,
+                                       width=1131,
+                                       height=1131,
                                        chain=0,
                                        eps=0.0,
                                        invert=False,

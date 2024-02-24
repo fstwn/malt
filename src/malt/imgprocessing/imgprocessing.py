@@ -572,45 +572,41 @@ def detect_qr_codes_from_image(image: np.ndarray,
     img_copy = image.copy()
     # binarize the image
     img_gray = cv2.cvtColor(img_copy, cv2.COLOR_RGB2GRAY)
-    th, img_bw = cv2.threshold(img_gray,
-                               0,
-                               255,
-                               cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    th, img_bwa = cv2.threshold(img_gray.copy(),
+                                85,
+                                255,
+                                cv2.THRESH_BINARY)
+    th, img_bwb = cv2.threshold(img_gray.copy(),
+                                127,
+                                255,
+                                cv2.THRESH_BINARY)
+    th, img_bwc = cv2.threshold(img_gray.copy(),
+                                170,
+                                255,
+                                cv2.THRESH_BINARY)
 
     # find the qr codes in the image and decode each of the codes
     # TODO: find better way to make qr code detection more stable instead of
     #       performing it three times ...
-    qrcodes_bw = pyzbar.decode(img_bw, [pyzbar.ZBarSymbol.QRCODE])
-    qrcodes_gray = pyzbar.decode(img_gray, [pyzbar.ZBarSymbol.QRCODE])
-    qrcodes_col = pyzbar.decode(image, [pyzbar.ZBarSymbol.QRCODE])
+    codes_rect = []
+    codes_data = []
 
-    codes_rect = [code.rect for code in qrcodes_bw]
-    codes_data = [code.data.decode('utf-8') for code in qrcodes_bw]
-    codes_found = set(codes_data)
+    codes = pyzbar.decode(img_bwa, [pyzbar.ZBarSymbol.QRCODE])
 
-    for i, graycode in enumerate(qrcodes_gray):
+    if not codes:
+        codes = pyzbar.decode(img_bwb, [pyzbar.ZBarSymbol.QRCODE])
+    if not codes:
+        codes = pyzbar.decode(img_bwc, [pyzbar.ZBarSymbol.QRCODE])
+    if not codes:
+        codes = pyzbar.decode(img_gray, [pyzbar.ZBarSymbol.QRCODE])
+    if not codes:
+        codes = pyzbar.decode(image, [pyzbar.ZBarSymbol.QRCODE])
+
+    for code in codes:
         # get code data
-        cdata = graycode.data.decode('utf-8')
-        # continue if already found
-        if cdata in codes_found:
-            continue
-        # append new data
-        codes_rect.append(graycode.rect)
+        cdata = code.data.decode('utf-8')
+        codes_rect.append(code.rect)
         codes_data.append(cdata)
-        # add to found set
-        codes_found.add(cdata)
-
-    for i, colcode in enumerate(qrcodes_col):
-        # get code data
-        cdata = colcode.data.decode('utf-8')
-        # continue if already found
-        if cdata in codes_found:
-            continue
-        # append new data
-        codes_rect.append(colcode.rect)
-        codes_data.append(cdata)
-        # add to found set
-        codes_found.add(cdata)
 
     if display_results:
         for i, cdata in enumerate(codes_data):
