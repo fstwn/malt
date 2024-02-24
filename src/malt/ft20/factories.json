@@ -1,7 +1,7 @@
 {
     "Betonwerk Neuendorf": [
         50.0366327,
-        9.6518025
+        9.6516271
     ],
     "Betonwerke Dippon GmbH": [
         50.8926053,
@@ -30,10 +30,6 @@
     "Rekers Betonwerk": [
         52.3454775,
         7.4609502
-    ],
-    "Hörster Betonwerk": [
-        52.036799,
-        8.2749389
     ],
     "Betonwerk Lauterbach": [
         49.8945606,
@@ -143,6 +139,10 @@
         51.5005776,
         14.464983
     ],
+    "Rottweiler TransportbetonGmbH & Co. KG Betonwerk Trossingen": [
+        48.0873165,
+        8.6277301
+    ],
     "Betonwerk Hauser": [
         48.9753906,
         12.4904441
@@ -164,8 +164,12 @@
         12.6015793
     ],
     "Betonwerk Neu-Ulm": [
-        48.4258566,
+        48.4258664,
         10.0355917
+    ],
+    "Leonhard Moll Betonwerke GmbH & Co KG": [
+        52.3559458,
+        11.972898
     ],
     "Kijlstra Kanalbausysteme (Betonwerk)": [
         52.4830575,
@@ -188,16 +192,8 @@
         8.0312706
     ],
     "Betonwerk Mengen": [
-        48.0512391,
+        48.05124,
         9.3554087
-    ],
-    "Betonwerk, Concrete Plant": [
-        52.0610565,
-        8.2180697
-    ],
-    "Betonwerk Lintel": [
-        51.8295877,
-        8.3656125
     ],
     "bwb Betonwerk Velten": [
         52.6721646,
@@ -291,13 +287,17 @@
         52.6874063,
         8.8358316
     ],
+    "Diephaus Betonwerk Schopsdorf": [
+        52.2444725,
+        12.2580518
+    ],
     "beweka Betonwerk Kahla GmbH": [
         50.7984087,
         11.5839876
     ],
     "BWB Betonwerke Berlin-Brandenburg GmbH": [
         52.4216466,
-        12.5287534
+        12.5287803
     ],
     "GP Betonwerke Ost GmbH": [
         51.3401975,
@@ -306,6 +306,14 @@
     "bwb Betonwerk Gommern": [
         52.0841796,
         11.8200937
+    ],
+    "Betonwerk Bad Lausick Mischanlage Borna": [
+        51.1266689,
+        12.4829725
+    ],
+    "TBR Betonwerk Görlitz": [
+        51.1159117,
+        14.972448
     ],
     "Rudolph Betonwerke": [
         47.5990106,
@@ -319,5 +327,5 @@
         52.701692,
         8.2840791
     ],
-    "file_version": "2023-01-19-15-31-35"
+    "file_version": "2024-01-09-09-17-45"
 }
