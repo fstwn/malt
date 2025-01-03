@@ -1,5 +1,9 @@
 # Malt
 
+```diff
+- PLEASE NOTE THAT THIS CODE IS MOSTLY OLD AND WILL NOT BE WORKED ON ANYMORE
+```
+
 Malt is a collection of Hops components for Rhino Grasshopper.
 
 - The Hops components run using a local [ghhops-server](https://github.com/mcneel/compute.rhino3d/tree/master/src/ghhops-server-py).
@@ -11,8 +15,7 @@ Malt is a collection of Hops components for Rhino Grasshopper.
 [General](#general)  
 [Installation & Updates](#installation--updates)  
 [Development](#development)  
-[Licensing & References](#licensing--references)  
-[To-Do & Extension Ideas](#to-do--extension-ideas)  
+[Credits, Licensing & References](#credits) 
 
 # General
 
