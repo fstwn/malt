@@ -1,5 +1,9 @@
 # Malt
 
+```diff
+- PLEASE NOTE THAT THIS CODE IS MOSTLY OLD AND WILL NOT BE WORKED ON ANYMORE
+```
+
 Malt is a collection of Hops components for Rhino Grasshopper.
 
 - The Hops components run using a local [ghhops-server](https://github.com/mcneel/compute.rhino3d/tree/master/src/ghhops-server-py).
@@ -11,8 +15,7 @@ Malt is a collection of Hops components for Rhino Grasshopper.
 [General](#general)  
 [Installation & Updates](#installation--updates)  
 [Development](#development)  
-[Licensing & References](#licensing--references)  
-[To-Do & Extension Ideas](#to-do--extension-ideas)  
+[Credits, Licensing & References](#credits) 
 
 # General
 
@@ -245,7 +248,18 @@ To lint all code, call
 invoke lint
 ```
 
-# Licensing & References
+# Credits
+
+## Public Funding
+
+Part of this research was conducted within the Project _Fertigteil 2.0 -
+Real-digital process chains for the production of built-in concrete
+components_. The project _Fertigteil 2.0 (Precast Concrete Components 2.0)_
+was funded by the Federal Ministry of Education and Research Germany (BMBF)
+through the funding measure Resource-efficient circular economy - Building and
+mineral cycles (ReMin).
+
+## Licensing & References
 
 - Original code is licensed under the MIT License.
 - The `malt.ipc` module is based on code by Yijiang Huang. This code is licensed under the MIT License found under `licenses/compas_rpc_example`.
@@ -256,8 +270,13 @@ invoke lint
 - The `malt.imgprocessing` module makes heavy use of the [OpenCV](https://opencv.org/) library, more specifically its [pre-built packages for python](https://anaconda.org/conda-forge/opencv) via conda-forge.
 - The `malt.vsa` module is a re-implementation of code by [romain22222](https://github.com/romain22222/PROJ602-Variational-shape-approximation). Unfortunately, no license is provided by its author for this public open-source code. The code is based on the paper *"Variational shape approximation" by Cohen-Steiner, D., Alliez, P., Desbrun, M., 2004*.
 
+## Student Work
+
+- Parts of the python code in `src/malt/imgprocessing/imgprocessing.py` and `src/malt/imgprocessing/qrgen.py` to create QR-Code labels was developed by Mirko Dutschke. The code has been refactored and integrated by
+Max Benjamin Eschenbach.
+
 # To-Do & Extension Ideas
 
 ## Possible Future Integrations
 
-- [Google Mediapipe](https://github.com/google/mediapipe)
+...
