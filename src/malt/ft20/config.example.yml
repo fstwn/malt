@@ -1,0 +1,7 @@
+---
+base_url: "https://your.api.url/"
+hostname: "your_auth_hostname"
+realm_name: "your_realm_name"
+client_id: "your_client_id_for_auth"
+client_secret: "your_client_secret"
+token_url: "https://your.auth.url/token"
