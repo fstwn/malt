@@ -4,7 +4,7 @@
 PLEASE NOTE THAT THIS CODE IS MOSTLY OLD AND WILL NOT BE MAINTAINED, DEVELOPED OR OTHERWISE UPDATED ANYMORE.
 ```
 
-## This branch contains code developed for the FETIGTEIL 2.0 research rpoject at DDU.
+## This branch contains code developed for the FETIGTEIL 2.0 research project at DDU.
 
 # Malt
 
