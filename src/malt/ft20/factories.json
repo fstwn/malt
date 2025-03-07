@@ -31,6 +31,10 @@
         52.3454775,
         7.4609502
     ],
+    "Betonwerk Endress": [
+        49.6473316,
+        11.2609959
+    ],
     "Betonwerk Lauterbach": [
         49.8945606,
         11.7160215
@@ -73,19 +77,15 @@
     ],
     "Betonwerk Carl Plötner GmbH": [
         49.9886157,
-        8.0364232
+        8.0364245
     ],
-    "Karl Bachl Betonwerke GmbH & Co. KG": [
+    "Karl Bachl Betonwerke": [
         48.7298412,
         13.5433007
     ],
     "Betonwerk Uhl": [
         48.2852822,
         8.1471547
-    ],
-    "Ehemaliges Hume Rohr Betonwerk Doberlug- Kirchhain": [
-        51.6251023,
-        13.5679641
     ],
     "Betonwerk Schmidt": [
         49.8850666,
@@ -95,13 +95,17 @@
         50.3167002,
         11.8000885
     ],
+    "Betonwerk Carl Ploetner GmbH": [
+        51.3278483,
+        12.6209047
+    ],
     "Betonwerk Schuster Cunewalde": [
-        51.1053293,
-        14.5192155
+        51.1053832,
+        14.5191741
     ],
     "Betonwerk Müller": [
-        47.9986145,
-        7.6463849
+        48.6447558,
+        8.0606074
     ],
     "BBW Betonwerk Weißensee": [
         51.2001142,
@@ -112,7 +116,7 @@
         9.1532146
     ],
     "Hans Abel GmbH & Co. KG Betonwerk Köthen": [
-        51.7430121,
+        51.7429999,
         11.9950761
     ],
     "Adolf Blatt GmbH + Co. KG Betonwerke": [
@@ -124,8 +128,8 @@
         12.7811209
     ],
     "Betonwerk HTB": [
-        51.667619,
-        11.7452456
+        51.667685,
+        11.7455656
     ],
     "Betonwerk Michelfeld": [
         49.7080146,
@@ -165,10 +169,10 @@
     ],
     "Betonwerk Neu-Ulm": [
         48.4258664,
-        10.0355917
+        10.0356124
     ],
     "Leonhard Moll Betonwerke GmbH & Co KG": [
-        52.3559458,
+        52.3584382,
         11.972898
     ],
     "Kijlstra Kanalbausysteme (Betonwerk)": [
@@ -204,7 +208,7 @@
         8.6998362
     ],
     "Betonwerk Lebatz": [
-        53.9819908,
+        53.9819371,
         10.5445733
     ],
     "Betonwerk Heinrich Blatt GmbH + Co. KG": [
@@ -228,7 +232,7 @@
         10.8475702
     ],
     "Betonwerk Stigloher": [
-        47.8532364,
+        47.8533264,
         11.9950563
     ],
     "Pebüso-Betonwerke": [
@@ -320,12 +324,12 @@
         9.9519119
     ],
     "Ziegelei Betonwerk Lücking": [
-        51.5553672,
+        51.5551996,
         9.051338
     ],
     "Diephaus Betonwerk": [
         52.701692,
-        8.2840791
+        8.2843414
     ],
-    "file_version": "2024-01-09-09-17-45"
+    "file_version": "2025-01-21-08-25-47"
 }
