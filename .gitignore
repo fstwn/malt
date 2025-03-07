@@ -16,6 +16,7 @@ __pycache__/
 # GUROBI TESTS
 /src/malt/ghgurobi/dev_files/
 /viz/
+gurobi.log
 
 # IMAGE FOLDERS
 /src/malt/imgprocessing/imgs_calibration/*/
