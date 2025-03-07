@@ -1,8 +1,12 @@
-# Malt
+# Malt - FT20 Dev Branch
 
 ```diff
-- PLEASE NOTE THAT THIS CODE IS MOSTLY OLD AND WILL NOT BE WORKED ON ANYMORE
+- PLEASE NOTE THAT THIS CODE IS MOSTLY OLD AND WILL NOT BE MAINTAINED, DEVELOPED OR OTHERWISE UPDATED ANYMORE.
 ```
+
+## This branch contains code developed for the FETIGTEIL 2.0 research project at DDU.
+
+# Malt
 
 Malt is a collection of Hops components for Rhino Grasshopper.
 
